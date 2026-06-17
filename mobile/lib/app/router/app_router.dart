@@ -12,6 +12,8 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
+import '../../features/session/presentation/screens/my_circles_screen.dart';
+import '../../features/session/presentation/screens/today_session_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -74,6 +76,19 @@ GoRouter appRouter(Ref ref) {
         path: Routes.adminWaiting,
         builder: (BuildContext context, GoRouterState state) =>
             const WaitingListScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherCircles,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MyCirclesScreen(),
+      ),
+      GoRoute(
+        path: Routes.sessionPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            TodaySessionScreen(
+          circleId: state.pathParameters['circleId']!,
+          circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+        ),
       ),
     ],
   );

@@ -21,4 +21,10 @@ abstract final class Routes {
   static const String rosterPattern = '/admin/circles/:circleId/students';
   static String roster(String circleId, String name) =>
       '/admin/circles/$circleId/students?name=${Uri.encodeComponent(name)}';
+
+  // المعلّم: حلقاته + حصة النهارده
+  static const String teacherCircles = '/teacher/circles';
+  static const String sessionPattern = '/teacher/session/:circleId';
+  static String session(String circleId, String name) =>
+      '/teacher/session/$circleId?name=${Uri.encodeComponent(name)}';
 }

@@ -98,6 +98,14 @@ class _HomeBody extends StatelessWidget {
               onPressed: () => context.go(Routes.adminWaiting),
             ),
           ],
+          if (roles.contains('teacher')) ...<Widget>[
+            const SizedBox(height: AppSpacing.xl),
+            AppButton(
+              label: 'حلقاتي',
+              icon: Icons.menu_book,
+              onPressed: () => context.go(Routes.teacherCircles),
+            ),
+          ],
         ],
       ),
     );
