@@ -1,9 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-/// عميل Supabase للسيرفر (Server Components / Server Actions / Route Handlers).
-/// بيستخدم anon key + RLS — مش service-role. الـ service-role يتعمله helper
-/// منفصل server-only لمّا نحتاجه (دعوة مستخدمين / impersonation) في D1/D4.
+// عميل Supabase للسيرفر (Server Components / Server Actions / Route Handlers).
+// بيستخدم anon key + RLS — مش service-role. الـ service-role يتعمله helper
+// منفصل server-only لمّا نحتاجه (دعوة مستخدمين / impersonation) في D1/D4.
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
