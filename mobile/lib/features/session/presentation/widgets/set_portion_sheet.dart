@@ -6,12 +6,18 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
+import 'portion_range_row.dart';
 
-/// شيت تحديد مقطع الحفظ الحالي للحلقة (اسم + نطاق سور/آيات).
+/// شيت تحديد مقطع الحفظ — أول مقطع (setPortion) أو مقطع الانتقال (advance).
 class SetPortionSheet extends ConsumerStatefulWidget {
-  const SetPortionSheet({required this.circleId, super.key});
+  const SetPortionSheet({
+    required this.circleId,
+    this.advanceMode = false,
+    super.key,
+  });
 
   final String circleId;
+  final bool advanceMode;
 
   @override
   ConsumerState<SetPortionSheet> createState() => _SetPortionSheetState();
@@ -34,24 +40,20 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
     super.dispose();
   }
 
-  Future<void> _save() async {
+  Future<void> _save(List<SurahOption> surahs) async {
     final String name = _name.text.trim();
-    final int? ss = _surahStart;
-    final int? se = _surahEnd;
     final int? as = int.tryParse(_ayahStart.text.trim());
     final int? ae = int.tryParse(_ayahEnd.text.trim());
-    if (name.isEmpty ||
-        ss == null ||
-        se == null ||
-        as == null ||
-        ae == null ||
-        as <= 0 ||
-        ae <= 0) {
-      setState(() => _error = 'املا كل الخانات صح');
-      return;
-    }
-    if (se < ss || (se == ss && ae < as)) {
-      setState(() => _error = 'نهاية المقطع لازم تكون بعد بدايتها');
+    final String? err = portionRangeError(
+      surahs: surahs,
+      name: name,
+      surahStart: _surahStart,
+      ayahStart: as,
+      surahEnd: _surahEnd,
+      ayahEnd: ae,
+    );
+    if (err != null) {
+      setState(() => _error = err);
       return;
     }
     setState(() {
@@ -59,15 +61,26 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
       _saving = true;
     });
     try {
-      await ref
-          .read(todaySessionControllerProvider(widget.circleId).notifier)
-          .setPortion(
-            name: name,
-            surahStart: ss,
-            ayahStart: as,
-            surahEnd: se,
-            ayahEnd: ae,
-          );
+      final TodaySessionController notifier = ref.read(
+        todaySessionControllerProvider(widget.circleId).notifier,
+      );
+      if (widget.advanceMode) {
+        await notifier.advance(
+          name: name,
+          surahStart: _surahStart!,
+          ayahStart: as!,
+          surahEnd: _surahEnd!,
+          ayahEnd: ae!,
+        );
+      } else {
+        await notifier.setPortion(
+          name: name,
+          surahStart: _surahStart!,
+          ayahStart: as!,
+          surahEnd: _surahEnd!,
+          ayahEnd: ae!,
+        );
+      }
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
@@ -100,10 +113,15 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const Text(
-                'مقطع الحفظ الحالي',
+              Text(
+                widget.advanceMode
+                    ? 'مقطع الانتقال الجديد'
+                    : 'مقطع الحفظ الحالي',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextField(
@@ -113,7 +131,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              _RangeRow(
+              PortionRangeRow(
                 title: 'من',
                 surahs: list,
                 surah: _surahStart,
@@ -121,7 +139,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
                 ayahController: _ayahStart,
               ),
               const SizedBox(height: AppSpacing.sm),
-              _RangeRow(
+              PortionRangeRow(
                 title: 'لـ',
                 surahs: list,
                 surah: _surahEnd,
@@ -140,69 +158,12 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
               AppButton(
                 label: _saving ? 'بنحفظ…' : 'حفظ',
                 icon: Icons.check,
-                onPressed: _saving ? null : _save,
+                onPressed: _saving ? null : () => _save(list),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _RangeRow extends StatelessWidget {
-  const _RangeRow({
-    required this.title,
-    required this.surahs,
-    required this.surah,
-    required this.onSurah,
-    required this.ayahController,
-  });
-
-  final String title;
-  final List<SurahOption> surahs;
-  final int? surah;
-  final ValueChanged<int?> onSurah;
-  final TextEditingController ayahController;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        SizedBox(
-          width: 28,
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        Expanded(
-          flex: 3,
-          child: DropdownButton<int>(
-            isExpanded: true,
-            value: surah,
-            hint: const Text('السورة'),
-            items: surahs
-                .map(
-                  (SurahOption s) => DropdownMenuItem<int>(
-                    value: s.number,
-                    child: Text(s.name, overflow: TextOverflow.ellipsis),
-                  ),
-                )
-                .toList(),
-            onChanged: onSurah,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          flex: 2,
-          child: TextField(
-            controller: ayahController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'الآية'),
-          ),
-        ),
-      ],
     );
   }
 }
