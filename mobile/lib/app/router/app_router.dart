@@ -9,6 +9,7 @@ import '../../features/admin_setup/presentation/screens/circles_screen.dart';
 import '../../features/admin_setup/presentation/screens/curricula_screen.dart';
 import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import 'routes.dart';
 
@@ -58,6 +59,14 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) => CirclesScreen(
           levelId: state.pathParameters['levelId']!,
           levelName: state.uri.queryParameters['name'] ?? 'المستوى',
+        ),
+      ),
+      GoRoute(
+        path: Routes.rosterPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CircleRosterScreen(
+          circleId: state.pathParameters['circleId']!,
+          circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
         ),
       ),
     ],

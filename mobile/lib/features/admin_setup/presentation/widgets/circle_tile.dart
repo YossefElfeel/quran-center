@@ -6,15 +6,17 @@ import '../../domain/circle.dart';
 
 /// بلاطة حلقة (المعلّم + السعة + الحالة).
 class CircleTile extends StatelessWidget {
-  const CircleTile({required this.circle, super.key});
+  const CircleTile({required this.circle, required this.onTap, super.key});
 
   final Circle circle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: ListTile(
+        onTap: onTap,
         leading: const Icon(Icons.groups, color: AppColors.primary),
         title: Text(circle.name),
         subtitle: Text(

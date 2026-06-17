@@ -15,4 +15,9 @@ abstract final class Routes {
   static const String circlesPattern = '/admin/levels/:levelId/circles';
   static String circles(String levelId, String name) =>
       '/admin/levels/$levelId/circles?name=${Uri.encodeComponent(name)}';
+
+  // روستر حلقة (الطلبة المسجّلين)
+  static const String rosterPattern = '/admin/circles/:circleId/students';
+  static String roster(String circleId, String name) =>
+      '/admin/circles/$circleId/students?name=${Uri.encodeComponent(name)}';
 }
