@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_center/app/app.dart';
 import 'package:quran_center/core/auth/auth_providers.dart';
 import 'package:quran_center/core/auth/auth_repository.dart';
+import 'package:quran_center/features/home/presentation/screens/home_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FakeAuthRepository implements AuthRepository {
@@ -37,5 +39,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('الإيميل'), findsOneWidget);
+  });
+
+  testWidgets('الرئيسية بتعرض دور المستخدم (أدمن)', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
+          currentRolesProvider.overrideWith((ref) async => <String>['admin']),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('أدمن'), findsOneWidget);
   });
 }
