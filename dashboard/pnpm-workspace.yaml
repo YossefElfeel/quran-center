@@ -1,0 +1,6 @@
+# قرار صريح لـ build scripts (pnpm 10). مش بنبني الـ native dependencies دي
+# لأنها مش لازمة للّينت/البناء في الـ scaffold. لتفعيل تحسين الصور في الإنتاج،
+# حوّل sharp لـ true.
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
