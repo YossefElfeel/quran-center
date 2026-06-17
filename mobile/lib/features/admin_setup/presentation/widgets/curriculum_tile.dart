@@ -5,9 +5,14 @@ import '../../domain/curriculum.dart';
 
 /// بلاطة منهج في القائمة.
 class CurriculumTile extends StatelessWidget {
-  const CurriculumTile({required this.curriculum, super.key});
+  const CurriculumTile({
+    required this.curriculum,
+    required this.onTap,
+    super.key,
+  });
 
   final Curriculum curriculum;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +22,8 @@ class CurriculumTile extends StatelessWidget {
         leading: const Icon(Icons.menu_book, color: AppColors.primary),
         title: Text(curriculum.name),
         subtitle: Text(curriculum.type.labelAr),
+        trailing: const Icon(Icons.chevron_left),
+        onTap: onTap,
       ),
     );
   }

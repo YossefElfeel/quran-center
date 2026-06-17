@@ -5,7 +5,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/auth/auth_providers.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/auth/go_router_refresh_stream.dart';
+import '../../features/admin_setup/presentation/screens/circles_screen.dart';
 import '../../features/admin_setup/presentation/screens/curricula_screen.dart';
+import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import 'routes.dart';
@@ -43,6 +45,20 @@ GoRouter appRouter(Ref ref) {
         path: Routes.adminCurricula,
         builder: (BuildContext context, GoRouterState state) =>
             const CurriculaScreen(),
+      ),
+      GoRoute(
+        path: Routes.levelsPattern,
+        builder: (BuildContext context, GoRouterState state) => LevelsScreen(
+          curriculumId: state.pathParameters['curriculumId']!,
+          curriculumName: state.uri.queryParameters['name'] ?? 'المنهج',
+        ),
+      ),
+      GoRoute(
+        path: Routes.circlesPattern,
+        builder: (BuildContext context, GoRouterState state) => CirclesScreen(
+          levelId: state.pathParameters['levelId']!,
+          levelName: state.uri.queryParameters['name'] ?? 'المستوى',
+        ),
       ),
     ],
   );

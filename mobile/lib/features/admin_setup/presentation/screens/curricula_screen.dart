@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
@@ -41,8 +43,11 @@ class CurriculaScreen extends ConsumerWidget {
             : ListView.builder(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) =>
-                    CurriculumTile(curriculum: items[i]),
+                itemBuilder: (BuildContext context, int i) => CurriculumTile(
+                curriculum: items[i],
+                onTap: () =>
+                    context.go(Routes.levels(items[i].id, items[i].name)),
+              ),
               ),
       ),
     );
