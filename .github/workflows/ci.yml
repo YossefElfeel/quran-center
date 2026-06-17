@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  mobile:
+    name: Mobile (Flutter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.0
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Codegen (riverpod / freezed / l10n)
+        run: dart run build_runner build
+
+      - name: Format check (tracked Dart files only)
+        run: dart format --set-exit-if-changed $(git ls-files '*.dart')
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Guard — no infinite/looping animations
+        working-directory: ${{ github.workspace }}
+        run: |
+          if grep -rn --include=*.dart -e '\.repeat(' mobile/lib ; then
+            echo "::error::Found '.repeat(' — looping animations are banned (plan A.5). Use one-shot/implicit only."
+            exit 1
+          fi
+          echo "OK: no looping animations found."

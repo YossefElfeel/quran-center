@@ -1,0 +1,29 @@
+{
+  "@@locale": "ar",
+
+  "appTitle": "مركز تحفيظ القرآن",
+  "@appTitle": { "description": "اسم التطبيق" },
+
+  "retry": "إعادة المحاولة",
+  "@retry": { "description": "زر إعادة المحاولة بعد خطأ" },
+
+  "loading": "بنحمّل...",
+  "@loading": { "description": "حالة التحميل" },
+
+  "genericError": "حصل خطأ، حاول تاني",
+  "@genericError": { "description": "رسالة خطأ عامة" },
+
+  "noConnection": "مفيش اتصال بالنت",
+  "@noConnection": { "description": "رسالة انقطاع الاتصال" },
+
+  "emptyState": "مفيش حاجة هنا لسه",
+  "@emptyState": { "description": "حالة فاضية" },
+
+  "loginTitle": "تسجيل الدخول",
+  "@loginTitle": { "description": "عنوان شاشة الدخول" },
+
+  "roleTeacher": "معلّم",
+  "roleSupervisor": "مشرف",
+  "roleAdmin": "أدمن",
+  "roleParent": "ولي أمر"
+}
