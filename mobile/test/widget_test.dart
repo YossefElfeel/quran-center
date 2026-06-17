@@ -1,13 +1,41 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_center/app/app.dart';
+import 'package:quran_center/core/auth/auth_providers.dart';
+import 'package:quran_center/core/auth/auth_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  Session? get currentSession => null;
+
+  @override
+  Stream<AuthState> get authStateChanges => const Stream<AuthState>.empty();
+
+  @override
+  Future<void> signInWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {}
+
+  @override
+  Future<void> signOut() async {}
+}
 
 void main() {
-  testWidgets('التطبيق يفتح ويعرض كارت الترحيب', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: QuranCenterApp()));
+  testWidgets('من غير جلسة → التطبيق يروح لشاشة الدخول (إيميل)', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
+        ],
+        child: const QuranCenterApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('home_welcome')), findsOneWidget);
+    expect(find.text('الإيميل'), findsOneWidget);
   });
 }
