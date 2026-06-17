@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
@@ -81,6 +84,14 @@ class _HomeBody extends StatelessWidget {
                   .map((String r) => _RoleChip(role: r))
                   .toList(),
             ),
+          if (roles.contains('admin') || roles.contains('super_admin')) ...<Widget>[
+            const SizedBox(height: AppSpacing.xl),
+            AppButton(
+              label: 'المناهج والحلقات',
+              icon: Icons.account_tree,
+              onPressed: () => context.go(Routes.adminCurricula),
+            ),
+          ],
         ],
       ),
     );

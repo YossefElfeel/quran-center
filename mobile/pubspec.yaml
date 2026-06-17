@@ -25,6 +25,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.15.0
   riverpod_generator: ^4.0.4
+  mocktail: ^1.0.5
 
 # ملاحظة: حزم الطرف الثالث (riverpod / go_router / intl / build_runner ...) بتتضاف
 # عبر `flutter pub add` عشان تتحلّ على آخر إصدار متوافق، مش بأرقام يدوية.
