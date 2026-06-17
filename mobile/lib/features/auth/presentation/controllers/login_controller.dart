@@ -12,10 +12,7 @@ class LoginController extends _$LoginController {
   @override
   FutureOr<void> build() {}
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading<void>();
     state = await AsyncValue.guard(() async {
       await ref

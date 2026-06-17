@@ -45,7 +45,9 @@ class WaitingListController extends _$WaitingListController {
     required String resultLevelId,
     String? notes,
   }) async {
-    await ref.read(intakeRepositoryProvider).recordPlacement(
+    await ref
+        .read(intakeRepositoryProvider)
+        .recordPlacement(
           waitingId: waitingId,
           studentPersonId: studentPersonId,
           supervisorId: supervisorId,
@@ -61,7 +63,9 @@ class WaitingListController extends _$WaitingListController {
     required String studentPersonId,
     required String circleId,
   }) async {
-    await ref.read(intakeRepositoryProvider).enroll(
+    await ref
+        .read(intakeRepositoryProvider)
+        .enroll(
           waitingId: waitingId,
           studentPersonId: studentPersonId,
           circleId: circleId,

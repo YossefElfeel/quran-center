@@ -48,8 +48,9 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<LevelOption>> levels =
-        ref.watch(levelOptionsProvider);
+    final AsyncValue<List<LevelOption>> levels = ref.watch(
+      levelOptionsProvider,
+    );
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,

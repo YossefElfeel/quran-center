@@ -16,8 +16,9 @@ class TodaySessionController extends _$TodaySessionController {
   Future<TodaySession> build(String circleId) async {
     final SessionRepository repo = ref.watch(sessionRepositoryProvider);
     final String? sessionId = await repo.openSessionId(circleId);
-    final List<Map<String, dynamic>> rosterRows =
-        await repo.fetchRoster(circleId);
+    final List<Map<String, dynamic>> rosterRows = await repo.fetchRoster(
+      circleId,
+    );
     final Map<String, String> att = sessionId != null
         ? await repo.fetchAttendance(sessionId)
         : const <String, String>{};
@@ -50,7 +51,9 @@ class TodaySessionController extends _$TodaySessionController {
     final TodaySession? current = state.asData?.value;
     final String? sessionId = current?.sessionId;
     if (current == null || sessionId == null) return;
-    await ref.read(sessionRepositoryProvider).setAttendance(
+    await ref
+        .read(sessionRepositoryProvider)
+        .setAttendance(
           sessionId: sessionId,
           enrollmentId: enrollmentId,
           status: status.dbValue,

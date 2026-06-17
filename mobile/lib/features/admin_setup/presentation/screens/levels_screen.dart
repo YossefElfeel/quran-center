@@ -26,15 +26,17 @@ class LevelsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<Level>> state =
-        ref.watch(levelsControllerProvider(curriculumId));
+    final AsyncValue<List<Level>> state = ref.watch(
+      levelsControllerProvider(curriculumId),
+    );
     return AppScaffold(
       title: curriculumName,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
-          builder: (BuildContext _) => AddLevelSheet(curriculumId: curriculumId),
+          builder: (BuildContext _) =>
+              AddLevelSheet(curriculumId: curriculumId),
         ),
         icon: const Icon(Icons.add),
         label: const Text('مستوى جديد'),
@@ -43,8 +45,7 @@ class LevelsScreen extends ConsumerWidget {
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: 'مش قادرين نحمّل المستويات',
-          onRetry: () =>
-              ref.invalidate(levelsControllerProvider(curriculumId)),
+          onRetry: () => ref.invalidate(levelsControllerProvider(curriculumId)),
         ),
         data: (List<Level> items) => items.isEmpty
             ? const EmptyState(message: 'مفيش مستويات لسه — ضيف أول مستوى')

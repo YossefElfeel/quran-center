@@ -22,10 +22,7 @@ class LevelRepository {
   }
 
   /// بيضيف مستوى بترتيب تلقائي = أكبر ترتيب موجود + 1.
-  Future<void> add({
-    required String curriculumId,
-    required String name,
-  }) async {
+  Future<void> add({required String curriculumId, required String name}) async {
     final List<Map<String, dynamic>> top = await _client
         .from('level')
         .select('ord')

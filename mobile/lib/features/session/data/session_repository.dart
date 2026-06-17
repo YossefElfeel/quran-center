@@ -70,14 +70,11 @@ class SessionRepository {
     required String enrollmentId,
     required String status,
   }) async {
-    await _client.from('attendance').upsert(
-      <String, dynamic>{
-        'session_id': sessionId,
-        'enrollment_id': enrollmentId,
-        'status': status,
-      },
-      onConflict: 'session_id,enrollment_id',
-    );
+    await _client.from('attendance').upsert(<String, dynamic>{
+      'session_id': sessionId,
+      'enrollment_id': enrollmentId,
+      'status': status,
+    }, onConflict: 'session_id,enrollment_id');
   }
 
   Future<void> closeSession(String sessionId) async {

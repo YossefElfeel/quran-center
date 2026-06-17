@@ -33,7 +33,8 @@ class IntakeRepository {
         .select('id, name, curriculum:curriculum_id(name)')
         .order('ord', ascending: true);
     return rows.map((Map<String, dynamic> r) {
-      final Map<String, dynamic>? cur = r['curriculum'] as Map<String, dynamic>?;
+      final Map<String, dynamic>? cur =
+          r['curriculum'] as Map<String, dynamic>?;
       final String curName = cur?['name'] as String? ?? '';
       final String name = r['name'] as String;
       return LevelOption(
@@ -50,8 +51,10 @@ class IntakeRepository {
         .eq('level_id', levelId)
         .order('created_at', ascending: true);
     return rows
-        .map((Map<String, dynamic> r) =>
-            CircleOption(id: r['id'] as String, name: r['name'] as String))
+        .map(
+          (Map<String, dynamic> r) =>
+              CircleOption(id: r['id'] as String, name: r['name'] as String),
+        )
         .toList();
   }
 

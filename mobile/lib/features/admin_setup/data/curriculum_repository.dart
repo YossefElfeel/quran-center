@@ -20,10 +20,7 @@ class CurriculumRepository {
     return rows.map(Curriculum.fromMap).toList();
   }
 
-  Future<void> add({
-    required String name,
-    required CurriculumType type,
-  }) async {
+  Future<void> add({required String name, required CurriculumType type}) async {
     await _client.from('curriculum').insert(<String, dynamic>{
       'name': name,
       'type': type.dbValue,

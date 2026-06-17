@@ -32,7 +32,9 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
     if (circleId == null) return;
     setState(() => _saving = true);
     try {
-      await ref.read(waitingListControllerProvider.notifier).enroll(
+      await ref
+          .read(waitingListControllerProvider.notifier)
+          .enroll(
             waitingId: widget.waitingId,
             studentPersonId: widget.studentPersonId,
             circleId: circleId,
@@ -49,8 +51,9 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<CircleOption>> circles =
-        ref.watch(circlesOfLevelProvider(widget.levelId));
+    final AsyncValue<List<CircleOption>> circles = ref.watch(
+      circlesOfLevelProvider(widget.levelId),
+    );
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,

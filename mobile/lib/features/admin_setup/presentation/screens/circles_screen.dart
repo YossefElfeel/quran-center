@@ -26,8 +26,9 @@ class CirclesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<Circle>> state =
-        ref.watch(circlesControllerProvider(levelId));
+    final AsyncValue<List<Circle>> state = ref.watch(
+      circlesControllerProvider(levelId),
+    );
     return AppScaffold(
       title: levelName,
       floatingActionButton: FloatingActionButton.extended(

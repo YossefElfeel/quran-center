@@ -19,8 +19,9 @@ class WaitingListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<WaitingApplicant>> state =
-        ref.watch(waitingListControllerProvider);
+    final AsyncValue<List<WaitingApplicant>> state = ref.watch(
+      waitingListControllerProvider,
+    );
     return AppScaffold(
       title: 'قائمة الانتظار',
       floatingActionButton: FloatingActionButton.extended(

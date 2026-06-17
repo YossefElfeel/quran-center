@@ -16,11 +16,11 @@ class RosterEntry {
   final Gender? gender;
 
   RosterEntry copyWith({AttendanceStatus? attendance}) => RosterEntry(
-        enrollmentId: enrollmentId,
-        studentName: studentName,
-        attendance: attendance ?? this.attendance,
-        gender: gender,
-      );
+    enrollmentId: enrollmentId,
+    studentName: studentName,
+    attendance: attendance ?? this.attendance,
+    gender: gender,
+  );
 }
 
 /// حالة "حصة النهارده" لحلقة: الحصة المفتوحة (لو فيه) + الروستر.

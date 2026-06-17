@@ -24,8 +24,9 @@ class CircleRosterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<EnrolledStudent>> state =
-        ref.watch(circleRosterControllerProvider(circleId));
+    final AsyncValue<List<EnrolledStudent>> state = ref.watch(
+      circleRosterControllerProvider(circleId),
+    );
     return AppScaffold(
       title: circleName,
       floatingActionButton: FloatingActionButton.extended(

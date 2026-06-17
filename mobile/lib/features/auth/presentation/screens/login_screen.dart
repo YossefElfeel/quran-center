@@ -37,10 +37,9 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref.read(loginControllerProvider.notifier).signIn(
-          email: _email.text.trim(),
-          password: _password.text,
-        );
+    await ref
+        .read(loginControllerProvider.notifier)
+        .signIn(email: _email.text.trim(), password: _password.text);
   }
 
   @override

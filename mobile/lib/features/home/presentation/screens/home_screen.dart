@@ -24,8 +24,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<String>> rolesAsync =
-        ref.watch(currentRolesProvider);
+    final AsyncValue<List<String>> rolesAsync = ref.watch(currentRolesProvider);
     return AppScaffold(
       title: 'مركز تحفيظ القرآن',
       actions: <Widget>[
@@ -80,11 +79,10 @@ class _HomeBody extends StatelessWidget {
               alignment: WrapAlignment.center,
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
-              children: roles
-                  .map((String r) => _RoleChip(role: r))
-                  .toList(),
+              children: roles.map((String r) => _RoleChip(role: r)).toList(),
             ),
-          if (roles.contains('admin') || roles.contains('super_admin')) ...<Widget>[
+          if (roles.contains('admin') ||
+              roles.contains('super_admin')) ...<Widget>[
             const SizedBox(height: AppSpacing.xl),
             AppButton(
               label: 'المناهج والحلقات',

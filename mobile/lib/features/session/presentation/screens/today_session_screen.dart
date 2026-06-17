@@ -25,8 +25,9 @@ class TodaySessionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<TodaySession> state =
-        ref.watch(todaySessionControllerProvider(circleId));
+    final AsyncValue<TodaySession> state = ref.watch(
+      todaySessionControllerProvider(circleId),
+    );
     return AppScaffold(
       title: circleName,
       body: state.when(
@@ -57,8 +58,9 @@ class _SessionBody extends ConsumerWidget {
         icon: Icons.groups_outlined,
       );
     }
-    final TodaySessionController notifier =
-        ref.read(todaySessionControllerProvider(circleId).notifier);
+    final TodaySessionController notifier = ref.read(
+      todaySessionControllerProvider(circleId).notifier,
+    );
 
     if (!session.isOpen) {
       return Padding(

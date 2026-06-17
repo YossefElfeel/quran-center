@@ -24,7 +24,9 @@ class CirclesController extends _$CirclesController {
     required int maxSize,
     String? teacherId,
   }) async {
-    await ref.read(circleRepositoryProvider).add(
+    await ref
+        .read(circleRepositoryProvider)
+        .add(
           levelId: levelId,
           name: name,
           maxSize: maxSize,

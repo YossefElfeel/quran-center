@@ -25,7 +25,9 @@ Future<void> bootstrap() async {
       publishableKey: Env.supabaseAnonKey,
     );
   } else {
-    AppLog.warn('Supabase env مش متوفّر — شغّل بـ --dart-define-from-file=env/dev.json');
+    AppLog.warn(
+      'Supabase env مش متوفّر — شغّل بـ --dart-define-from-file=env/dev.json',
+    );
   }
 
   runApp(const ProviderScope(child: QuranCenterApp()));

@@ -50,8 +50,9 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<TeacherOption>> teachers =
-        ref.watch(teacherOptionsProvider);
+    final AsyncValue<List<TeacherOption>> teachers = ref.watch(
+      teacherOptionsProvider,
+    );
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -93,9 +94,7 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
               value: _teacherId,
               hint: const Text('من غير معلّم'),
               items: <DropdownMenuItem<String?>>[
-                const DropdownMenuItem<String?>(
-                  child: Text('من غير معلّم'),
-                ),
+                const DropdownMenuItem<String?>(child: Text('من غير معلّم')),
                 ...list.map(
                   (TeacherOption t) => DropdownMenuItem<String?>(
                     value: t.id,

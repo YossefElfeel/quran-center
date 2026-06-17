@@ -68,9 +68,9 @@ GoRouter appRouter(Ref ref) {
         path: Routes.rosterPattern,
         builder: (BuildContext context, GoRouterState state) =>
             CircleRosterScreen(
-          circleId: state.pathParameters['circleId']!,
-          circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
-        ),
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
       ),
       GoRoute(
         path: Routes.adminWaiting,
@@ -86,9 +86,9 @@ GoRouter appRouter(Ref ref) {
         path: Routes.sessionPattern,
         builder: (BuildContext context, GoRouterState state) =>
             TodaySessionScreen(
-          circleId: state.pathParameters['circleId']!,
-          circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
-        ),
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
       ),
     ],
   );

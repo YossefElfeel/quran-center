@@ -38,10 +38,13 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
     if (levelId == null) return;
     setState(() => _saving = true);
     try {
-      final String? supervisorId =
-          await ref.read(currentPersonIdProvider.future);
+      final String? supervisorId = await ref.read(
+        currentPersonIdProvider.future,
+      );
       final String notes = _notes.text.trim();
-      await ref.read(waitingListControllerProvider.notifier).recordPlacement(
+      await ref
+          .read(waitingListControllerProvider.notifier)
+          .recordPlacement(
             waitingId: widget.waitingId,
             studentPersonId: widget.studentPersonId,
             supervisorId: supervisorId,
@@ -60,8 +63,9 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<LevelOption>> levels =
-        ref.watch(levelOptionsProvider);
+    final AsyncValue<List<LevelOption>> levels = ref.watch(
+      levelOptionsProvider,
+    );
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,

@@ -5,22 +5,22 @@ enum CircleStatus {
   graduated;
 
   String get dbValue => switch (this) {
-        CircleStatus.forming => 'forming',
-        CircleStatus.active => 'active',
-        CircleStatus.graduated => 'graduated',
-      };
+    CircleStatus.forming => 'forming',
+    CircleStatus.active => 'active',
+    CircleStatus.graduated => 'graduated',
+  };
 
   String get labelAr => switch (this) {
-        CircleStatus.forming => 'بتتجمّع',
-        CircleStatus.active => 'شغّالة',
-        CircleStatus.graduated => 'اتخرّجت',
-      };
+    CircleStatus.forming => 'بتتجمّع',
+    CircleStatus.active => 'شغّالة',
+    CircleStatus.graduated => 'اتخرّجت',
+  };
 
   static CircleStatus fromDb(String value) => switch (value) {
-        'active' => CircleStatus.active,
-        'graduated' => CircleStatus.graduated,
-        _ => CircleStatus.forming,
-      };
+    'active' => CircleStatus.active,
+    'graduated' => CircleStatus.graduated,
+    _ => CircleStatus.forming,
+  };
 }
 
 /// حلقة (دُفعة) داخل مستوى. `teacherName` بيتعبّى من join مع person.
@@ -44,7 +44,8 @@ class Circle {
   final String? teacherName;
 
   factory Circle.fromMap(Map<String, dynamic> map) {
-    final Map<String, dynamic>? teacher = map['teacher'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? teacher =
+        map['teacher'] as Map<String, dynamic>?;
     return Circle(
       id: map['id'] as String,
       levelId: map['level_id'] as String,

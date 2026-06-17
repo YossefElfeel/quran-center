@@ -19,8 +19,9 @@ class CurriculaScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<Curriculum>> state =
-        ref.watch(curriculaControllerProvider);
+    final AsyncValue<List<Curriculum>> state = ref.watch(
+      curriculaControllerProvider,
+    );
     return AppScaffold(
       title: 'المناهج',
       floatingActionButton: FloatingActionButton.extended(
@@ -44,10 +45,10 @@ class CurriculaScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: items.length,
                 itemBuilder: (BuildContext context, int i) => CurriculumTile(
-                curriculum: items[i],
-                onTap: () =>
-                    context.go(Routes.levels(items[i].id, items[i].name)),
-              ),
+                  curriculum: items[i],
+                  onTap: () =>
+                      context.go(Routes.levels(items[i].id, items[i].name)),
+                ),
               ),
       ),
     );

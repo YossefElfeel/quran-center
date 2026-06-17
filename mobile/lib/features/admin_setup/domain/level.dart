@@ -13,9 +13,9 @@ class Level {
   final String name;
 
   factory Level.fromMap(Map<String, dynamic> map) => Level(
-        id: map['id'] as String,
-        curriculumId: map['curriculum_id'] as String,
-        ord: map['ord'] as int,
-        name: map['name'] as String,
-      );
+    id: map['id'] as String,
+    curriculumId: map['curriculum_id'] as String,
+    ord: map['ord'] as int,
+    name: map['name'] as String,
+  );
 }

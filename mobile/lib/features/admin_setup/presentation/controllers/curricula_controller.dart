@@ -13,10 +13,7 @@ class CurriculaController extends _$CurriculaController {
     return ref.watch(curriculumRepositoryProvider).fetchAll();
   }
 
-  Future<void> add({
-    required String name,
-    required CurriculumType type,
-  }) async {
+  Future<void> add({required String name, required CurriculumType type}) async {
     await ref.read(curriculumRepositoryProvider).add(name: name, type: type);
     ref.invalidateSelf();
     await future;

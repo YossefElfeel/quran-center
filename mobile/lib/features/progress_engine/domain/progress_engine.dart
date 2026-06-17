@@ -60,6 +60,5 @@ abstract final class ProgressEngine {
   static bool isStruggling({
     required int failedAttempts,
     required int threshold,
-  }) =>
-      failedAttempts >= threshold;
+  }) => failedAttempts >= threshold;
 }
