@@ -127,7 +127,7 @@ class _SessionBody extends ConsumerWidget {
           DebtStrip(
             passedCount: session.passedCount,
             debtCount: session.debtCount,
-            total: session.activeAtOpen,
+            total: session.roster.length,
           ),
         if (session.shouldAdvance)
           AdvanceSuggestionBanner(

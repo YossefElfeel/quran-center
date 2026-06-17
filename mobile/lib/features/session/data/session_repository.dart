@@ -304,9 +304,9 @@ class SessionRepository {
       );
     }
 
+    // for_session_id متساب null: الخطة للحصة الجاية (لسه متفتحتش)، مش للحالية.
     await _client.from('session_plan').insert(<String, dynamic>{
       'circle_id': circleId,
-      'for_session_id': sessionId,
       'revision_portion_id': ?revisionPortionId,
       'set_by': ?teacherId,
     });
