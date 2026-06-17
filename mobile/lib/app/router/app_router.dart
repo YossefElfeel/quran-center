@@ -11,6 +11,7 @@ import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -68,6 +69,11 @@ GoRouter appRouter(Ref ref) {
           circleId: state.pathParameters['circleId']!,
           circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
         ),
+      ),
+      GoRoute(
+        path: Routes.adminWaiting,
+        builder: (BuildContext context, GoRouterState state) =>
+            const WaitingListScreen(),
       ),
     ],
   );

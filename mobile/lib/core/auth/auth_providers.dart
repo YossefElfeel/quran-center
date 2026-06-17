@@ -15,25 +15,32 @@ AuthRepository authRepository(Ref ref) =>
 Stream<AuthState> authState(Ref ref) =>
     ref.watch(authRepositoryProvider).authStateChanges;
 
-/// أدوار المستخدم الحالي **هو بس** (بنفلتر صراحةً على person_id بتاعه — مش بنعتمد
-/// على اتساع الـ RLS، لأن الأدمن يقدر يقرا أدوار الكل).
+/// معرّف الـ person للمستخدم الحالي (للاستخدام في supervisor_id وغيره).
 @riverpod
-Future<List<String>> currentRoles(Ref ref) async {
-  ref.watch(authStateProvider); // أعِد القراءة عند تغيّر الجلسة
+Future<String?> currentPersonId(Ref ref) async {
+  ref.watch(authStateProvider);
   final SupabaseClient client = ref.watch(supabaseClientProvider);
   final String? userId = client.auth.currentUser?.id;
-  if (userId == null) return const <String>[];
-
+  if (userId == null) return null;
   final Map<String, dynamic>? me = await client
       .from('app_user')
       .select('person_id')
       .eq('auth_user_id', userId)
       .maybeSingle();
-  if (me == null) return const <String>[];
+  return me?['person_id'] as String?;
+}
 
+/// أدوار المستخدم الحالي **هو بس** (بنفلتر صراحةً على person_id بتاعه — مش بنعتمد
+/// على اتساع الـ RLS، لأن الأدمن يقدر يقرا أدوار الكل).
+@riverpod
+Future<List<String>> currentRoles(Ref ref) async {
+  final String? personId = await ref.watch(currentPersonIdProvider.future);
+  if (personId == null) return const <String>[];
+
+  final SupabaseClient client = ref.watch(supabaseClientProvider);
   final List<Map<String, dynamic>> rows = await client
       .from('role_assignment')
       .select('role')
-      .eq('person_id', me['person_id'] as String);
+      .eq('person_id', personId);
   return rows.map((Map<String, dynamic> r) => r['role'] as String).toList();
 }

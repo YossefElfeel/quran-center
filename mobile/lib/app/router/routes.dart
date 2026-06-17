@@ -5,6 +5,7 @@ abstract final class Routes {
   static const String home = '/';
   static const String login = '/login';
   static const String adminCurricula = '/admin/curricula';
+  static const String adminWaiting = '/admin/waiting';
 
   // مستويات منهج
   static const String levelsPattern = '/admin/curricula/:curriculumId/levels';

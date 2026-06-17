@@ -91,6 +91,12 @@ class _HomeBody extends StatelessWidget {
               icon: Icons.account_tree,
               onPressed: () => context.go(Routes.adminCurricula),
             ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: 'قائمة الانتظار',
+              icon: Icons.how_to_reg,
+              onPressed: () => context.go(Routes.adminWaiting),
+            ),
           ],
         ],
       ),
