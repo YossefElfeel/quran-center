@@ -10,9 +10,13 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
 import '../controllers/today_session_controller.dart';
-import '../widgets/attendance_tile.dart';
+import '../widgets/current_portion_card.dart';
+import '../widgets/debt_strip.dart';
+import '../widgets/score_input_sheet.dart';
+import '../widgets/set_portion_sheet.dart';
+import '../widgets/student_tile.dart';
 
-/// حصة النهارده — فتح الحصة + الحضور + القفل. (التسميع في الدفعة الجاية.)
+/// حصة النهارده — فتح الحصة + المقطع الحالي + الحضور + التسميع + القفل.
 class TodaySessionScreen extends ConsumerWidget {
   const TodaySessionScreen({
     required this.circleId,
@@ -50,6 +54,23 @@ class _SessionBody extends ConsumerWidget {
   final String circleId;
   final TodaySession session;
 
+  void _openSetPortion(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext _) => SetPortionSheet(circleId: circleId),
+    );
+  }
+
+  void _openTasmee(BuildContext context, RosterEntry entry) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext _) =>
+          ScoreInputSheet(circleId: circleId, entry: entry),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (session.roster.isEmpty) {
@@ -63,45 +84,34 @@ class _SessionBody extends ConsumerWidget {
     );
 
     if (!session.isOpen) {
-      return Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Icon(
-              Icons.event_available,
-              size: 64,
-              color: AppColors.primary,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            const Text(
-              'الحصة لسه مقفولة',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: 'افتح حصة النهارده',
-              icon: Icons.play_arrow,
-              onPressed: () => notifier.openSession(),
-            ),
-          ],
-        ),
-      );
+      return _ClosedView(onOpen: notifier.openSession);
     }
 
     return Column(
       children: <Widget>[
+        CurrentPortionCard(
+          portion: session.currentPortion,
+          onSetPortion: () => _openSetPortion(context),
+        ),
+        if (session.hasPortion)
+          DebtStrip(
+            passedCount: session.passedCount,
+            debtCount: session.debtCount,
+            total: session.roster.length,
+          ),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
             itemCount: session.roster.length,
             itemBuilder: (BuildContext context, int i) {
               final RosterEntry e = session.roster[i];
-              return AttendanceTile(
+              return StudentTile(
+                key: ValueKey<String>(e.enrollmentId),
                 entry: e,
-                onChanged: (AttendanceStatus s) =>
+                canRecordTasmee: session.hasPortion,
+                onAttendanceChanged: (AttendanceStatus s) =>
                     notifier.setAttendance(e.enrollmentId, s),
+                onTasmee: () => _openTasmee(context, e),
               );
             },
           ),
@@ -115,6 +125,37 @@ class _SessionBody extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ClosedView extends StatelessWidget {
+  const _ClosedView({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          const Icon(Icons.event_available, size: 64, color: AppColors.primary),
+          const SizedBox(height: AppSpacing.md),
+          const Text(
+            'الحصة لسه مقفولة',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: 'افتح حصة النهارده',
+            icon: Icons.play_arrow,
+            onPressed: onOpen,
+          ),
+        ],
+      ),
     );
   }
 }

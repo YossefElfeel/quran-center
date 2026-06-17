@@ -24,6 +24,9 @@ abstract final class ProgressEngine {
   /// عتبة الانتقال (٥٠٪، حصري — لازم تتعدّى مش تتساوى).
   static const double advanceThreshold = 0.5;
 
+  /// حد النجاح الافتراضي للتسميع (/١٠) — قابل للضبط لكل منهج لاحقًا.
+  static const int defaultPassThreshold = 7;
+
   /// نجح التسميع؟
   static bool isPassing({required int score, required int threshold}) =>
       score >= threshold;
