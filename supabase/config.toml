@@ -32,8 +32,10 @@ enabled = false
 [inbucket]
 enabled = false
 
+# Storage must be on — a migration seeds storage.buckets for media.
 [storage]
-enabled = false
+enabled = true
+file_size_limit = "50MiB"
 
 [auth]
 enabled = true
