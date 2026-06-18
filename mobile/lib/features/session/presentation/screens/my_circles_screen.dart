@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -17,20 +18,18 @@ class MyCirclesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<Circle>> state = ref.watch(myCirclesProvider);
     return AppScaffold(
-      title: 'حلقاتي',
+      title: l.sesMyCirclesTitle,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل حلقاتك',
+          message: l.sesMyCirclesLoadError,
           onRetry: () => ref.invalidate(myCirclesProvider),
         ),
         data: (List<Circle> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'لسه مفيش حلقات متسندة لك',
-                icon: Icons.groups_outlined,
-              )
+            ? EmptyState(message: l.sesNoCircles, icon: Icons.groups_outlined)
             : ListView.builder(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: items.length,
@@ -43,14 +42,14 @@ class MyCirclesScreen extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         IconButton(
-                          tooltip: 'خطة الشهر',
+                          tooltip: l.sesMonthlyPlan,
                           icon: const Icon(Icons.calendar_month),
                           onPressed: () => context.go(
                             Routes.monthlyPlan(items[i].id, items[i].name),
                           ),
                         ),
                         IconButton(
-                          tooltip: 'تقييم شهري',
+                          tooltip: l.sesMonthlyEval,
                           icon: const Icon(Icons.fact_check),
                           onPressed: () => context.go(
                             Routes.monthlyEval(items[i].id, items[i].name),

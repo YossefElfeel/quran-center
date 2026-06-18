@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/settings/settings_repository.dart';
@@ -55,7 +56,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نسجّل التسميع — جرّب تاني')),
+        SnackBar(content: Text(AppL10n.of(context).sesTasmeeSaveError)),
       );
     }
   }
@@ -67,6 +68,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
         ProgressEngine.defaultPassThreshold;
     final int? score = _score;
     final bool passed = score != null && score >= threshold;
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -79,7 +81,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'تسميع: ${widget.entry.studentName}',
+            l.sesTasmeeTitle(widget.entry.studentName),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
@@ -87,14 +89,14 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
             const SizedBox(height: AppSpacing.md),
             Center(
               child: SegmentedButton<TasmeeKind>(
-                segments: const <ButtonSegment<TasmeeKind>>[
+                segments: <ButtonSegment<TasmeeKind>>[
                   ButtonSegment<TasmeeKind>(
                     value: TasmeeKind.memorization,
-                    label: Text('حفظ'),
+                    label: Text(l.sesTasmeeKindMemorization),
                   ),
                   ButtonSegment<TasmeeKind>(
                     value: TasmeeKind.revision,
-                    label: Text('مراجعة'),
+                    label: Text(l.sesTasmeeKindRevision),
                   ),
                 ],
                 selected: <TasmeeKind>{_kind},
@@ -112,7 +114,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
           const SizedBox(height: AppSpacing.lg),
           if (score != null)
             Text(
-              passed ? 'ناجح ✓' : 'محتاج إعادة',
+              passed ? l.sesTasmeePassed : l.sesTasmeeNeedsRetry,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -122,7 +124,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
             ),
           const SizedBox(height: AppSpacing.md),
           AppButton(
-            label: _saving ? 'بنسجّل…' : 'سجّل',
+            label: _saving ? l.sesTasmeeSaving : l.sesTasmeeSave,
             icon: Icons.check,
             onPressed: (score == null || _saving) ? null : _submit,
           ),

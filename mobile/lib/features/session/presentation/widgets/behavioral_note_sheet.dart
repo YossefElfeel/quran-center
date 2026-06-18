@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -50,13 +51,14 @@ class _BehavioralNoteSheetState extends ConsumerState<BehavioralNoteSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نسجّل الملاحظة — جرّب تاني')),
+        SnackBar(content: Text(AppL10n.of(context).sesNoteSaveError)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -69,19 +71,22 @@ class _BehavioralNoteSheetState extends ConsumerState<BehavioralNoteSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'ملاحظة سلوك: ${widget.studentName}',
+            l.sesBehavioralNoteTitle(widget.studentName),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSpacing.md),
           Center(
             child: SegmentedButton<String>(
-              segments: const <ButtonSegment<String>>[
+              segments: <ButtonSegment<String>>[
                 ButtonSegment<String>(
                   value: 'parent',
-                  label: Text('يشوفها ولي الأمر'),
+                  label: Text(l.sesNoteVisibilityParent),
                 ),
-                ButtonSegment<String>(value: 'internal', label: Text('داخلية')),
+                ButtonSegment<String>(
+                  value: 'internal',
+                  label: Text(l.sesNoteVisibilityInternal),
+                ),
               ],
               selected: <String>{_visibility},
               onSelectionChanged: (Set<String> s) =>
@@ -93,14 +98,14 @@ class _BehavioralNoteSheetState extends ConsumerState<BehavioralNoteSheet> {
             controller: _text,
             minLines: 3,
             maxLines: 5,
-            decoration: const InputDecoration(
-              hintText: 'اكتب الملاحظة…',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: l.sesNoteHint,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنسجّل…' : 'سجّل الملاحظة',
+            label: _saving ? l.sesNoteSaving : l.sesNoteSave,
             icon: Icons.save,
             onPressed: _saving ? null : _save,
           ),

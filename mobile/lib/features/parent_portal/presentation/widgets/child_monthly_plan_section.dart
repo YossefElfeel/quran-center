@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../domain/monthly_plan_view.dart';
@@ -13,6 +14,7 @@ class ChildMonthlyPlanSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<MonthlyPlanView?> state = ref.watch(
       childMonthlyPlanProvider(studentPersonId),
     );
@@ -27,9 +29,9 @@ class ChildMonthlyPlanSection extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
-                  'خطة الشهر',
-                  style: TextStyle(
+                Text(
+                  l.ppMonthlyPlan,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),

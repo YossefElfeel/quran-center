@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../enrollment/domain/gender.dart';
@@ -31,6 +32,7 @@ class StudentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
@@ -69,9 +71,9 @@ class StudentTile extends StatelessWidget {
                         minimumSize: const Size(0, 32),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        'طلب عذر',
-                        style: TextStyle(fontSize: 12),
+                      child: Text(
+                        l.sesRequestExcuse,
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                 ],
@@ -83,14 +85,14 @@ class StudentTile extends StatelessWidget {
             ),
             if (onNote != null)
               IconButton(
-                tooltip: 'ملاحظة سلوك',
+                tooltip: l.sesBehavioralNoteTooltip,
                 icon: const Icon(Icons.note_add_outlined),
                 onPressed: onNote,
               ),
             if (canRecordTasmee) ...<Widget>[
               const SizedBox(width: AppSpacing.xs),
               IconButton.filled(
-                tooltip: 'تسميع',
+                tooltip: l.sesTasmeeTooltip,
                 icon: const Icon(Icons.record_voice_over),
                 onPressed: onTasmee,
               ),
@@ -109,10 +111,11 @@ class _LedgerBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final (String label, Color color) = switch (state) {
-      LedgerState.passed => ('عدّى', AppColors.success),
-      LedgerState.failedRetry => ('عليه دَيْن', AppColors.error),
-      _ => ('لسه', AppColors.textSecondary),
+      LedgerState.passed => (l.sesLedgerPassed, AppColors.success),
+      LedgerState.failedRetry => (l.sesLedgerOwed, AppColors.error),
+      _ => (l.sesLedgerPending, AppColors.textSecondary),
     };
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(

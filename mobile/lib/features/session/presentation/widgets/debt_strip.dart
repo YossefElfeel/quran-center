@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -18,6 +19,7 @@ class DebtStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpacing.md,
@@ -26,13 +28,13 @@ class DebtStrip extends StatelessWidget {
       child: Row(
         children: <Widget>[
           _Pill(
-            label: 'عدّوا',
+            label: l.sesDebtPassed,
             value: '${arabicNumber(passedCount)}/${arabicNumber(total)}',
             color: AppColors.success,
           ),
           const SizedBox(width: AppSpacing.sm),
           _Pill(
-            label: 'عليهم دَيْن',
+            label: l.sesDebtOwed,
             value: arabicNumber(debtCount),
             color: AppColors.error,
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../domain/journey_stop.dart';
@@ -13,6 +14,7 @@ class ChildJourneySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<JourneyStop>> state = ref.watch(
       childJourneyProvider(studentPersonId),
     );
@@ -27,9 +29,9 @@ class ChildJourneySection extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const Text(
-                  'رحلة الطفل',
-                  style: TextStyle(
+                Text(
+                  l.ppChildJourney,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -52,6 +54,7 @@ class _StopTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final String range = (stop.fromPoint != null && stop.toPoint != null)
         ? '${stop.fromPoint} ← ${stop.toPoint}'
         : (stop.fromPoint ?? '');
@@ -71,7 +74,7 @@ class _StopTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  '${stop.circleName} — مع ${stop.teacherName}',
+                  l.ppJourneyStopTitle(stop.circleName, stop.teacherName),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 if (range.isNotEmpty)

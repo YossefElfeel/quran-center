@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../data/surah_option.dart';
@@ -22,6 +23,7 @@ class PortionRangeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Row(
       children: <Widget>[
         SizedBox(
@@ -36,7 +38,7 @@ class PortionRangeRow extends StatelessWidget {
           child: DropdownButton<int>(
             isExpanded: true,
             value: surah,
-            hint: const Text('السورة'),
+            hint: Text(l.sesSurahHint),
             items: surahs
                 .map(
                   (SurahOption s) => DropdownMenuItem<int>(
@@ -54,7 +56,7 @@ class PortionRangeRow extends StatelessWidget {
           child: TextField(
             controller: ayahController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'الآية'),
+            decoration: InputDecoration(labelText: l.sesAyahLabel),
           ),
         ),
       ],

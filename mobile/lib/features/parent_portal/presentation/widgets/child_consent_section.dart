@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../controllers/child_consents_controller.dart';
@@ -12,6 +13,7 @@ class ChildConsentSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<Set<String>> state = ref.watch(
       childConsentsControllerProvider(studentPersonId),
     );
@@ -22,33 +24,38 @@ class ChildConsentSection extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
-              'موافقة وسائط البنت',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            Text(
+              l.ppGirlMediaConsent,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 2),
-            const Text(
-              'من غير موافقتك مش هيتصوّر ولا يتعرض أي صور أو فيديو لبنتك',
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            Text(
+              l.ppGirlMediaConsentNote,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             state.when(
               skipLoadingOnReload: true,
               loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace _) =>
-                  const Text('مش قادرين نحمّل الموافقات'),
+              error: (Object e, StackTrace _) => Text(l.ppConsentsLoadError),
               data: (Set<String> active) => Column(
                 children: <Widget>[
                   _ConsentSwitch(
                     studentPersonId: studentPersonId,
                     scope: 'photo',
-                    label: 'السماح بالصور',
+                    label: l.ppAllowPhotos,
                     granted: active.contains('photo'),
                   ),
                   _ConsentSwitch(
                     studentPersonId: studentPersonId,
                     scope: 'video',
-                    label: 'السماح بالفيديو',
+                    label: l.ppAllowVideo,
                     granted: active.contains('video'),
                   ),
                 ],

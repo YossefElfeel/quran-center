@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -86,13 +87,14 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نحفظ المقطع — جرّب تاني')),
+        SnackBar(content: Text(AppL10n.of(context).sesPortionSaveError)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<SurahOption>> surahsAsync = ref.watch(surahsProvider);
     return Padding(
       padding: EdgeInsets.only(
@@ -107,7 +109,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
           child: Center(child: CircularProgressIndicator()),
         ),
         error: (Object e, StackTrace _) =>
-            const Text('مش قادرين نحمّل السور', textAlign: TextAlign.center),
+            Text(l.sesSurahsLoadError, textAlign: TextAlign.center),
         data: (List<SurahOption> list) => SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -115,8 +117,8 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
             children: <Widget>[
               Text(
                 widget.advanceMode
-                    ? 'مقطع الانتقال الجديد'
-                    : 'مقطع الحفظ الحالي',
+                    ? l.sesNewAdvancePortion
+                    : l.sesCurrentPortion,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 18,
@@ -126,13 +128,11 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
               const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _name,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المقطع (مثلاً: أول البقرة)',
-                ),
+                decoration: InputDecoration(labelText: l.sesPortionNameLabel),
               ),
               const SizedBox(height: AppSpacing.md),
               PortionRangeRow(
-                title: 'من',
+                title: l.sesRangeFrom,
                 surahs: list,
                 surah: _surahStart,
                 onSurah: (int? v) => setState(() => _surahStart = v),
@@ -140,7 +140,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
               ),
               const SizedBox(height: AppSpacing.sm),
               PortionRangeRow(
-                title: 'لـ',
+                title: l.sesRangeTo,
                 surahs: list,
                 surah: _surahEnd,
                 onSurah: (int? v) => setState(() => _surahEnd = v),
@@ -156,7 +156,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
               ],
               const SizedBox(height: AppSpacing.lg),
               AppButton(
-                label: _saving ? 'بنحفظ…' : 'حفظ',
+                label: _saving ? l.sesPortionSaving : l.sesPortionSave,
                 icon: Icons.check,
                 onPressed: _saving ? null : () => _save(list),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -78,13 +79,14 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نقفل الحصة — جرّب تاني')),
+        SnackBar(content: Text(AppL10n.of(context).sesCloseSessionError)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<SurahOption>> surahsAsync = ref.watch(surahsProvider);
     return Padding(
       padding: EdgeInsets.only(
@@ -99,30 +101,33 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
           child: Center(child: CircularProgressIndicator()),
         ),
         error: (Object e, StackTrace _) =>
-            const Text('مش قادرين نحمّل السور', textAlign: TextAlign.center),
+            Text(l.sesSurahsLoadError, textAlign: TextAlign.center),
         data: (List<SurahOption> list) => SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const Text(
-                'اقفل الحصة',
+              Text(
+                l.sesCloseSession,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
-              const Text(
-                'هيراجعوا إيه الحصة الجاية؟ (اختياري)',
-                style: TextStyle(color: AppColors.textSecondary),
+              Text(
+                l.sesCloseRevisionPrompt,
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: _revName,
-                decoration: const InputDecoration(labelText: 'اسم المراجعة'),
+                decoration: InputDecoration(labelText: l.sesRevisionNameLabel),
               ),
               const SizedBox(height: AppSpacing.sm),
               PortionRangeRow(
-                title: 'من',
+                title: l.sesRangeFrom,
                 surahs: list,
                 surah: _revSurahStart,
                 onSurah: (int? v) => setState(() => _revSurahStart = v),
@@ -130,7 +135,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
               ),
               const SizedBox(height: AppSpacing.sm),
               PortionRangeRow(
-                title: 'لـ',
+                title: l.sesRangeTo,
                 surahs: list,
                 surah: _revSurahEnd,
                 onSurah: (int? v) => setState(() => _revSurahEnd = v),
@@ -146,7 +151,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
               ],
               const SizedBox(height: AppSpacing.lg),
               AppButton(
-                label: _saving ? 'بنقفل…' : 'اقفل الحصة',
+                label: _saving ? l.sesClosing : l.sesCloseSession,
                 icon: Icons.check_circle,
                 onPressed: _saving ? null : () => _close(list),
               ),

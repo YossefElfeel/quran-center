@@ -3,6 +3,7 @@ import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -63,6 +64,7 @@ class TodaySessionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<TodaySession> state = ref.watch(
       todaySessionControllerProvider(circleId),
     );
@@ -70,7 +72,7 @@ class TodaySessionScreen extends ConsumerWidget {
       title: circleName,
       actions: <Widget>[
         IconButton(
-          tooltip: 'كشف حضور (PDF)',
+          tooltip: l.sesAttendanceSheetPdf,
           icon: const Icon(Icons.print),
           onPressed: () => _printAttendance(context, ref),
         ),
@@ -78,7 +80,7 @@ class TodaySessionScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الحصة',
+          message: l.sesSessionLoadError,
           onRetry: () =>
               ref.invalidate(todaySessionControllerProvider(circleId)),
         ),
@@ -154,17 +156,19 @@ class _SessionBody extends ConsumerWidget {
   ) async {
     await notifier.requestExcuse(enrollmentId);
     if (context.mounted) {
+      final AppL10n l = AppL10n.of(context);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('اتبعت طلب العذر للمشرف')));
+      ).showSnackBar(SnackBar(content: Text(l.sesExcuseRequestSent)));
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     if (session.roster.isEmpty) {
-      return const EmptyState(
-        message: 'مفيش طلبة في الحلقة',
+      return EmptyState(
+        message: l.sesNoStudentsInCircle,
         icon: Icons.groups_outlined,
       );
     }
@@ -221,7 +225,7 @@ class _SessionBody extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: AppButton(
-            label: 'اقفل الحصة',
+            label: l.sesCloseSession,
             icon: Icons.check_circle,
             onPressed: () => _openClose(context),
           ),
@@ -238,6 +242,7 @@ class _ClosedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -245,14 +250,14 @@ class _ClosedView extends StatelessWidget {
         children: <Widget>[
           const Icon(Icons.event_available, size: 64, color: AppColors.primary),
           const SizedBox(height: AppSpacing.md),
-          const Text(
-            'الحصة لسه مقفولة',
+          Text(
+            l.sesSessionStillClosed,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18),
+            style: const TextStyle(fontSize: 18),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: 'افتح حصة النهارده',
+            label: l.sesOpenTodaySession,
             icon: Icons.play_arrow,
             onPressed: onOpen,
           ),

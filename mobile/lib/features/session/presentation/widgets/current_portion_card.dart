@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -35,16 +36,17 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Column(
       children: <Widget>[
-        const Text(
-          'لسه ماحدّدتش مقطع الحفظ للحلقة',
+        Text(
+          l.sesNoPortionYet,
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary),
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.md),
         AppButton(
-          label: 'حدّد مقطع الحفظ',
+          label: l.sesSetPortion,
           icon: Icons.menu_book,
           onPressed: onSetPortion,
         ),
@@ -60,6 +62,7 @@ class _Current extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Row(
       children: <Widget>[
         const Icon(Icons.menu_book, color: AppColors.primary),
@@ -68,9 +71,12 @@ class _Current extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text(
-                'مقطع الحفظ الحالي',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              Text(
+                l.sesCurrentPortion,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               Text(
                 portion.name,
