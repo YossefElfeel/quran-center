@@ -192,6 +192,12 @@ class _HomeBody extends StatelessWidget {
             ],
             const SizedBox(height: AppSpacing.xl),
             AppButton(
+              label: 'لوحة الشرف',
+              icon: Icons.emoji_events,
+              onPressed: () => context.go(Routes.honorBoard),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
               label: 'الكورسات',
               icon: Icons.ondemand_video,
               onPressed: () => context.go(Routes.courses),

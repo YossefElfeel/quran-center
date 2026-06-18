@@ -75,6 +75,9 @@ abstract final class Routes {
   static const String complaintsMine = '/complaints';
   static const String complaintsInbox = '/admin/complaints';
 
+  // لوحة الشرف (متفوّقو الشهر)
+  static const String honorBoard = '/honor-board';
+
   // الكورسات المجانية
   static const String courses = '/courses';
 

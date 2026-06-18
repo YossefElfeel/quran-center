@@ -6,6 +6,7 @@ import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../recognition/data/recognition_repository.dart';
 import '../../domain/monthly_eval.dart';
 import '../controllers/monthly_eval_controllers.dart';
 
@@ -76,6 +77,56 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _pickTop(BuildContext context, WidgetRef ref) async {
+    final List<MonthlyEvalStudent> students =
+        ref.read(circleMonthlyEvalsProvider(circleId)).asData?.value ??
+        <MonthlyEvalStudent>[];
+    if (students.isEmpty) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Text(
+                'اختار متفوّق الشهر',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            for (final MonthlyEvalStudent s in students)
+              ListTile(
+                leading: const Icon(
+                  Icons.emoji_events,
+                  color: AppColors.accent,
+                ),
+                title: Text(s.studentName),
+                onTap: () async {
+                  await ref
+                      .read(recognitionRepositoryProvider)
+                      .pickTopStudent(
+                        circleId: circleId,
+                        studentPersonId: s.studentPersonId,
+                      );
+                  ref.invalidate(honorBoardProvider);
+                  if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${s.studentName} متفوّق الشهر 🏆'),
+                      ),
+                    );
+                  }
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<MonthlyEvalStudent>> state = ref.watch(
@@ -83,6 +134,13 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
     );
     return AppScaffold(
       title: 'تقييم شهري — $circleName',
+      actions: <Widget>[
+        IconButton(
+          tooltip: 'متفوّق الشهر',
+          icon: const Icon(Icons.emoji_events),
+          onPressed: () => _pickTop(context, ref),
+        ),
+      ],
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(

@@ -27,6 +27,7 @@ import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.d
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
 import '../../features/parent_portal/presentation/screens/children_screen.dart';
+import '../../features/recognition/presentation/screens/honor_board_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
 import '../../features/subscription/presentation/screens/household_members_screen.dart';
@@ -200,6 +201,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.courses,
         builder: (BuildContext context, GoRouterState state) =>
             const CoursesScreen(),
+      ),
+      GoRoute(
+        path: Routes.honorBoard,
+        builder: (BuildContext context, GoRouterState state) =>
+            const HonorBoardScreen(),
       ),
       GoRoute(
         path: Routes.competitions,
