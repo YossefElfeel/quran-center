@@ -110,6 +110,12 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.link,
                 onPressed: () => context.go(Routes.adminGuardians),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'صندوق الشكاوى',
+                icon: Icons.inbox,
+                onPressed: () => context.go(Routes.complaintsInbox),
+              ),
             ],
             if (roles.contains('teacher')) ...<Widget>[
               const SizedBox(height: AppSpacing.xl),
@@ -131,6 +137,12 @@ class _HomeBody extends StatelessWidget {
                 label: 'أولادي',
                 icon: Icons.child_care,
                 onPressed: () => context.go(Routes.parentChildren),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'الشكاوى',
+                icon: Icons.support_agent,
+                onPressed: () => context.go(Routes.complaintsMine),
               ),
             ],
             if (roles.contains('supervisor') ||

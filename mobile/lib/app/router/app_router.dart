@@ -13,6 +13,8 @@ import '../../features/documents/presentation/screens/certificate_preview_screen
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/family/presentation/screens/guardian_links_screen.dart';
+import '../../features/feedback/presentation/screens/complaint_inbox_screen.dart';
+import '../../features/feedback/presentation/screens/my_complaints_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.dart';
@@ -164,6 +166,16 @@ GoRouter appRouter(Ref ref) {
         path: Routes.parentChildren,
         builder: (BuildContext context, GoRouterState state) =>
             const ChildrenScreen(),
+      ),
+      GoRoute(
+        path: Routes.complaintsMine,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MyComplaintsScreen(),
+      ),
+      GoRoute(
+        path: Routes.complaintsInbox,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ComplaintInboxScreen(),
       ),
       GoRoute(
         path: Routes.parentChildPattern,

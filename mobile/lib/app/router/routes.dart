@@ -64,6 +64,10 @@ abstract final class Routes {
   static String parentChild(String studentId, String name) =>
       '/parent/child/$studentId?name=${Uri.encodeComponent(name)}';
 
+  // الشكاوى: المستخدم + صندوق المدير
+  static const String complaintsMine = '/complaints';
+  static const String complaintsInbox = '/admin/complaints';
+
   // معاينة شهادة PDF
   static const String certificatePreviewPattern = '/certificate/preview';
   static String certificatePreview(

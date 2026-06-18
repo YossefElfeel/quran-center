@@ -6,6 +6,7 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../feedback/presentation/widgets/rate_teacher_sheet.dart';
 import '../../domain/child_card.dart';
 import '../controllers/child_card_controller.dart';
 import '../widgets/child_certificates_section.dart';
@@ -32,6 +33,18 @@ class ChildCardScreen extends ConsumerWidget {
     );
     return AppScaffold(
       title: childName,
+      actions: <Widget>[
+        IconButton(
+          tooltip: 'قيّم المحفّظ',
+          icon: const Icon(Icons.star_rate),
+          onPressed: () => showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            builder: (BuildContext _) =>
+                RateTeacherSheet(studentPersonId: studentPersonId),
+          ),
+        ),
+      ],
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
