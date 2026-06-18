@@ -173,6 +173,17 @@ class _HomeBody extends StatelessWidget {
                 onPressed: () => context.go(Routes.supervisorDevApproval),
               ),
             ],
+            if (roles.contains('admin') ||
+                roles.contains('super_admin') ||
+                roles.contains('supervisor') ||
+                roles.contains('teacher')) ...<Widget>[
+              const SizedBox(height: AppSpacing.xl),
+              AppButton(
+                label: 'المسابقات',
+                icon: Icons.emoji_events,
+                onPressed: () => context.go(Routes.competitions),
+              ),
+            ],
           ],
         ),
       ),

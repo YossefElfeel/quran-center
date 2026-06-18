@@ -68,6 +68,15 @@ abstract final class Routes {
   static const String complaintsMine = '/complaints';
   static const String complaintsInbox = '/admin/complaints';
 
+  // المسابقات
+  static const String competitions = '/competitions';
+  static const String competitionDetailPattern = '/competitions/:id';
+  static String competitionDetail(String id, String name) =>
+      '/competitions/$id?name=${Uri.encodeComponent(name)}';
+  static const String competitionResultsPattern = '/competitions/:id/results';
+  static String competitionResults(String id, String name) =>
+      '/competitions/$id/results?name=${Uri.encodeComponent(name)}';
+
   // معاينة شهادة PDF
   static const String certificatePreviewPattern = '/certificate/preview';
   static String certificatePreview(

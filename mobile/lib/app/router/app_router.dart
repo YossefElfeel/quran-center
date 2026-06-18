@@ -9,6 +9,9 @@ import '../../features/admin_setup/presentation/screens/circles_screen.dart';
 import '../../features/admin_setup/presentation/screens/curricula_screen.dart';
 import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/competition/presentation/screens/competition_detail_screen.dart';
+import '../../features/competition/presentation/screens/competition_results_screen.dart';
+import '../../features/competition/presentation/screens/competitions_screen.dart';
 import '../../features/documents/presentation/screens/certificate_preview_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
@@ -176,6 +179,27 @@ GoRouter appRouter(Ref ref) {
         path: Routes.complaintsInbox,
         builder: (BuildContext context, GoRouterState state) =>
             const ComplaintInboxScreen(),
+      ),
+      GoRoute(
+        path: Routes.competitions,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CompetitionsScreen(),
+      ),
+      GoRoute(
+        path: Routes.competitionResultsPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CompetitionResultsScreen(
+              competitionId: state.pathParameters['id']!,
+              competitionName: state.uri.queryParameters['name'] ?? 'المسابقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.competitionDetailPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CompetitionDetailScreen(
+              competitionId: state.pathParameters['id']!,
+              competitionName: state.uri.queryParameters['name'] ?? 'المسابقة',
+            ),
       ),
       GoRoute(
         path: Routes.parentChildPattern,
