@@ -21,6 +21,8 @@ import '../../features/feedback/presentation/screens/complaint_inbox_screen.dart
 import '../../features/feedback/presentation/screens/my_complaints_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
+import '../../features/monthly/presentation/screens/circle_monthly_eval_screen.dart';
+import '../../features/monthly/presentation/screens/monthly_eval_approval_screen.dart';
 import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
@@ -140,6 +142,19 @@ GoRouter appRouter(Ref ref) {
               circleId: state.pathParameters['circleId']!,
               circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
             ),
+      ),
+      GoRoute(
+        path: Routes.monthlyEvalPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CircleMonthlyEvalScreen(
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.supervisorMonthlyEval,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MonthlyEvalApprovalScreen(),
       ),
       GoRoute(
         path: Routes.supervisorEval,

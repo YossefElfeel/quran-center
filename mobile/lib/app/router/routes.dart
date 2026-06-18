@@ -45,6 +45,13 @@ abstract final class Routes {
   static const String teacherDevelopment = '/teacher/development';
   static const String supervisorDevApproval = '/supervisor/development';
 
+  // التقييم الشهري للطالب: المعلّم يؤلّف، المشرف يعتمد
+  static const String monthlyEvalPattern =
+      '/teacher/circle/:circleId/monthly-eval';
+  static String monthlyEval(String circleId, String name) =>
+      '/teacher/circle/$circleId/monthly-eval?name=${Uri.encodeComponent(name)}';
+  static const String supervisorMonthlyEval = '/supervisor/monthly-eval';
+
   // المشرف: تقييم الحلقات (٣×١٠)
   static const String supervisorEval = '/supervisor/eval';
   static const String supervisorCircleEvalPattern =
