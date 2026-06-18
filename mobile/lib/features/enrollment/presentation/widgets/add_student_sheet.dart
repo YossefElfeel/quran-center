@@ -5,6 +5,7 @@ import 'package:flutter/services.dart'
         LengthLimitingTextInputFormatter,
         TextInputFormatter;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/error/app_exception.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -47,13 +48,14 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
   }
 
   Future<void> _save() async {
+    final AppL10n l = AppL10n.of(context);
     final String name = _name.text.trim();
     if (name.isEmpty) return;
     final String natId = _natId.text.trim();
     if (natId.isNotEmpty && !isValidNationalId(natId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرقم القومي لازم يكون ١٤ رقم')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.enrNationalIdLengthError)));
       return;
     }
     setState(() => _saving = true);
@@ -75,14 +77,15 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نسجّل الطالب — جرّب تاني')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.enrSaveStudentError)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -95,14 +98,14 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'تسجيل طالب',
+            l.enrEnrollStudent,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: 'اسم الطالب'),
+            decoration: InputDecoration(labelText: l.enrStudentNameLabel),
           ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
@@ -113,9 +116,9 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
               LengthLimitingTextInputFormatter(14),
             ],
             decoration: InputDecoration(
-              labelText: 'الرقم القومي (اختياري)',
+              labelText: l.enrNationalIdLabel,
               suffixIcon: IconButton(
-                tooltip: 'مسح بالكاميرا',
+                tooltip: l.enrScanWithCamera,
                 icon: const Icon(Icons.document_scanner),
                 onPressed: _openScanner,
               ),
@@ -123,9 +126,15 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
           ),
           const SizedBox(height: AppSpacing.lg),
           SegmentedButton<Gender>(
-            segments: const <ButtonSegment<Gender>>[
-              ButtonSegment<Gender>(value: Gender.male, label: Text('ولد')),
-              ButtonSegment<Gender>(value: Gender.female, label: Text('بنت')),
+            segments: <ButtonSegment<Gender>>[
+              ButtonSegment<Gender>(
+                value: Gender.male,
+                label: Text(l.enrGenderBoy),
+              ),
+              ButtonSegment<Gender>(
+                value: Gender.female,
+                label: Text(l.enrGenderGirl),
+              ),
             ],
             selected: <Gender>{_gender},
             onSelectionChanged: (Set<Gender> s) =>
@@ -133,7 +142,7 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنسجّل…' : 'حفظ',
+            label: _saving ? l.enrSaving : l.enrSave,
             onPressed: _saving ? null : _save,
           ),
         ],

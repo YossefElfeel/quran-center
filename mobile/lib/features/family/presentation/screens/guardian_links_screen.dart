@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -24,14 +25,15 @@ class GuardianLinksScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<GuardianLinkRow>> state = ref.watch(
       guardianLinksControllerProvider,
     );
     return AppScaffold(
-      title: 'ربط أولياء الأمور',
+      title: l.famGuardianLinksTitle,
       actions: <Widget>[
         IconButton(
-          tooltip: 'ربط جديد',
+          tooltip: l.famNewLink,
           icon: const Icon(Icons.add),
           onPressed: () => _add(context),
         ),
@@ -39,14 +41,11 @@ class GuardianLinksScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الروابط',
+          message: l.famLinksLoadError,
           onRetry: () => ref.invalidate(guardianLinksControllerProvider),
         ),
         data: (List<GuardianLinkRow> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'لسه مفيش روابط — اربط ولي أمر بطفل',
-                icon: Icons.link_off,
-              )
+            ? EmptyState(message: l.famNoLinks, icon: Icons.link_off)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
@@ -60,7 +59,9 @@ class GuardianLinksScreen extends ConsumerWidget {
                     child: ListTile(
                       leading: const Icon(Icons.link, color: AppColors.primary),
                       title: Text(r.guardianName),
-                      subtitle: Text('${r.relationAr} لـ ${r.childName}'),
+                      subtitle: Text(
+                        l.famLinkRelationSubtitle(r.relationAr, r.childName),
+                      ),
                     ),
                   );
                 },

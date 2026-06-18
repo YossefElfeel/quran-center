@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -16,18 +17,19 @@ class HonorBoardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<TopStudentRow>> state = ref.watch(honorBoardProvider);
     return AppScaffold(
-      title: 'لوحة الشرف',
+      title: l.recHonorBoardTitle,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل لوحة الشرف',
+          message: l.recHonorBoardLoadError,
           onRetry: () => ref.invalidate(honorBoardProvider),
         ),
         data: (List<TopStudentRow> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'لسه مفيش متفوّقين الشهر ده',
+            ? EmptyState(
+                message: l.recNoTopStudents,
                 icon: Icons.emoji_events_outlined,
               )
             : ListView.builder(

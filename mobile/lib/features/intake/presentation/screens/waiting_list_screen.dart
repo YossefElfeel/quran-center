@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -19,11 +20,12 @@ class WaitingListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<WaitingApplicant>> state = ref.watch(
       waitingListControllerProvider,
     );
     return AppScaffold(
-      title: 'قائمة الانتظار',
+      title: l.itkWaitingListTitle,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showModalBottomSheet<void>(
           context: context,
@@ -31,19 +33,16 @@ class WaitingListScreen extends ConsumerWidget {
           builder: (BuildContext _) => const AddApplicantSheet(),
         ),
         icon: const Icon(Icons.person_add_alt),
-        label: const Text('متقدّم جديد'),
+        label: Text(l.itkNewApplicant),
       ),
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل القائمة',
+          message: l.itkWaitingListLoadError,
           onRetry: () => ref.invalidate(waitingListControllerProvider),
         ),
         data: (List<WaitingApplicant> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش متقدّمين في الانتظار',
-                icon: Icons.inbox_outlined,
-              )
+            ? EmptyState(message: l.itkNoApplicants, icon: Icons.inbox_outlined)
             : ListView.builder(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: items.length,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -24,6 +25,7 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
   String? _error;
 
   Future<void> _scan() async {
+    final AppL10n l = AppL10n.of(context);
     setState(() {
       _busy = true;
       _error = null;
@@ -48,15 +50,13 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
       setState(() {
         _busy = false;
         _result = id;
-        _error = id == null
-            ? 'مش لاقيين الرقم في الصورة — صوّر تاني أو اكتبه يدوي'
-            : null;
+        _error = id == null ? l.enrIdNotFoundError : null;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'مش قادرين نقرا الصورة — اكتب الرقم يدوي';
+        _error = l.enrIdReadError;
       });
     } finally {
       await recognizer?.close();
@@ -65,6 +65,7 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -77,7 +78,7 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'مسح الرقم القومي',
+            l.enrScanNationalIdTitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
           ),
@@ -99,11 +100,11 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: 'استخدم الرقم ده',
+              label: l.enrUseThisId,
               icon: Icons.check,
               onPressed: () => Navigator.of(context).pop(_result),
             ),
-            TextButton(onPressed: _scan, child: const Text('صوّر تاني')),
+            TextButton(onPressed: _scan, child: Text(l.enrRescan)),
           ] else ...<Widget>[
             if (_error != null)
               Padding(
@@ -115,7 +116,7 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
                 ),
               ),
             AppButton(
-              label: 'صوّر البطاقة',
+              label: l.enrCaptureCard,
               icon: Icons.camera_alt,
               onPressed: _scan,
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -55,14 +56,16 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نحفظ الاختبار — جرّب تاني')),
-      );
+      final AppL10n l = AppL10n.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.itkPlacementSaveError)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<LevelOption>> levels = ref.watch(
       levelOptionsProvider,
     );
@@ -78,23 +81,22 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'اختبار تحديد المستوى',
+            l.itkPlacementTest,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Text('المستوى الناتج'),
+            child: Text(l.itkResultLevel),
           ),
           levels.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) =>
-                const Text('مش قادرين نحمّل المستويات'),
+            error: (Object e, StackTrace _) => Text(l.itkLevelsLoadError),
             data: (List<LevelOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _resultLevelId,
-              hint: const Text('اختر المستوى'),
+              hint: Text(l.itkChooseLevel),
               items: list
                   .map(
                     (LevelOption l) => DropdownMenuItem<String>(
@@ -110,11 +112,11 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
           TextField(
             controller: _notes,
             maxLines: 2,
-            decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)'),
+            decoration: InputDecoration(labelText: l.itkNotesOptionalLabel),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنحفظ…' : 'حفظ',
+            label: _saving ? l.itkSaving : l.itkSave,
             onPressed: _saving ? null : _save,
           ),
         ],

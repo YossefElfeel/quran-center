@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -26,10 +27,11 @@ class IssueCertificateScreen extends ConsumerWidget {
     WidgetRef ref,
     EligibleStudent s,
   ) async {
+    final AppL10n l = AppL10n.of(context);
     final CertificateKind? kind = await showDialog<CertificateKind>(
       context: context,
       builder: (BuildContext context) => SimpleDialog(
-        title: Text('شهادة لـ ${s.name}'),
+        title: Text(l.docCertificateForTitle(s.name)),
         children: <Widget>[
           for (final CertificateKind k in _kinds)
             SimpleDialogOption(
@@ -47,34 +49,35 @@ class IssueCertificateScreen extends ConsumerWidget {
       ref.invalidate(eligibleStudentsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تم إصدار ${kind.labelAr} لـ ${s.name}')),
+          SnackBar(content: Text(l.docIssuedSnack(kind.labelAr, s.name))),
         );
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('مش قادرين نصدر الشهادة — جرّب تاني')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l.docIssueError)));
       }
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<EligibleStudent>> state = ref.watch(
       eligibleStudentsProvider,
     );
     return AppScaffold(
-      title: 'إصدار الشهادات',
+      title: l.docIssueCertificatesTitle,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل المؤهّلين',
+          message: l.docEligibleLoadError,
           onRetry: () => ref.invalidate(eligibleStudentsProvider),
         ),
         data: (List<EligibleStudent> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش طلبة مؤهّلين دلوقتي (لازم يعدّوا كل المقاطع)',
+            ? EmptyState(
+                message: l.docNoEligibleStudents,
                 icon: Icons.workspace_premium_outlined,
               )
             : ListView.builder(
@@ -93,7 +96,7 @@ class IssueCertificateScreen extends ConsumerWidget {
                     title: Text(items[i].name),
                     trailing: FilledButton(
                       onPressed: () => _issue(context, ref, items[i]),
-                      child: const Text('إصدار'),
+                      child: Text(l.docIssue),
                     ),
                   ),
                 ),

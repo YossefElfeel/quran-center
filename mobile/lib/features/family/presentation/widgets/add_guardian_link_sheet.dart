@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -45,14 +46,16 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نحفظ الربط — جرّب تاني')),
-      );
+      final AppL10n l = AppL10n.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.famLinkSaveError)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<StudentOption>> students = ref.watch(
       studentsForLinkProvider,
     );
@@ -67,29 +70,28 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const Text(
-            'ربط ولي أمر بطفل',
+          Text(
+            l.famLinkSheetTitle,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: 'اسم ولي الأمر'),
+            decoration: InputDecoration(labelText: l.famGuardianNameLabel),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Text('الطفل'),
+            child: Text(l.famChildLabel),
           ),
           students.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) =>
-                const Text('مش قادرين نحمّل الطلبة'),
+            error: (Object e, StackTrace _) => Text(l.famStudentsLoadError),
             data: (List<StudentOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _childId,
-              hint: const Text('اختار الطفل'),
+              hint: Text(l.famChildHint),
               items: list
                   .map(
                     (StudentOption s) => DropdownMenuItem<String>(
@@ -102,23 +104,32 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Text('صلة القرابة'),
+            child: Text(l.famRelationLabel),
           ),
           DropdownButton<String>(
             isExpanded: true,
             value: _relation,
-            items: const <DropdownMenuItem<String>>[
-              DropdownMenuItem<String>(value: 'father', child: Text('أب')),
-              DropdownMenuItem<String>(value: 'mother', child: Text('أم')),
-              DropdownMenuItem<String>(value: 'other', child: Text('غير ذلك')),
+            items: <DropdownMenuItem<String>>[
+              DropdownMenuItem<String>(
+                value: 'father',
+                child: Text(l.famRelationFather),
+              ),
+              DropdownMenuItem<String>(
+                value: 'mother',
+                child: Text(l.famRelationMother),
+              ),
+              DropdownMenuItem<String>(
+                value: 'other',
+                child: Text(l.famRelationOther),
+              ),
             ],
             onChanged: (String? v) => setState(() => _relation = v ?? 'father'),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنحفظ…' : 'ربط',
+            label: _saving ? l.famSaving : l.famLinkAction,
             icon: Icons.link,
             onPressed: _saving ? null : _save,
           ),

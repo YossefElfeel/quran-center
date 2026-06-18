@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -24,6 +25,7 @@ class CircleRosterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<EnrolledStudent>> state = ref.watch(
       circleRosterControllerProvider(circleId),
     );
@@ -36,20 +38,17 @@ class CircleRosterScreen extends ConsumerWidget {
           builder: (BuildContext _) => AddStudentSheet(circleId: circleId),
         ),
         icon: const Icon(Icons.person_add),
-        label: const Text('تسجيل طالب'),
+        label: Text(l.enrEnrollStudent),
       ),
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الطلبة',
+          message: l.enrRosterLoadError,
           onRetry: () =>
               ref.invalidate(circleRosterControllerProvider(circleId)),
         ),
         data: (List<EnrolledStudent> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش طلبة في الحلقة لسه — سجّل أول طالب',
-                icon: Icons.groups_outlined,
-              )
+            ? EmptyState(message: l.enrRosterEmpty, icon: Icons.groups_outlined)
             : ListView.builder(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: items.length,
