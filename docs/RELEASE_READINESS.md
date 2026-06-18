@@ -84,8 +84,9 @@ integration/RLS كاملة شغّالة قبل التطبيق عشان مايك�
 ## 4) الإطلاق (Android) — يدوي/خارجي
 - توقيع التطبيق (keystore) + R8/ProGuard + أيقونة + بيان متجر عربي.
 - `flutter build appbundle --flavor prod` → Google Play internal testing → إطلاق.
-- الصفحة العامة (المسابقة + الكورسات): بناء **Flutter Web** للمسارات العامة
-  (`/courses` + تقديم المسابقة بـ anon key) ونشرها (Vercel/استضافة ثابتة).
+- الصفحة العامة (المسابقة + الكورسات): **تطبيق Next.js منفصل `web/`** (React) —
+  اتبنى ومتحقّق (`/courses` anon + `/competition` بنموذج بينده submit-public-application).
+  فاضل: **نشر على Vercel** (بإذن المستخدم) + rate-limit/OTP على الـ Edge قبل الإنتاج.
 
 ## 5) لوحة السوبر أدمن (Track D — Next.js) — لسه ما اتبنتش
 D0 scaffolding اتعمل بس. D1–D4 (إدارة مستخدمين/إعدادات، تدقيق، تحليلات،
