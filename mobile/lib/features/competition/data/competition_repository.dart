@@ -43,6 +43,14 @@ class CompetitionRepository {
     return rows.map(CompetitionApplicationRow.fromMap).toList();
   }
 
+  /// الأدمن يقبل/يرفض متقدّم (RLS = أدمن).
+  Future<void> setApplicationStatus(String applicationId, String status) async {
+    await _client
+        .from('competition_application')
+        .update(<String, dynamic>{'status': status})
+        .eq('id', applicationId);
+  }
+
   /// المحكّم يدرّج (upsert — درجة واحدة لكل محكّم لكل متقدّم).
   Future<void> scoreApplication(String applicationId, double score) async {
     await _client.from('competition_score').upsert(<String, dynamic>{

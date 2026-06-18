@@ -36,6 +36,14 @@ class CompetitionApplications extends _$CompetitionApplications {
     ref.invalidateSelf();
     await future;
   }
+
+  Future<void> setStatus(String applicationId, String status) async {
+    await ref
+        .read(competitionRepositoryProvider)
+        .setApplicationStatus(applicationId, status);
+    ref.invalidateSelf();
+    await future;
+  }
 }
 
 /// نتائج مسابقة مرتّبة.

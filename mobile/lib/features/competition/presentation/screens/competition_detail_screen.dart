@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
@@ -72,6 +73,10 @@ class CompetitionDetailScreen extends ConsumerWidget {
     final AsyncValue<List<CompetitionApplicationRow>> state = ref.watch(
       competitionApplicationsProvider(competitionId),
     );
+    final List<String> roles =
+        ref.watch(currentRolesProvider).asData?.value ?? const <String>[];
+    final bool isAdmin =
+        roles.contains('admin') || roles.contains('super_admin');
     return AppScaffold(
       title: competitionName,
       actions: <Widget>[
@@ -112,10 +117,45 @@ class CompetitionDetailScreen extends ConsumerWidget {
                       ),
                       title: Text(a.applicantName),
                       subtitle: Text(a.status),
-                      trailing: TextButton.icon(
-                        icon: const Icon(Icons.grade),
-                        label: const Text('درجة'),
-                        onPressed: () => _score(context, ref, a),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          if (isAdmin && a.status == 'pending') ...<Widget>[
+                            IconButton(
+                              tooltip: 'قبول',
+                              icon: const Icon(
+                                Icons.check_circle,
+                                color: AppColors.success,
+                              ),
+                              onPressed: () => ref
+                                  .read(
+                                    competitionApplicationsProvider(
+                                      competitionId,
+                                    ).notifier,
+                                  )
+                                  .setStatus(a.id, 'accepted'),
+                            ),
+                            IconButton(
+                              tooltip: 'رفض',
+                              icon: const Icon(
+                                Icons.cancel,
+                                color: AppColors.error,
+                              ),
+                              onPressed: () => ref
+                                  .read(
+                                    competitionApplicationsProvider(
+                                      competitionId,
+                                    ).notifier,
+                                  )
+                                  .setStatus(a.id, 'rejected'),
+                            ),
+                          ],
+                          TextButton.icon(
+                            icon: const Icon(Icons.grade),
+                            label: const Text('درجة'),
+                            onPressed: () => _score(context, ref, a),
+                          ),
+                        ],
                       ),
                     ),
                   );
