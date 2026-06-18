@@ -42,36 +42,56 @@ class NotificationListScreen extends ConsumerWidget {
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final AppNotification n = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      leading: Icon(
-                        n.isRead
-                            ? Icons.notifications_none
-                            : Icons.notifications_active,
-                        color: n.isRead
-                            ? AppColors.textSecondary
-                            : AppColors.primary,
-                      ),
-                      title: Text(
-                        n.title,
-                        style: TextStyle(
-                          fontWeight: n.isRead
-                              ? FontWeight.normal
-                              : FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: n.body != null ? Text(n.body!) : null,
-                    ),
-                  );
-                },
+                itemBuilder: (BuildContext context, int i) => _NotificationTile(
+                  key: ValueKey<String>(items[i].id),
+                  notification: items[i],
+                ),
               ),
       ),
     );
   }
 }
+
+/// بلاطة إشعار: أيقونة حسب النوع + لون/خط حسب مقروء، ونقطة للغير مقروء.
+class _NotificationTile extends StatelessWidget {
+  const _NotificationTile({required this.notification, super.key});
+
+  final AppNotification notification;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool read = notification.isRead;
+    return Card(
+      margin: const EdgeInsets.symmetric(
+        vertical: AppSpacing.xs,
+        horizontal: AppSpacing.md,
+      ),
+      child: ListTile(
+        leading: Icon(
+          _iconForType(notification.type),
+          color: read ? AppColors.textSecondary : AppColors.primary,
+        ),
+        title: Text(
+          notification.title,
+          style: TextStyle(
+            fontWeight: read ? FontWeight.normal : FontWeight.bold,
+          ),
+        ),
+        subtitle: notification.body != null ? Text(notification.body!) : null,
+        trailing: read
+            ? null
+            : const Icon(Icons.circle, size: 10, color: AppColors.primary),
+      ),
+    );
+  }
+}
+
+/// أيقونة الإشعار حسب نوعه (يطابق منتِجات الـ triggers سيرفر-سايد).
+IconData _iconForType(String type) => switch (type) {
+  'supervisor_eval' => Icons.grading,
+  'advance' => Icons.arrow_upward,
+  'struggling' => Icons.warning_amber,
+  'behavior_note' => Icons.sticky_note_2,
+  'excuse_decided' => Icons.event_available,
+  _ => Icons.notifications,
+};

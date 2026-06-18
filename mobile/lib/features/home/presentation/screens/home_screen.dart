@@ -104,6 +104,18 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.payments,
                 onPressed: () => context.go(Routes.adminSubscriptions),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'ربط أولياء الأمور',
+                icon: Icons.link,
+                onPressed: () => context.go(Routes.adminGuardians),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'صندوق الشكاوى',
+                icon: Icons.inbox,
+                onPressed: () => context.go(Routes.complaintsInbox),
+              ),
             ],
             if (roles.contains('teacher')) ...<Widget>[
               const SizedBox(height: AppSpacing.xl),
@@ -112,6 +124,12 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.menu_book,
                 onPressed: () => context.go(Routes.teacherCircles),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'ملفّي وتطوّري',
+                icon: Icons.trending_up,
+                onPressed: () => context.go(Routes.teacherDevelopment),
+              ),
             ],
             if (roles.contains('parent')) ...<Widget>[
               const SizedBox(height: AppSpacing.xl),
@@ -119,6 +137,12 @@ class _HomeBody extends StatelessWidget {
                 label: 'أولادي',
                 icon: Icons.child_care,
                 onPressed: () => context.go(Routes.parentChildren),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'الشكاوى',
+                icon: Icons.support_agent,
+                onPressed: () => context.go(Routes.complaintsMine),
               ),
             ],
             if (roles.contains('supervisor') ||
@@ -142,7 +166,30 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.warning_amber,
                 onPressed: () => context.go(Routes.supervisorAttention),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'تطوّر المعلّمين',
+                icon: Icons.school,
+                onPressed: () => context.go(Routes.supervisorDevApproval),
+              ),
             ],
+            if (roles.contains('admin') ||
+                roles.contains('super_admin') ||
+                roles.contains('supervisor') ||
+                roles.contains('teacher')) ...<Widget>[
+              const SizedBox(height: AppSpacing.xl),
+              AppButton(
+                label: 'المسابقات',
+                icon: Icons.emoji_events,
+                onPressed: () => context.go(Routes.competitions),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.xl),
+            AppButton(
+              label: 'الكورسات',
+              icon: Icons.ondemand_video,
+              onPressed: () => context.go(Routes.courses),
+            ),
           ],
         ),
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
@@ -80,6 +82,9 @@ class SubscriptionsScreen extends ConsumerWidget {
                   onRecordPayment: () => ref
                       .read(householdsControllerProvider.notifier)
                       .recordPayment(items[i]),
+                  onTap: () => context.go(
+                    Routes.householdMembers(items[i].id, items[i].name),
+                  ),
                 ),
               ),
       ),

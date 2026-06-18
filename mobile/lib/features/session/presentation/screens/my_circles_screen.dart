@@ -39,7 +39,13 @@ class MyCirclesScreen extends ConsumerWidget {
                   child: ListTile(
                     leading: const Icon(Icons.groups, color: AppColors.primary),
                     title: Text(items[i].name),
-                    trailing: const Icon(Icons.chevron_left),
+                    trailing: IconButton(
+                      tooltip: 'خطة الشهر',
+                      icon: const Icon(Icons.calendar_month),
+                      onPressed: () => context.go(
+                        Routes.monthlyPlan(items[i].id, items[i].name),
+                      ),
+                    ),
                     onTap: () =>
                         context.go(Routes.session(items[i].id, items[i].name)),
                   ),

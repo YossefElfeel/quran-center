@@ -9,19 +9,31 @@ import '../../features/admin_setup/presentation/screens/circles_screen.dart';
 import '../../features/admin_setup/presentation/screens/curricula_screen.dart';
 import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/competition/presentation/screens/competition_detail_screen.dart';
+import '../../features/competition/presentation/screens/competition_results_screen.dart';
+import '../../features/competition/presentation/screens/competitions_screen.dart';
+import '../../features/courses/presentation/screens/courses_screen.dart';
+import '../../features/documents/presentation/screens/certificate_preview_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
+import '../../features/family/presentation/screens/guardian_links_screen.dart';
+import '../../features/feedback/presentation/screens/complaint_inbox_screen.dart';
+import '../../features/feedback/presentation/screens/my_complaints_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
+import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
 import '../../features/parent_portal/presentation/screens/children_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
+import '../../features/subscription/presentation/screens/household_members_screen.dart';
 import '../../features/subscription/presentation/screens/subscriptions_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/attention_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
+import '../../features/teacher/presentation/screens/development_approval_screen.dart';
+import '../../features/teacher/presentation/screens/teacher_development_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -96,6 +108,19 @@ GoRouter appRouter(Ref ref) {
             const SubscriptionsScreen(),
       ),
       GoRoute(
+        path: Routes.adminGuardians,
+        builder: (BuildContext context, GoRouterState state) =>
+            const GuardianLinksScreen(),
+      ),
+      GoRoute(
+        path: Routes.householdMembersPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            HouseholdMembersScreen(
+              householdId: state.pathParameters['householdId']!,
+              householdName: state.uri.queryParameters['name'] ?? 'الأسرة',
+            ),
+      ),
+      GoRoute(
         path: Routes.teacherCircles,
         builder: (BuildContext context, GoRouterState state) =>
             const MyCirclesScreen(),
@@ -104,6 +129,14 @@ GoRouter appRouter(Ref ref) {
         path: Routes.sessionPattern,
         builder: (BuildContext context, GoRouterState state) =>
             TodaySessionScreen(
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.monthlyPlanPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            MonthlyPlanEditorScreen(
               circleId: state.pathParameters['circleId']!,
               circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
             ),
@@ -124,9 +157,55 @@ GoRouter appRouter(Ref ref) {
             const AttentionScreen(),
       ),
       GoRoute(
+        path: Routes.teacherDevelopment,
+        builder: (BuildContext context, GoRouterState state) =>
+            const TeacherDevelopmentScreen(),
+      ),
+      GoRoute(
+        path: Routes.supervisorDevApproval,
+        builder: (BuildContext context, GoRouterState state) =>
+            const DevelopmentApprovalScreen(),
+      ),
+      GoRoute(
         path: Routes.parentChildren,
         builder: (BuildContext context, GoRouterState state) =>
             const ChildrenScreen(),
+      ),
+      GoRoute(
+        path: Routes.complaintsMine,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MyComplaintsScreen(),
+      ),
+      GoRoute(
+        path: Routes.complaintsInbox,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ComplaintInboxScreen(),
+      ),
+      GoRoute(
+        path: Routes.courses,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CoursesScreen(),
+      ),
+      GoRoute(
+        path: Routes.competitions,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CompetitionsScreen(),
+      ),
+      GoRoute(
+        path: Routes.competitionResultsPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CompetitionResultsScreen(
+              competitionId: state.pathParameters['id']!,
+              competitionName: state.uri.queryParameters['name'] ?? 'المسابقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.competitionDetailPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CompetitionDetailScreen(
+              competitionId: state.pathParameters['id']!,
+              competitionName: state.uri.queryParameters['name'] ?? 'المسابقة',
+            ),
       ),
       GoRoute(
         path: Routes.parentChildPattern,
@@ -134,6 +213,15 @@ GoRouter appRouter(Ref ref) {
           studentPersonId: state.pathParameters['studentId']!,
           childName: state.uri.queryParameters['name'] ?? 'الطفل',
         ),
+      ),
+      GoRoute(
+        path: Routes.certificatePreviewPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CertificatePreviewScreen(
+              studentName: state.uri.queryParameters['name'] ?? 'الطالب',
+              kindLabel: state.uri.queryParameters['kind'] ?? 'شهادة',
+              dateLabel: state.uri.queryParameters['date'] ?? '',
+            ),
       ),
       GoRoute(
         path: Routes.supervisorCircleEvalPattern,

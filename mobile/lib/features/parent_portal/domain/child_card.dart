@@ -20,6 +20,7 @@ class ChildCard {
     required this.late,
     this.circleName,
     this.latestTasmee,
+    this.isGirl = false,
   });
 
   final String? circleName;
@@ -28,6 +29,9 @@ class ChildCard {
   final int absent;
   final int excused;
   final int late;
+
+  /// بنت؟ (لإظهار بوابة موافقة الوسائط — الأولاد عادي).
+  final bool isGirl;
 
   bool get hasCircle => circleName != null;
 }

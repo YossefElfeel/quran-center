@@ -1,8 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
+import '../domain/household_member_row.dart';
 import '../domain/household_summary.dart';
+import '../domain/person_option.dart';
 import '../domain/subscription_logic.dart';
 
 part 'subscription_repository.g.dart';
@@ -58,6 +61,52 @@ class SubscriptionRepository {
   Future<bool> mySubscriptionActive() async {
     final dynamic res = await _client.rpc('my_subscription_active');
     return (res as bool?) ?? false;
+  }
+
+  /// كل الأشخاص (لاختيار فرد يتضاف للأسرة).
+  Future<List<PersonOption>> fetchAllPersons() async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('person')
+        .select('id, full_name')
+        .order('full_name', ascending: true);
+    return rows
+        .map(
+          (Map<String, dynamic> r) => PersonOption(
+            personId: r['id'] as String,
+            fullName: r['full_name'] as String,
+          ),
+        )
+        .toList();
+  }
+
+  Future<List<HouseholdMemberRow>> fetchHouseholdMembers(
+    String householdId,
+  ) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('household_member')
+        .select('role, person:person_id(full_name)')
+        .eq('household_id', householdId);
+    return rows.map(HouseholdMemberRow.fromMap).toList();
+  }
+
+  Future<void> addHouseholdMember({
+    required String householdId,
+    required String personId,
+    required String role,
+  }) async {
+    try {
+      await _client.from('household_member').insert(<String, dynamic>{
+        'household_id': householdId,
+        'person_id': personId,
+        'role': role,
+      });
+    } on PostgrestException catch (e) {
+      // 23505 = unique_violation: الشخص في أسرة واحدة بس (household_member_person_unique).
+      if (e.code == '23505') {
+        throw const ValidationException('الشخص ده مضاف لأسرة بالفعل');
+      }
+      rethrow;
+    }
   }
 }
 
