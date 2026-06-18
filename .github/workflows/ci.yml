@@ -177,12 +177,12 @@ jobs:
           set -e
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             (cd mobile && flutter test --tags golden --update-goldens)
-            if git diff --quiet -- mobile/test; then
+            git add mobile/test
+            if git diff --cached --quiet; then
               echo "Goldens unchanged."
             else
               git config user.name "github-actions[bot]"
               git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-              git add mobile/test
               git commit -m "ci: (re)generate RTL goldens on Linux [skip ci]"
               git push
               echo "Committed regenerated goldens."
