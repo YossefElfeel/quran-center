@@ -7,4 +7,9 @@ enum TasmeeKind {
     TasmeeKind.memorization => 'memorization',
     TasmeeKind.revision => 'revision',
   };
+
+  static TasmeeKind fromDb(String value) => switch (value) {
+    'revision' => TasmeeKind.revision,
+    _ => TasmeeKind.memorization,
+  };
 }

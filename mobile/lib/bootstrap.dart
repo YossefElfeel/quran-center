@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/app.dart';
 import 'core/env/env.dart';
 import 'core/logging/logger.dart';
+import 'features/session/data/session_sync.dart';
 
 /// تهيئة التطبيق وتشغيله جوّا ProviderScope مع التقاط أخطاء الـ framework.
 Future<void> bootstrap() async {
@@ -30,5 +31,16 @@ Future<void> bootstrap() async {
     );
   }
 
-  runApp(const ProviderScope(child: QuranCenterApp()));
+  // حاوية صريحة عشان نفعّل مزامن الطابور (outbox) عند البدء — يفرّغ عمليات
+  // الكتابة المؤجّلة أول ما النت يرجع. (اختبارات الـ widget بتعمل ProviderScope
+  // بتاعها فمش بتفتح Drift.)
+  final ProviderContainer container = ProviderContainer();
+  container.read(outboxSyncProvider);
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const QuranCenterApp(),
+    ),
+  );
 }

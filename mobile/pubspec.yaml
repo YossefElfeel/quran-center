@@ -24,6 +24,11 @@ dependencies:
   url_launcher: ^6.3.2
   image_picker: ^1.2.2
   google_mlkit_text_recognition: ^0.15.1
+  drift: ^2.34.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  path_provider: ^2.1.6
+  connectivity_plus: ^7.1.1
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +37,7 @@ dev_dependencies:
   build_runner: ^2.15.0
   riverpod_generator: ^4.0.4
   mocktail: ^1.0.5
+  drift_dev: ^2.34.0
 
 # ملاحظة: حزم الطرف الثالث (riverpod / go_router / intl / build_runner ...) بتتضاف
 # عبر `flutter pub add` عشان تتحلّ على آخر إصدار متوافق، مش بأرقام يدوية.

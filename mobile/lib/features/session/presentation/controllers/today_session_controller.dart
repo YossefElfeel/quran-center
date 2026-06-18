@@ -1,7 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/db/local_db.dart';
+import '../../../../core/network/network_status.dart';
 import '../../../../core/settings/settings_repository.dart';
+import '../../../../core/sync/outbox_op.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../../excuse/data/excuse_repository.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
@@ -80,13 +84,31 @@ class TodaySessionController extends _$TodaySessionController {
     final TodaySession? current = state.asData?.value;
     final String? sessionId = current?.sessionId;
     if (current == null || sessionId == null) return;
-    await ref
-        .read(sessionRepositoryProvider)
-        .setAttendance(
-          sessionId: sessionId,
-          enrollmentId: enrollmentId,
-          status: status.dbValue,
-        );
+    try {
+      await ref
+          .read(sessionRepositoryProvider)
+          .setAttendance(
+            sessionId: sessionId,
+            enrollmentId: enrollmentId,
+            status: status.dbValue,
+          );
+    } catch (e) {
+      // النت مقطوع → سجّل في الطابور وكمّل (التحديث المتفائل تحت يظهر الحالة).
+      if (!isOfflineError(e)) rethrow;
+      await ref
+          .read(localDbProvider)
+          .enqueue(
+            OutboxOp(
+              id: const Uuid().v4(),
+              type: OutboxOpType.attendanceMark,
+              payload: <String, dynamic>{
+                'session_id': sessionId,
+                'enrollment_id': enrollmentId,
+                'status': status.dbValue,
+              },
+            ),
+          );
+    }
     final List<RosterEntry> roster = current.roster
         .map(
           (RosterEntry e) => e.enrollmentId == enrollmentId
@@ -176,19 +198,45 @@ class TodaySessionController extends _$TodaySessionController {
       threshold: threshold,
     );
     final String? teacherId = await ref.read(currentPersonIdProvider.future);
-    final LedgerState next = await ref
-        .read(sessionRepositoryProvider)
-        .recordTasmee(
-          enrollmentId: enrollmentId,
-          studentPersonId: studentPersonId,
-          portionId: portion.id,
-          score: score,
-          passed: passed,
-          idempotencyKey: idempotencyKey,
-          kind: kind,
-          teacherId: teacherId,
-          sessionId: current.sessionId,
-        );
+    LedgerState next;
+    try {
+      next = await ref
+          .read(sessionRepositoryProvider)
+          .recordTasmee(
+            enrollmentId: enrollmentId,
+            studentPersonId: studentPersonId,
+            portionId: portion.id,
+            score: score,
+            passed: passed,
+            idempotencyKey: idempotencyKey,
+            kind: kind,
+            teacherId: teacherId,
+            sessionId: current.sessionId,
+          );
+    } catch (e) {
+      // النت مقطوع → سجّل في الطابور (id = idempotencyKey فإعادة الإرسال آمنة)
+      // واحسب حالة الدفتر محليًا مؤقتًا (السيرفر هو المصدر النهائي عند المزامنة).
+      if (!isOfflineError(e)) rethrow;
+      await ref
+          .read(localDbProvider)
+          .enqueue(
+            OutboxOp(
+              id: idempotencyKey,
+              type: OutboxOpType.tasmeeRecord,
+              payload: <String, dynamic>{
+                'enrollment_id': enrollmentId,
+                'student_person_id': studentPersonId,
+                'portion_id': portion.id,
+                'score': score,
+                'passed': passed,
+                'kind': kind.dbValue,
+                'teacher_id': teacherId,
+                'session_id': current.sessionId,
+              },
+            ),
+          );
+      next = passed ? LedgerState.passed : LedgerState.failedRetry;
+    }
     // المراجعة مابتغيّرش الدَيْن → مفيش تحديث متفائل للروستر.
     if (kind == TasmeeKind.memorization) {
       final List<RosterEntry> roster = current.roster
