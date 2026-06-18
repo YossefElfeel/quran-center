@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, dev]
   pull_request:
+  workflow_dispatch: # manual trigger — used to (re)generate RTL goldens on Linux
 
 jobs:
   mobile:
@@ -33,7 +34,7 @@ jobs:
         run: flutter analyze
 
       - name: Test
-        run: flutter test
+        run: flutter test --exclude-tags golden
 
       - name: Guard — no infinite/looping animations
         working-directory: ${{ github.workspace }}
@@ -142,3 +143,55 @@ jobs:
           fi
           echo "::error::Engine flow did not report a result (setup error?)"
           exit 1
+
+  goldens:
+    name: Goldens (RTL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.0
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Codegen (riverpod / freezed / l10n)
+        run: dart run build_runner build
+
+      # On manual dispatch: (re)generate the goldens on Linux and commit them, so
+      # the committed references match the comparison platform. On push: compare
+      # against the committed references (skipped until they've been generated).
+      - name: Goldens — generate+commit on dispatch, compare on push
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            (cd mobile && flutter test --tags golden --update-goldens)
+            if git diff --quiet -- mobile/test; then
+              echo "Goldens unchanged."
+            else
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add mobile/test
+              git commit -m "ci: (re)generate RTL goldens on Linux [skip ci]"
+              git push
+              echo "Committed regenerated goldens."
+            fi
+          else
+            if find mobile/test -path '*goldens*' -name '*.png' | grep -q .; then
+              (cd mobile && flutter test --tags golden)
+            else
+              echo "No golden references committed yet — run the CI workflow manually"
+              echo "(Actions > CI > Run workflow) to generate them on Linux. Skipping."
+            fi
+          fi
