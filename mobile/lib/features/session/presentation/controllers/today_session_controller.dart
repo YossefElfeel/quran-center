@@ -222,6 +222,24 @@ class TodaySessionController extends _$TodaySessionController {
     await future;
   }
 
+  /// المعلّم يسجّل ملاحظة سلوك لطالب. parent-visible بتبعت إشعار لولي الأمر
+  /// (عبر الموصّل سيرفر-سايد)؛ مفيش تغيير على الروستر.
+  Future<void> addBehavioralNote({
+    required String studentPersonId,
+    required String text,
+    required String visibility,
+  }) async {
+    final String? teacherId = await ref.read(currentPersonIdProvider.future);
+    await ref
+        .read(sessionRepositoryProvider)
+        .addBehavioralNote(
+          studentPersonId: studentPersonId,
+          text: text,
+          visibility: visibility,
+          teacherId: teacherId,
+        );
+  }
+
   /// المعلّم يطلب عذر لطالب غايب → يدخل طابور المشرف.
   Future<void> requestExcuse(String enrollmentId) async {
     final TodaySession? current = state.asData?.value;

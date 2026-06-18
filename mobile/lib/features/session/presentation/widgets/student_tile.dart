@@ -13,6 +13,7 @@ class StudentTile extends StatelessWidget {
     required this.canRecordTasmee,
     required this.onAttendanceChanged,
     required this.onTasmee,
+    this.onNote,
     this.onRequestExcuse,
     super.key,
   });
@@ -21,6 +22,9 @@ class StudentTile extends StatelessWidget {
   final bool canRecordTasmee;
   final ValueChanged<AttendanceStatus> onAttendanceChanged;
   final VoidCallback onTasmee;
+
+  /// تسجيل ملاحظة سلوك للطالب (null = مخفي).
+  final VoidCallback? onNote;
 
   /// متاح لو الطالب غايب — يطلب عذر للمشرف (null = ماينفعش).
   final VoidCallback? onRequestExcuse;
@@ -77,6 +81,12 @@ class StudentTile extends StatelessWidget {
               value: entry.attendance,
               onChanged: onAttendanceChanged,
             ),
+            if (onNote != null)
+              IconButton(
+                tooltip: 'ملاحظة سلوك',
+                icon: const Icon(Icons.note_add_outlined),
+                onPressed: onNote,
+              ),
             if (canRecordTasmee) ...<Widget>[
               const SizedBox(width: AppSpacing.xs),
               IconButton.filled(

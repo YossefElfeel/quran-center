@@ -326,6 +326,22 @@ class SessionRepository {
         })
         .eq('id', sessionId);
   }
+
+  /// ملاحظة سلوك لطالب: visibility='parent' (يشوفها ولي الأمر، والموصّل بيبعتله
+  /// إشعار) أو 'internal' (داخلية). المعلّم بيكتبها (RLS بتقيّد لحلقته).
+  Future<void> addBehavioralNote({
+    required String studentPersonId,
+    required String text,
+    required String visibility,
+    String? teacherId,
+  }) async {
+    await _client.from('behavioral_note').insert(<String, dynamic>{
+      'student_person_id': studentPersonId,
+      'text': text,
+      'visibility': visibility,
+      'teacher_id': ?teacherId,
+    });
+  }
 }
 
 @riverpod

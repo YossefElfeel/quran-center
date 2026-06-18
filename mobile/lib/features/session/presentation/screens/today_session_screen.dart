@@ -12,6 +12,7 @@ import '../../domain/roster_entry.dart';
 import '../controllers/today_session_controller.dart';
 import '../widgets/advance_confirmation_dialog.dart';
 import '../widgets/advance_suggestion_banner.dart';
+import '../widgets/behavioral_note_sheet.dart';
 import '../widgets/close_session_sheet.dart';
 import '../widgets/current_portion_card.dart';
 import '../widgets/debt_strip.dart';
@@ -75,6 +76,18 @@ class _SessionBody extends ConsumerWidget {
         circleId: circleId,
         entry: entry,
         hasRevision: hasRevision,
+      ),
+    );
+  }
+
+  void _openNote(BuildContext context, RosterEntry entry) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext _) => BehavioralNoteSheet(
+        circleId: circleId,
+        studentPersonId: entry.studentPersonId,
+        studentName: entry.studentName,
       ),
     );
   }
@@ -161,6 +174,7 @@ class _SessionBody extends ConsumerWidget {
                 onAttendanceChanged: (AttendanceStatus s) =>
                     notifier.setAttendance(e.enrollmentId, s),
                 onTasmee: () => _openTasmee(context, e, hasRevision),
+                onNote: () => _openNote(context, e),
                 onRequestExcuse: e.attendance == AttendanceStatus.absent
                     ? () => _requestExcuse(context, notifier, e.enrollmentId)
                     : null,
