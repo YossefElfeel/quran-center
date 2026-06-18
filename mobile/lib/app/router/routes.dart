@@ -42,4 +42,10 @@ abstract final class Routes {
 
   // المشرف: محتاج انتباه (الطلبة المتعثّرين)
   static const String supervisorAttention = '/supervisor/attention';
+
+  // ولي الأمر: أولاده + كارت الطفل
+  static const String parentChildren = '/parent/children';
+  static const String parentChildPattern = '/parent/child/:studentId';
+  static String parentChild(String studentId, String name) =>
+      '/parent/child/$studentId?name=${Uri.encodeComponent(name)}';
 }

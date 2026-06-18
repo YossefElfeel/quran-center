@@ -113,6 +113,14 @@ class _HomeBody extends StatelessWidget {
                 onPressed: () => context.go(Routes.teacherCircles),
               ),
             ],
+            if (roles.contains('parent')) ...<Widget>[
+              const SizedBox(height: AppSpacing.xl),
+              AppButton(
+                label: 'أولادي',
+                icon: Icons.child_care,
+                onPressed: () => context.go(Routes.parentChildren),
+              ),
+            ],
             if (roles.contains('supervisor') ||
                 roles.contains('admin') ||
                 roles.contains('super_admin')) ...<Widget>[
