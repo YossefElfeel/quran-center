@@ -11,6 +11,7 @@ import '../../../excuse/data/excuse_repository.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../../progress_engine/domain/progress_engine.dart';
 import '../../data/current_cycle.dart';
+import '../../data/session_cache.dart';
 import '../../data/session_repository.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/portion.dart';
@@ -25,6 +26,24 @@ part 'today_session_controller.g.dart';
 class TodaySessionController extends _$TodaySessionController {
   @override
   Future<TodaySession> build(String circleId) async {
+    final LocalDb db = ref.read(localDbProvider);
+    try {
+      final TodaySession session = await _loadOnline(circleId);
+      // كاش أفضل-جهد: مينفعش يكسر تحميل ناجح لو الكتابة المحلية فشلت.
+      try {
+        await db.cacheSession(circleId, encodeTodaySession(session));
+      } catch (_) {}
+      return session;
+    } catch (e) {
+      if (!isOfflineError(e)) rethrow;
+      // أوفلاين → افتح من آخر كاش (لو موجود) عشان المعلّم يكمّل تسجيل في الطابور.
+      final String? cached = await db.readCachedSession(circleId);
+      if (cached == null) rethrow;
+      return decodeTodaySession(cached);
+    }
+  }
+
+  Future<TodaySession> _loadOnline(String circleId) async {
     final SessionRepository repo = ref.watch(sessionRepositoryProvider);
     final String? sessionId = await repo.openSessionId(circleId);
     final List<Map<String, dynamic>> rosterRows = await repo.fetchRoster(

@@ -27,13 +27,52 @@ class OutboxEntries extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
-/// قاعدة البيانات المحلية (Drift) — تنفّذ [OutboxStore] فوق جدول `outbox_entries`.
-@DriftDatabase(tables: <Type>[OutboxEntries])
+/// كاش "حصة النهارده" لكل حلقة (JSON) — يخلّي الشاشة تفتح أوفلاين بعد إعادة
+/// التشغيل، فالمعلّم يكمّل تسجيل (يدخل الطابور) من غير اتصال.
+class CachedSessions extends Table {
+  TextColumn get circleId => text()();
+  TextColumn get payloadJson => text()();
+  IntColumn get cachedAt => integer()(); // epoch ms
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{circleId};
+}
+
+/// قاعدة البيانات المحلية (Drift) — تنفّذ [OutboxStore] فوق `outbox_entries`
+/// + كاش الحصص.
+@DriftDatabase(tables: <Type>[OutboxEntries, CachedSessions])
 class LocalDb extends _$LocalDb implements OutboxStore {
   LocalDb([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) await m.createTable(cachedSessions);
+    },
+  );
+
+  // ===== كاش الحصص =====
+
+  Future<void> cacheSession(String circleId, String payloadJson) async {
+    await into(cachedSessions).insertOnConflictUpdate(
+      CachedSessionsCompanion.insert(
+        circleId: circleId,
+        payloadJson: payloadJson,
+        cachedAt: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+  }
+
+  Future<String?> readCachedSession(String circleId) async {
+    final CachedSession? row =
+        await (select(cachedSessions)
+              ..where(($CachedSessionsTable t) => t.circleId.equals(circleId)))
+            .getSingleOrNull();
+    return row?.payloadJson;
+  }
 
   @override
   Future<void> enqueue(OutboxOp op) async {
