@@ -5,6 +5,8 @@ import '../../../core/supabase/supabase_providers.dart';
 import '../../enrollment/domain/gender.dart';
 import '../domain/child_card.dart';
 import '../domain/child_summary.dart';
+import '../domain/journey_stop.dart';
+import '../domain/monthly_plan_view.dart';
 import '../domain/parent_comment.dart';
 
 part 'parent_repository.g.dart';
@@ -142,6 +144,44 @@ class ParentRepository {
         .eq('student_person_id', studentPersonId)
         .eq('scope', scope)
         .isFilter('revoked_at', null);
+  }
+
+  /// خطة الشهر الحالي لحلقة الطفل النشطة (لو موجودة).
+  Future<MonthlyPlanView?> fetchChildMonthlyPlan(String studentPersonId) async {
+    final Map<String, dynamic>? enr = await _client
+        .from('enrollment')
+        .select('circle_id')
+        .eq('student_person_id', studentPersonId)
+        .eq('status', 'active')
+        .maybeSingle();
+    final String? circleId = enr?['circle_id'] as String?;
+    if (circleId == null) return null;
+    final DateTime now = DateTime.now();
+    final String month =
+        '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-01';
+    final Map<String, dynamic>? row = await _client
+        .from('monthly_study_plan')
+        .select('curriculum_plan, teaching_method, portions_ref')
+        .eq('circle_id', circleId)
+        .eq('month', month)
+        .eq('published', true)
+        .maybeSingle();
+    if (row == null) return null;
+    return MonthlyPlanView.fromMap(row);
+  }
+
+  /// رحلة الطالب عبر الحلقات (حق المحفّظ) — الأقدم الأول.
+  Future<List<JourneyStop>> fetchChildJourney(String studentPersonId) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('student_journey_segment')
+        .select(
+          'from_point, to_point, ajza, pages, ended_at, '
+          'circle:circle_id(name), teacher:teacher_id(full_name)',
+        )
+        .eq('student_person_id', studentPersonId)
+        .order('started_at', ascending: true);
+    return rows.map(JourneyStop.fromMap).toList();
   }
 
   /// تعليقات ولي الأمر على الطفل (الأحدث الأول) + اسم كاتبها.

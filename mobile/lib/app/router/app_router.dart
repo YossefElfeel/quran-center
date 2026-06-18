@@ -14,6 +14,7 @@ import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/family/presentation/screens/guardian_links_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
+import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
 import '../../features/parent_portal/presentation/screens/children_screen.dart';
@@ -119,6 +120,14 @@ GoRouter appRouter(Ref ref) {
         path: Routes.sessionPattern,
         builder: (BuildContext context, GoRouterState state) =>
             TodaySessionScreen(
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.monthlyPlanPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            MonthlyPlanEditorScreen(
               circleId: state.pathParameters['circleId']!,
               circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
             ),
