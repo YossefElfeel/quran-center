@@ -13,6 +13,9 @@ import '../../features/enrollment/presentation/screens/circle_roster_screen.dart
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
+import '../../features/notifications/presentation/screens/notification_list_screen.dart';
+import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
+import '../../features/parent_portal/presentation/screens/children_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
 import '../../features/subscription/presentation/screens/subscriptions_screen.dart';
@@ -49,6 +52,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.login,
         builder: (BuildContext context, GoRouterState state) =>
             const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.notifications,
+        builder: (BuildContext context, GoRouterState state) =>
+            const NotificationListScreen(),
       ),
       GoRoute(
         path: Routes.adminCurricula,
@@ -114,6 +122,18 @@ GoRouter appRouter(Ref ref) {
         path: Routes.supervisorAttention,
         builder: (BuildContext context, GoRouterState state) =>
             const AttentionScreen(),
+      ),
+      GoRoute(
+        path: Routes.parentChildren,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ChildrenScreen(),
+      ),
+      GoRoute(
+        path: Routes.parentChildPattern,
+        builder: (BuildContext context, GoRouterState state) => ChildCardScreen(
+          studentPersonId: state.pathParameters['studentId']!,
+          childName: state.uri.queryParameters['name'] ?? 'الطفل',
+        ),
       ),
       GoRoute(
         path: Routes.supervisorCircleEvalPattern,

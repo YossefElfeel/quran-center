@@ -4,6 +4,7 @@ abstract final class Routes {
 
   static const String home = '/';
   static const String login = '/login';
+  static const String notifications = '/notifications';
   static const String adminCurricula = '/admin/curricula';
   static const String adminWaiting = '/admin/waiting';
   static const String adminSubscriptions = '/admin/subscriptions';
@@ -41,4 +42,10 @@ abstract final class Routes {
 
   // المشرف: محتاج انتباه (الطلبة المتعثّرين)
   static const String supervisorAttention = '/supervisor/attention';
+
+  // ولي الأمر: أولاده + كارت الطفل
+  static const String parentChildren = '/parent/children';
+  static const String parentChildPattern = '/parent/child/:studentId';
+  static String parentChild(String studentId, String name) =>
+      '/parent/child/$studentId?name=${Uri.encodeComponent(name)}';
 }

@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../notifications/presentation/controllers/notifications_controller.dart';
 
 const Map<String, String> _roleNamesAr = <String, String>{
   'super_admin': 'سوبر أدمن',
@@ -28,6 +29,7 @@ class HomeScreen extends ConsumerWidget {
     return AppScaffold(
       title: 'مركز تحفيظ القرآن',
       actions: <Widget>[
+        const _NotificationBell(),
         IconButton(
           tooltip: 'خروج',
           icon: const Icon(Icons.logout),
@@ -111,6 +113,14 @@ class _HomeBody extends StatelessWidget {
                 onPressed: () => context.go(Routes.teacherCircles),
               ),
             ],
+            if (roles.contains('parent')) ...<Widget>[
+              const SizedBox(height: AppSpacing.xl),
+              AppButton(
+                label: 'أولادي',
+                icon: Icons.child_care,
+                onPressed: () => context.go(Routes.parentChildren),
+              ),
+            ],
             if (roles.contains('supervisor') ||
                 roles.contains('admin') ||
                 roles.contains('super_admin')) ...<Widget>[
@@ -151,5 +161,20 @@ class _RoleChip extends StatelessWidget {
       label: Text(_roleNamesAr[role] ?? role),
       backgroundColor: AppColors.primary.withValues(alpha: 0.1),
     );
+  }
+}
+
+class _NotificationBell extends ConsumerWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final int count = ref.watch(unreadCountProvider).asData?.value ?? 0;
+    final Widget bell = IconButton(
+      tooltip: 'الإشعارات',
+      icon: const Icon(Icons.notifications),
+      onPressed: () => context.go(Routes.notifications),
+    );
+    return count == 0 ? bell : Badge.count(count: count, child: bell);
   }
 }
