@@ -139,12 +139,15 @@ void main() {
       expect(await store.pendingCount(), 0);
     });
 
-    test('enqueue لنفس الـ id مرّتين = عملية واحدة (insert-or-ignore)', () async {
-      final _FakeStore store = _FakeStore();
-      await store.enqueue(_op('dup'));
-      await store.enqueue(_op('dup'));
-      expect(await store.pendingCount(), 1);
-    });
+    test(
+      'enqueue لنفس الـ id مرّتين = عملية واحدة (insert-or-ignore)',
+      () async {
+        final _FakeStore store = _FakeStore();
+        await store.enqueue(_op('dup'));
+        await store.enqueue(_op('dup'));
+        expect(await store.pendingCount(), 1);
+      },
+    );
   });
 }
 

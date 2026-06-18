@@ -1,3 +1,5 @@
+# قرار صريح لـ build scripts (pnpm 10). مش بنبني الـ native dependencies دي
+# لأنها مش لازمة للّينت/البناء. لتفعيل تحسين الصور في الإنتاج، حوّل sharp لـ true.
 allowBuilds:
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  sharp: false
+  unrs-resolver: false
