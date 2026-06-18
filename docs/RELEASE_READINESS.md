@@ -19,7 +19,12 @@
 مش متاح. مؤجّلة للإطلاق (الترقية لـ Pro قبل المستخدمين الحقيقيين). الـ advisor
 هيفضل يطلّع WARN على المجاني — **متوقّع ومش بلوكر**.
 
-### (ج) advisor 0029 — نقل دوال RLS المساعدة لـ schema خاص — مؤجّل (test-gated)
+### (ج) advisor 0029 — نقل دوال RLS المساعدة لـ private — ✅ اتعمل (2026-06-18)
+> اتنفّذ: الـ١٦ helper اتنقلوا لـ `private` بـ `ALTER FUNCTION ... SET SCHEMA` (الـ OID
+> محفوظ → السياسات شغّالة من غير إعادة كتابة). متحقّق بـ `supabase/tests/rls_isolation.sql`
+> ("RLS OK") + advisors (0029 بقى مقصور على RPCs شرعية بيندهها التطبيق:
+> `eligible_certificate_students, teacher_pass_rate, log_media_access,
+> set_person_national_id, enroll_student`). الخطة الأصلية للمرجع:
 دوال الـ SECURITY DEFINER المساعدة في `public` فبتظهر كـ RPC للـ `authenticated`
 (تسريب بسيط: بوليانات عن المستخدم الحالي/علاقاته). الإصلاح المخطّط (محتاج اختبارات
 integration/RLS كاملة شغّالة قبل التطبيق عشان مايكسرش الـ RLS):
@@ -117,6 +122,6 @@ D0 scaffolding اتعمل بس. D1–D4 (إدارة مستخدمين/إعداد�
 - **سياسة الأنيميشن**: مفيش `.repeat(` في الكود (حارس CI).
 - **CI**: `flutter analyze` نضيف + `dart format` + الاختبارات خضراء (96) + build_runner.
 - **advisors**: مفيش جدول من غير RLS؛ `rls_auto_enable` (0028 anon) اتقفل؛
-  الباقي تحذيرات 0029 معروفة (دوال RLS المساعدة، مؤجّلة لـ private schema) +
+  الـ helpers اتنقلت لـ `private` (0029 بقى على RPCs شرعية بس) +
   leaked-pw (محتاج تأكيد) + INFO واحد (`subscription_overdue_notice` RLS-no-policy،
   مقصود لجدول نظام). الكرونات الجداد مش مكشوفة كـ RPC (execute مسحوب).
