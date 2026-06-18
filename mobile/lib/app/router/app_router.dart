@@ -15,6 +15,7 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
+import '../../features/subscription/presentation/screens/subscriptions_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/attention_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
@@ -80,6 +81,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.adminWaiting,
         builder: (BuildContext context, GoRouterState state) =>
             const WaitingListScreen(),
+      ),
+      GoRoute(
+        path: Routes.adminSubscriptions,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SubscriptionsScreen(),
       ),
       GoRoute(
         path: Routes.teacherCircles,
