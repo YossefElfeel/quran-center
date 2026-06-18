@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/household_member_row.dart';
 import '../domain/household_summary.dart';
@@ -93,11 +94,19 @@ class SubscriptionRepository {
     required String personId,
     required String role,
   }) async {
-    await _client.from('household_member').insert(<String, dynamic>{
-      'household_id': householdId,
-      'person_id': personId,
-      'role': role,
-    });
+    try {
+      await _client.from('household_member').insert(<String, dynamic>{
+        'household_id': householdId,
+        'person_id': personId,
+        'role': role,
+      });
+    } on PostgrestException catch (e) {
+      // 23505 = unique_violation: الشخص في أسرة واحدة بس (household_member_person_unique).
+      if (e.code == '23505') {
+        throw const ValidationException('الشخص ده مضاف لأسرة بالفعل');
+      }
+      rethrow;
+    }
   }
 }
 

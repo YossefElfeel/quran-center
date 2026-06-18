@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/error/app_exception.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../domain/person_option.dart';
@@ -33,12 +34,13 @@ class _AddHouseholdMemberSheetState
           .read(householdMembersControllerProvider(widget.householdId).notifier)
           .addMember(personId: personId, role: _role);
       if (mounted) Navigator.of(context).pop();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نضيف الفرد — جرّب تاني')),
-      );
+      final String msg = e is AppException
+          ? e.message
+          : 'مش قادرين نضيف الفرد — جرّب تاني';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
