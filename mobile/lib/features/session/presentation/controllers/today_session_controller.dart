@@ -163,10 +163,17 @@ class TodaySessionController extends _$TodaySessionController {
         ? current.requiredRevision
         : current.currentPortion;
     if (portion == null) return;
-    final AppSettings settings = await ref.read(appSettingsProvider.future);
+    // عتبة النجاح من الإعدادات، مع fallback للـ default لو الإعدادات ما تحمّلتش —
+    // تسجيل التسميع فعل أساسي ومينفعش يفشل عشان الإعدادات.
+    int threshold;
+    try {
+      threshold = (await ref.read(appSettingsProvider.future)).passThreshold;
+    } catch (_) {
+      threshold = ProgressEngine.defaultPassThreshold;
+    }
     final bool passed = ProgressEngine.isPassing(
       score: score,
-      threshold: settings.passThreshold,
+      threshold: threshold,
     );
     final String? teacherId = await ref.read(currentPersonIdProvider.future);
     final LedgerState next = await ref
