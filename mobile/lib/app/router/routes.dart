@@ -37,4 +37,7 @@ abstract final class Routes {
 
   // المشرف: طابور أعذار الغياب
   static const String supervisorExcuses = '/supervisor/excuses';
+
+  // المشرف: محتاج انتباه (الطلبة المتعثّرين)
+  static const String supervisorAttention = '/supervisor/attention';
 }
