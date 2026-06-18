@@ -64,6 +64,40 @@ class ExcuseRepository {
         'excuse_approved_by': ?supervisorId,
       }, onConflict: 'session_id,enrollment_id');
     }
+
+    // المشرف بيبلّغ المعلّم بقرار العذر (best-effort — مايوقفش القرار لو فشل).
+    try {
+      await _notifyTeacher(enrollmentId: enrollmentId, approve: approve);
+    } catch (_) {
+      // فشل الإشعار مايأثّرش على قرار العذر نفسه.
+    }
+  }
+
+  Future<void> _notifyTeacher({
+    required String enrollmentId,
+    required bool approve,
+  }) async {
+    final Map<String, dynamic>? row = await _client
+        .from('enrollment')
+        .select(
+          'circle:circle_id(teacher_id), '
+          'student:student_person_id(full_name)',
+        )
+        .eq('id', enrollmentId)
+        .maybeSingle();
+    final Map<String, dynamic>? circle =
+        row?['circle'] as Map<String, dynamic>?;
+    final String? teacherId = circle?['teacher_id'] as String?;
+    if (teacherId == null) return;
+    final Map<String, dynamic>? student =
+        row?['student'] as Map<String, dynamic>?;
+    final String studentName = (student?['full_name'] as String?) ?? 'الطالب';
+    await _client.from('notification').insert(<String, dynamic>{
+      'recipient_person_id': teacherId,
+      'type': 'excuse_decided',
+      'title': approve ? 'عذر غياب اتقبل' : 'عذر غياب اترفض',
+      'body': 'عذر غياب $studentName ${approve ? 'اتقبل' : 'اترفض'} من المشرف',
+    });
   }
 }
 
