@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/utils/arabic_numerals.dart';
@@ -17,6 +18,7 @@ class TeacherRatingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<TeacherRatingRow>> state = ref.watch(
       teacherRatingsProvider,
     );
@@ -25,18 +27,15 @@ class TeacherRatingsScreen extends ConsumerWidget {
     final bool isAdmin =
         roles.contains('admin') || roles.contains('super_admin');
     return AppScaffold(
-      title: 'تقييمات المحفّظين',
+      title: l.fbkTeacherRatingsTitle,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل التقييمات',
+          message: l.fbkLoadRatingsError,
           onRetry: () => ref.invalidate(teacherRatingsProvider),
         ),
         data: (List<TeacherRatingRow> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'لسه مفيش تقييمات',
-                icon: Icons.star_outline,
-              )
+            ? EmptyState(message: l.fbkNoRatings, icon: Icons.star_outline)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
@@ -56,6 +55,7 @@ class _RatingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
@@ -94,7 +94,7 @@ class _RatingCard extends ConsumerWidget {
                     icon: Icon(
                       rating.hidden ? Icons.visibility : Icons.visibility_off,
                     ),
-                    label: Text(rating.hidden ? 'إظهار' : 'إخفاء'),
+                    label: Text(rating.hidden ? l.fbkShow : l.fbkHide),
                     onPressed: () => ref
                         .read(teacherRatingsProvider.notifier)
                         .setHidden(rating.id, !rating.hidden),

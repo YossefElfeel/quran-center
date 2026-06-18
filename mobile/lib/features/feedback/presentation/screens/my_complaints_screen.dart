@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -14,18 +15,19 @@ class MyComplaintsScreen extends ConsumerWidget {
   const MyComplaintsScreen({super.key});
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {
+    final AppL10n l = AppL10n.of(context);
     String category = 'other';
     final TextEditingController body = TextEditingController();
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('شكوى جديدة'),
+        title: Text(l.fbkNewComplaint),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             DropdownButtonFormField<String>(
               initialValue: category,
-              decoration: const InputDecoration(labelText: 'النوع'),
+              decoration: InputDecoration(labelText: l.fbkCategory),
               items: complaintCategoriesAr.entries
                   .map(
                     (MapEntry<String, String> e) => DropdownMenuItem<String>(
@@ -42,18 +44,18 @@ class MyComplaintsScreen extends ConsumerWidget {
               autofocus: true,
               minLines: 2,
               maxLines: 4,
-              decoration: const InputDecoration(labelText: 'تفاصيل الشكوى'),
+              decoration: InputDecoration(labelText: l.fbkComplaintDetails),
             ),
           ],
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('إرسال'),
+            child: Text(l.fbkSend),
           ),
         ],
       ),
@@ -69,12 +71,13 @@ class MyComplaintsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<Complaint>> state = ref.watch(myComplaintsProvider);
     return AppScaffold(
-      title: 'الشكاوى',
+      title: l.fbkMyComplaintsTitle,
       actions: <Widget>[
         IconButton(
-          tooltip: 'شكوى جديدة',
+          tooltip: l.fbkNewComplaint,
           icon: const Icon(Icons.add),
           onPressed: () => _add(context, ref),
         ),
@@ -82,12 +85,12 @@ class MyComplaintsScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الشكاوى',
+          message: l.fbkLoadComplaintsError,
           onRetry: () => ref.invalidate(myComplaintsProvider),
         ),
         data: (List<Complaint> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش شكاوى — رقم المدير متاح لو محتاج',
+            ? EmptyState(
+                message: l.fbkNoComplaintsParent,
                 icon: Icons.support_agent,
               )
             : ListView.builder(
@@ -108,6 +111,7 @@ class _ComplaintCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
@@ -143,7 +147,7 @@ class _ComplaintCard extends StatelessWidget {
             if (complaint.isAnswered) ...<Widget>[
               const Divider(),
               Text(
-                'ردّ المدير: ${complaint.managerResponse}',
+                '${l.fbkManagerResponseLabel}: ${complaint.managerResponse}',
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
             ],

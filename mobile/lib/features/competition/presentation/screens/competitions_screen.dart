@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -16,24 +17,25 @@ class CompetitionsScreen extends ConsumerWidget {
   const CompetitionsScreen({super.key});
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {
+    final AppL10n l = AppL10n.of(context);
     final TextEditingController name = TextEditingController();
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('مسابقة جديدة'),
+        title: Text(l.cmpNewCompetition),
         content: TextField(
           controller: name,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'اسم المسابقة'),
+          decoration: InputDecoration(labelText: l.cmpCompetitionName),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('إضافة'),
+            child: Text(l.add),
           ),
         ],
       ),
@@ -45,14 +47,15 @@ class CompetitionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<CompetitionRow>> state = ref.watch(
       competitionsProvider,
     );
     return AppScaffold(
-      title: 'المسابقات',
+      title: l.navCompetitions,
       actions: <Widget>[
         IconButton(
-          tooltip: 'مسابقة جديدة',
+          tooltip: l.cmpNewCompetition,
           icon: const Icon(Icons.add),
           onPressed: () => _add(context, ref),
         ),
@@ -60,14 +63,11 @@ class CompetitionsScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل المسابقات',
+          message: l.cmpLoadError,
           onRetry: () => ref.invalidate(competitionsProvider),
         ),
         data: (List<CompetitionRow> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش مسابقات — ضيف وحدة بالزرّ فوق',
-                icon: Icons.emoji_events,
-              )
+            ? EmptyState(message: l.cmpEmpty, icon: Icons.emoji_events)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,

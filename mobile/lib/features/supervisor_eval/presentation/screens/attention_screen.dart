@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -17,16 +18,17 @@ class AttentionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     return AppScaffold(
-      title: 'محتاج انتباه',
+      title: l.navAttention,
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
-        children: const <Widget>[
-          _SectionTitle('حلقات محتاجة انتباه'),
-          _CirclesSection(),
-          SizedBox(height: AppSpacing.lg),
-          _SectionTitle('طلبة متعثّرين'),
-          _StrugglingSection(),
+        children: <Widget>[
+          _SectionTitle(l.supAttentionCirclesSection),
+          const _CirclesSection(),
+          const SizedBox(height: AppSpacing.lg),
+          _SectionTitle(l.supAttentionStrugglingSection),
+          const _StrugglingSection(),
         ],
       ),
     );
@@ -55,6 +57,7 @@ class _CirclesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<CirclePassRate>> state = ref.watch(
       circlePassRatesProvider,
     );
@@ -64,7 +67,7 @@ class _CirclesSection extends ConsumerWidget {
         child: AppLoader(),
       ),
       error: (Object e, StackTrace _) => AppErrorView(
-        message: 'مش قادرين نحمّل الحلقات',
+        message: l.supCirclesLoadError,
         onRetry: () => ref.invalidate(circlePassRatesProvider),
       ),
       data: (List<CirclePassRate> list) {
@@ -72,7 +75,7 @@ class _CirclesSection extends ConsumerWidget {
             .where((CirclePassRate c) => c.needsAttention)
             .toList();
         if (attention.isEmpty) {
-          return const _EmptyNote('كل الحلقات فوق النص 👍');
+          return _EmptyNote(l.supAllCirclesAboveHalf);
         }
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -92,17 +95,20 @@ class _CircleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: ListTile(
         leading: const Icon(Icons.trending_down, color: AppColors.error),
         title: Text(circle.circleName),
         subtitle: Text(
-          'عدّى ${arabicNumber(circle.passedCount)} من '
-          '${arabicNumber(circle.activeAtOpen)}',
+          l.supCirclePassedOf(
+            arabicNumber(circle.passedCount),
+            arabicNumber(circle.activeAtOpen),
+          ),
         ),
         trailing: Text(
-          '${arabicNumber(circle.percent)}٪',
+          l.supPercent(arabicNumber(circle.percent)),
           style: const TextStyle(
             color: AppColors.error,
             fontWeight: FontWeight.bold,
@@ -119,6 +125,7 @@ class _StrugglingSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<StrugglingStudent>> state = ref.watch(
       strugglingStudentsProvider,
     );
@@ -128,12 +135,12 @@ class _StrugglingSection extends ConsumerWidget {
         child: AppLoader(),
       ),
       error: (Object e, StackTrace _) => AppErrorView(
-        message: 'مش قادرين نحمّل القايمة',
+        message: l.supListLoadError,
         onRetry: () => ref.invalidate(strugglingStudentsProvider),
       ),
       data: (List<StrugglingStudent> items) {
         if (items.isEmpty) {
-          return const _EmptyNote('مفيش طلبة متعثّرين دلوقتي');
+          return _EmptyNote(l.supNoStrugglingStudents);
         }
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -153,14 +160,14 @@ class _StrugglingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: ListTile(
         leading: const Icon(Icons.warning_amber, color: AppColors.error),
         title: Text(student.studentName),
         subtitle: Text(
-          'عليه دَيْن على ${student.portionName} — '
-          'حاول ${arabicNumber(student.attempts)} مرّات',
+          l.supStudentDebt(student.portionName, arabicNumber(student.attempts)),
         ),
       ),
     );
