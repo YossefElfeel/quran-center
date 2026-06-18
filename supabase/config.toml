@@ -1,0 +1,52 @@
+# Supabase local config — used by `supabase start` in CI to stand up a local
+# stack (Postgres 17 + auth) and apply migrations + seed, so the RLS isolation
+# suite and integration tests can run on a faithful copy of the schema.
+# Not used against the hosted project (that's managed via MCP/migrations).
+project_id = "quran-center"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = false
+
+[inbucket]
+enabled = false
+
+[storage]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+[analytics]
+enabled = false
+
+[edge_runtime]
+enabled = false

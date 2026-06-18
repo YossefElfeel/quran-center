@@ -97,3 +97,32 @@ jobs:
 
       - name: Type-check + build
         run: pnpm build
+
+  supabase:
+    name: Supabase (RLS isolation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase (applies migrations + seed)
+        run: supabase start
+
+      - name: RLS isolation suite (rolls back; must print "RLS OK")
+        run: |
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          OUT=$(psql "$DB_URL" -f supabase/tests/rls_isolation.sql 2>&1 || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "RLS FAIL"; then
+            echo "::error::RLS isolation violated"
+            exit 1
+          fi
+          if echo "$OUT" | grep -q "RLS OK"; then
+            echo "RLS OK — isolation invariants held."
+            exit 0
+          fi
+          echo "::error::RLS suite did not report a result (setup error?)"
+          exit 1
