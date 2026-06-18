@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../theme/tokens.dart';
 
@@ -7,16 +8,17 @@ class AppErrorView extends StatelessWidget {
   const AppErrorView({
     required this.message,
     this.onRetry,
-    this.retryLabel = 'إعادة المحاولة',
+    this.retryLabel,
     super.key,
   });
 
   final String message;
   final VoidCallback? onRetry;
-  final String retryLabel;
+  final String? retryLabel;
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final VoidCallback? onRetry = this.onRetry;
     return Center(
       child: Padding(
@@ -33,7 +35,10 @@ class AppErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...<Widget>[
               const SizedBox(height: AppSpacing.lg),
-              ElevatedButton(onPressed: onRetry, child: Text(retryLabel)),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: Text(retryLabel ?? l.retry),
+              ),
             ],
           ],
         ),

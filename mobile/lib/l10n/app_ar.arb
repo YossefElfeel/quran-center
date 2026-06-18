@@ -435,5 +435,18 @@
   "ppChildJourney": "رحلة الطفل",
   "ppJourneyStopTitle": "{circle} — مع {teacher}",
   "@ppJourneyStopTitle": { "placeholders": { "circle": { "type": "String" }, "teacher": { "type": "String" } } },
-  "ppMonthlyPlan": "خطة الشهر"
+  "ppMonthlyPlan": "خطة الشهر",
+  "fbkRateTeacherTitle": "قيّم المحفّظ",
+  "fbkRatePrivateNote": "تقييمك خاص للإدارة — المحفّظ مش هيشوفه",
+  "fbkRateCommentLabel": "تعليق (اختياري)",
+  "fbkRateThanks": "تم تقييم المحفّظ — شكراً",
+  "fbkSending": "بنبعت…",
+  "fbkSubmitRating": "إرسال التقييم",
+  "supSelectedForEval": "مختار للتقييم",
+  "supEvaluate": "قيّم",
+  "supEvalStudentTitle": "تقييم: {name}",
+  "@supEvalStudentTitle": { "placeholders": { "name": { "type": "String" } } },
+  "supSaving": "بنحفظ…",
+  "supSaveEval": "حفظ التقييم",
+  "supSaveEvalError": "مش قادرين نحفظ التقييم — جرّب تاني"
 }

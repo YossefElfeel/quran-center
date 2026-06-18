@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../domain/eval_student.dart';
@@ -16,6 +17,7 @@ class EvalStudentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
@@ -30,14 +32,14 @@ class EvalStudentTile extends StatelessWidget {
         ),
         title: Text(student.fullName),
         subtitle: student.selected
-            ? const Text(
-                'مختار للتقييم',
-                style: TextStyle(color: AppColors.accent),
+            ? Text(
+                l.supSelectedForEval,
+                style: const TextStyle(color: AppColors.accent),
               )
             : null,
         trailing: student.scored
             ? const Icon(Icons.check_circle, color: AppColors.success)
-            : TextButton(onPressed: onEvaluate, child: const Text('قيّم')),
+            : TextButton(onPressed: onEvaluate, child: Text(l.supEvaluate)),
       ),
     );
   }
