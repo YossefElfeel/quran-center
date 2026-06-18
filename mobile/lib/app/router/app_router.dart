@@ -9,6 +9,7 @@ import '../../features/admin_setup/presentation/screens/circles_screen.dart';
 import '../../features/admin_setup/presentation/screens/curricula_screen.dart';
 import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/documents/presentation/screens/certificate_preview_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/family/presentation/screens/guardian_links_screen.dart';
@@ -158,6 +159,15 @@ GoRouter appRouter(Ref ref) {
           studentPersonId: state.pathParameters['studentId']!,
           childName: state.uri.queryParameters['name'] ?? 'الطفل',
         ),
+      ),
+      GoRoute(
+        path: Routes.certificatePreviewPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CertificatePreviewScreen(
+              studentName: state.uri.queryParameters['name'] ?? 'الطالب',
+              kindLabel: state.uri.queryParameters['kind'] ?? 'شهادة',
+              dateLabel: state.uri.queryParameters['date'] ?? '',
+            ),
       ),
       GoRoute(
         path: Routes.supervisorCircleEvalPattern,

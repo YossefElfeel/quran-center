@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../domain/child_card.dart';
 import '../controllers/child_card_controller.dart';
+import '../widgets/child_certificates_section.dart';
 import '../widgets/child_comments_section.dart';
 import '../widgets/child_consent_section.dart';
 import '../widgets/child_journey_section.dart';
@@ -57,6 +58,10 @@ class ChildCardScreen extends ConsumerWidget {
                   valueColor: lt.passed ? AppColors.success : AppColors.error,
                 ),
               _AttendanceCard(card: card),
+              ChildCertificatesSection(
+                studentPersonId: studentPersonId,
+                childName: childName,
+              ),
               ChildMonthlyPlanSection(studentPersonId: studentPersonId),
               ChildJourneySection(studentPersonId: studentPersonId),
               if (card.isGirl)

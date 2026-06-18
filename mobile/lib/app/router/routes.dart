@@ -59,4 +59,15 @@ abstract final class Routes {
   static const String parentChildPattern = '/parent/child/:studentId';
   static String parentChild(String studentId, String name) =>
       '/parent/child/$studentId?name=${Uri.encodeComponent(name)}';
+
+  // معاينة شهادة PDF
+  static const String certificatePreviewPattern = '/certificate/preview';
+  static String certificatePreview(
+    String name,
+    String kindLabel,
+    String dateLabel,
+  ) =>
+      '/certificate/preview?name=${Uri.encodeComponent(name)}'
+      '&kind=${Uri.encodeComponent(kindLabel)}'
+      '&date=${Uri.encodeComponent(dateLabel)}';
 }
