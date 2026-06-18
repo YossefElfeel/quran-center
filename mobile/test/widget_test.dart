@@ -5,6 +5,7 @@ import 'package:quran_center/app/app.dart';
 import 'package:quran_center/core/auth/auth_providers.dart';
 import 'package:quran_center/core/auth/auth_repository.dart';
 import 'package:quran_center/features/home/presentation/screens/home_screen.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FakeAuthRepository implements AuthRepository {
@@ -50,7 +51,12 @@ void main() {
           authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
           currentRolesProvider.overrideWith((ref) async => <String>['admin']),
         ],
-        child: const MaterialApp(home: HomeScreen()),
+        child: const MaterialApp(
+          locale: Locale('ar'),
+          localizationsDelegates: AppL10n.localizationsDelegates,
+          supportedLocales: AppL10n.supportedLocales,
+          home: HomeScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
