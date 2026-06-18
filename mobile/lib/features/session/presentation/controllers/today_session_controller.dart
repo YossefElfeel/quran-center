@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../enrollment/domain/gender.dart';
+import '../../../excuse/data/excuse_repository.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../../progress_engine/domain/progress_engine.dart';
 import '../../data/current_cycle.dart';
@@ -219,5 +220,14 @@ class TodaySessionController extends _$TodaySessionController {
         );
     ref.invalidateSelf();
     await future;
+  }
+
+  /// المعلّم يطلب عذر لطالب غايب → يدخل طابور المشرف.
+  Future<void> requestExcuse(String enrollmentId) async {
+    final TodaySession? current = state.asData?.value;
+    if (current == null) return;
+    await ref
+        .read(excuseRepositoryProvider)
+        .createExcuse(enrollmentId: enrollmentId, sessionId: current.sessionId);
   }
 }

@@ -13,6 +13,7 @@ class StudentTile extends StatelessWidget {
     required this.canRecordTasmee,
     required this.onAttendanceChanged,
     required this.onTasmee,
+    this.onRequestExcuse,
     super.key,
   });
 
@@ -20,6 +21,9 @@ class StudentTile extends StatelessWidget {
   final bool canRecordTasmee;
   final ValueChanged<AttendanceStatus> onAttendanceChanged;
   final VoidCallback onTasmee;
+
+  /// متاح لو الطالب غايب — يطلب عذر للمشرف (null = ماينفعش).
+  final VoidCallback? onRequestExcuse;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +57,19 @@ class StudentTile extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   _LedgerBadge(state: entry.ledgerState),
+                  if (onRequestExcuse != null)
+                    TextButton(
+                      onPressed: onRequestExcuse,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 32),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'طلب عذر',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
                 ],
               ),
             ),

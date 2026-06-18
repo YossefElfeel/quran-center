@@ -57,6 +57,9 @@ abstract final class ProgressEngine {
   /// الحد الأدنى الافتراضي لعدد النشطين قبل ما نقترح انتقال.
   static const int defaultMinActive = 1;
 
+  /// حد التعثّر الافتراضي: عدد مرّات الرسوب اللي بعدها الطالب "محتاج انتباه".
+  static const int defaultStruggleThreshold = 3;
+
   /// نجح التسميع؟
   static bool isPassing({required int score, required int threshold}) =>
       score >= threshold;

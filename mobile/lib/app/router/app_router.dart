@@ -10,10 +10,15 @@ import '../../features/admin_setup/presentation/screens/curricula_screen.dart';
 import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
+import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
+import '../../features/subscription/presentation/screens/subscriptions_screen.dart';
+import '../../features/supervisor_eval/presentation/screens/attention_screen.dart';
+import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
+import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -78,6 +83,11 @@ GoRouter appRouter(Ref ref) {
             const WaitingListScreen(),
       ),
       GoRoute(
+        path: Routes.adminSubscriptions,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SubscriptionsScreen(),
+      ),
+      GoRoute(
         path: Routes.teacherCircles,
         builder: (BuildContext context, GoRouterState state) =>
             const MyCirclesScreen(),
@@ -86,6 +96,29 @@ GoRouter appRouter(Ref ref) {
         path: Routes.sessionPattern,
         builder: (BuildContext context, GoRouterState state) =>
             TodaySessionScreen(
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.supervisorEval,
+        builder: (BuildContext context, GoRouterState state) =>
+            const EvalCirclesScreen(),
+      ),
+      GoRoute(
+        path: Routes.supervisorExcuses,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ExcuseQueueScreen(),
+      ),
+      GoRoute(
+        path: Routes.supervisorAttention,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AttentionScreen(),
+      ),
+      GoRoute(
+        path: Routes.supervisorCircleEvalPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CircleEvalScreen(
               circleId: state.pathParameters['circleId']!,
               circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
             ),
