@@ -112,6 +112,12 @@ class _HomeBody extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               AppButton(
+                label: 'دعوة مستخدم',
+                icon: Icons.person_add,
+                onPressed: () => context.go(Routes.adminInviteUser),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
                 label: 'صندوق الشكاوى',
                 icon: Icons.inbox,
                 onPressed: () => context.go(Routes.complaintsInbox),

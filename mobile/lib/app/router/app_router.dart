@@ -40,6 +40,7 @@ import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.
 import '../../features/teacher/presentation/screens/development_approval_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_development_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_profile_screen.dart';
+import '../../features/user_invite/presentation/screens/invite_user_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -117,6 +118,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.adminGuardians,
         builder: (BuildContext context, GoRouterState state) =>
             const GuardianLinksScreen(),
+      ),
+      GoRoute(
+        path: Routes.adminInviteUser,
+        builder: (BuildContext context, GoRouterState state) =>
+            const InviteUserScreen(),
       ),
       GoRoute(
         path: Routes.householdMembersPattern,
