@@ -32,6 +32,13 @@ class ParentRepository {
 
   /// كارت طفل: الحلقة النشطة + آخر تسميع + ملخّص الحضور.
   Future<ChildCard> fetchChildCard(String studentPersonId) async {
+    final Map<String, dynamic>? person = await _client
+        .from('person')
+        .select('gender')
+        .eq('id', studentPersonId)
+        .maybeSingle();
+    final bool isGirl = (person?['gender'] as String?) == 'female';
+
     final Map<String, dynamic>? enr = await _client
         .from('enrollment')
         .select('id, circle:circle_id(name)')
@@ -43,7 +50,13 @@ class ParentRepository {
         (enr?['circle'] as Map<String, dynamic>?)?['name'] as String?;
 
     if (enrollmentId == null) {
-      return const ChildCard(present: 0, absent: 0, excused: 0, late: 0);
+      return ChildCard(
+        present: 0,
+        absent: 0,
+        excused: 0,
+        late: 0,
+        isGirl: isGirl,
+      );
     }
 
     // آخر تسميع حفظ (مش مراجعة) — ده مؤشّر التقدّم لولي الأمر.
@@ -91,7 +104,44 @@ class ParentRepository {
       absent: absent,
       excused: excused,
       late: late,
+      isGirl: isGirl,
     );
+  }
+
+  /// أنواع موافقة الوسائط النشطة للطفل (photo/video).
+  Future<Set<String>> fetchActiveConsents(String studentPersonId) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('consent_record')
+        .select('scope')
+        .eq('student_person_id', studentPersonId)
+        .isFilter('revoked_at', null);
+    return rows.map((Map<String, dynamic> r) => r['scope'] as String).toSet();
+  }
+
+  /// يمنح موافقة وسائط (المانح بيتحدّد سيرفر-سايد).
+  Future<void> grantConsent({
+    required String studentPersonId,
+    required String scope,
+  }) async {
+    await _client.from('consent_record').insert(<String, dynamic>{
+      'student_person_id': studentPersonId,
+      'scope': scope,
+    });
+  }
+
+  /// يسحب موافقة وسائط نشطة (إخفاء فوري عبر RLS).
+  Future<void> revokeConsent({
+    required String studentPersonId,
+    required String scope,
+  }) async {
+    await _client
+        .from('consent_record')
+        .update(<String, dynamic>{
+          'revoked_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('student_person_id', studentPersonId)
+        .eq('scope', scope)
+        .isFilter('revoked_at', null);
   }
 
   /// تعليقات ولي الأمر على الطفل (الأحدث الأول) + اسم كاتبها.

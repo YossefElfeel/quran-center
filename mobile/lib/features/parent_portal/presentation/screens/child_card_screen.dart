@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_scaffold.dart';
 import '../../domain/child_card.dart';
 import '../controllers/child_card_controller.dart';
 import '../widgets/child_comments_section.dart';
+import '../widgets/child_consent_section.dart';
 
 /// كارت متابعة الطفل: الحلقة + آخر تسميع + ملخّص الحضور.
 class ChildCardScreen extends ConsumerWidget {
@@ -54,6 +55,8 @@ class ChildCardScreen extends ConsumerWidget {
                   valueColor: lt.passed ? AppColors.success : AppColors.error,
                 ),
               _AttendanceCard(card: card),
+              if (card.isGirl)
+                ChildConsentSection(studentPersonId: studentPersonId),
               ChildCommentsSection(studentPersonId: studentPersonId),
             ],
           );
