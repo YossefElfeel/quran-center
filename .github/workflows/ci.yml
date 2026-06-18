@@ -126,3 +126,19 @@ jobs:
           fi
           echo "::error::RLS suite did not report a result (setup error?)"
           exit 1
+
+      - name: Engine flow integration (rolls back; must print "ENGINE OK")
+        run: |
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          OUT=$(psql "$DB_URL" -f supabase/tests/engine_flow.sql 2>&1 || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "ENGINE FAIL"; then
+            echo "::error::Engine flow assertion failed"
+            exit 1
+          fi
+          if echo "$OUT" | grep -q "ENGINE OK"; then
+            echo "ENGINE OK — tasmee/ledger/idempotency invariants held."
+            exit 0
+          fi
+          echo "::error::Engine flow did not report a result (setup error?)"
+          exit 1
