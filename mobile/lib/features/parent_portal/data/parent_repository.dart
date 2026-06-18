@@ -5,6 +5,7 @@ import '../../../core/supabase/supabase_providers.dart';
 import '../../enrollment/domain/gender.dart';
 import '../domain/child_card.dart';
 import '../domain/child_summary.dart';
+import '../domain/parent_comment.dart';
 
 part 'parent_repository.g.dart';
 
@@ -91,6 +92,27 @@ class ParentRepository {
       excused: excused,
       late: late,
     );
+  }
+
+  /// تعليقات ولي الأمر على الطفل (الأحدث الأول) + اسم كاتبها.
+  Future<List<ParentComment>> fetchComments(String studentPersonId) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('parent_comment')
+        .select('id, body, created_at, author:author_guardian_id(full_name)')
+        .eq('student_person_id', studentPersonId)
+        .order('created_at', ascending: false);
+    return rows.map(ParentComment.fromMap).toList();
+  }
+
+  /// يضيف تعليق. المؤلّف بيتحدّد سيرفر-سايد (default current_person_id).
+  Future<void> addComment({
+    required String studentPersonId,
+    required String body,
+  }) async {
+    await _client.from('parent_comment').insert(<String, dynamic>{
+      'student_person_id': studentPersonId,
+      'body': body,
+    });
   }
 }
 
