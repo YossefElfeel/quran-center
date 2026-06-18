@@ -39,6 +39,7 @@ import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.d
 import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
 import '../../features/teacher/presentation/screens/development_approval_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_development_screen.dart';
+import '../../features/teacher/presentation/screens/teacher_profile_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -188,6 +189,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.teacherDevelopment,
         builder: (BuildContext context, GoRouterState state) =>
             const TeacherDevelopmentScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherProfile,
+        builder: (BuildContext context, GoRouterState state) =>
+            const TeacherProfileScreen(),
       ),
       GoRoute(
         path: Routes.supervisorDevApproval,

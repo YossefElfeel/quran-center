@@ -43,6 +43,7 @@ abstract final class Routes {
 
   // المعلّم: ملفّه وتطوّره — والمشرف: اعتماد التطوّر
   static const String teacherDevelopment = '/teacher/development';
+  static const String teacherProfile = '/teacher/profile';
   static const String supervisorDevApproval = '/supervisor/development';
 
   // التقييم الشهري للطالب: المعلّم يؤلّف، المشرف يعتمد

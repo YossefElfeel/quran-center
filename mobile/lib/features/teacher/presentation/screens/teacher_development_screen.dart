@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -56,6 +58,11 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
     return AppScaffold(
       title: 'ملفّي وتطوّري',
       actions: <Widget>[
+        IconButton(
+          tooltip: 'ملفّي',
+          icon: const Icon(Icons.badge),
+          onPressed: () => context.go(Routes.teacherProfile),
+        ),
         IconButton(
           tooltip: 'قيد جديد',
           icon: const Icon(Icons.add),
