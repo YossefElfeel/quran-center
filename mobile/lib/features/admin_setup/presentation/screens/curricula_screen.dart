@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -19,11 +20,12 @@ class CurriculaScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<Curriculum>> state = ref.watch(
       curriculaControllerProvider,
     );
     return AppScaffold(
-      title: 'المناهج',
+      title: l.admCurriculaTitle,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showModalBottomSheet<void>(
           context: context,
@@ -31,16 +33,16 @@ class CurriculaScreen extends ConsumerWidget {
           builder: (BuildContext _) => const AddCurriculumSheet(),
         ),
         icon: const Icon(Icons.add),
-        label: const Text('منهج جديد'),
+        label: Text(l.admNewCurriculum),
       ),
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل المناهج',
+          message: l.admCurriculaLoadError,
           onRetry: () => ref.invalidate(curriculaControllerProvider),
         ),
         data: (List<Curriculum> items) => items.isEmpty
-            ? const EmptyState(message: 'مفيش مناهج لسه — ضيف أول منهج')
+            ? EmptyState(message: l.admCurriculaEmpty)
             : ListView.builder(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: items.length,

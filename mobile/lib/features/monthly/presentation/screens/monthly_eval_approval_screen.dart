@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -16,22 +17,20 @@ class MonthlyEvalApprovalScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<PendingMonthlyEval>> state = ref.watch(
       pendingMonthlyEvalsProvider,
     );
     return AppScaffold(
-      title: 'اعتماد التقييم الشهري',
+      title: l.navMonthlyEvalApproval,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الطابور',
+          message: l.monLoadQueueFailed,
           onRetry: () => ref.invalidate(pendingMonthlyEvalsProvider),
         ),
         data: (List<PendingMonthlyEval> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش تقييمات مستنية اعتماد',
-                icon: Icons.done_all,
-              )
+            ? EmptyState(message: l.monNoPendingEvals, icon: Icons.done_all)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
@@ -54,7 +53,7 @@ class MonthlyEvalApprovalScreen extends ConsumerWidget {
                         onPressed: () => ref
                             .read(pendingMonthlyEvalsProvider.notifier)
                             .approve(e.id),
-                        child: const Text('اعتمد'),
+                        child: Text(l.monApprove),
                       ),
                     ),
                   );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -32,6 +33,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<HouseholdMemberRow>> state = ref.watch(
       householdMembersControllerProvider(householdId),
     );
@@ -39,7 +41,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
       title: householdName,
       actions: <Widget>[
         IconButton(
-          tooltip: 'ضيف فرد',
+          tooltip: l.subsAddMember,
           icon: const Icon(Icons.person_add),
           onPressed: () => _add(context),
         ),
@@ -47,15 +49,12 @@ class HouseholdMembersScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الأفراد',
+          message: l.subsMembersLoadError,
           onRetry: () =>
               ref.invalidate(householdMembersControllerProvider(householdId)),
         ),
         data: (List<HouseholdMemberRow> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'لسه مفيش أفراد — ضيف ولي أمر أو طالب',
-                icon: Icons.group_add,
-              )
+            ? EmptyState(message: l.subsNoMembers, icon: Icons.group_add)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,

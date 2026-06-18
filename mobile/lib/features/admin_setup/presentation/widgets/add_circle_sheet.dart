@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -43,13 +44,14 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نحفظ الحلقة — جرّب تاني')),
+        SnackBar(content: Text(AppL10n.of(context).admCircleSaveError)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<TeacherOption>> teachers = ref.watch(
       teacherOptionsProvider,
     );
@@ -65,36 +67,35 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'حلقة جديدة',
+            l.admNewCircle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: 'اسم الحلقة'),
+            decoration: InputDecoration(labelText: l.admCircleNameLabel),
           ),
           const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _maxSize,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'السعة القصوى'),
+            decoration: InputDecoration(labelText: l.admCircleMaxSizeLabel),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Text('المعلّم'),
+            child: Text(l.admTeacherLabel),
           ),
           teachers.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) =>
-                const Text('مش قادرين نحمّل المعلّمين'),
+            error: (Object e, StackTrace _) => Text(l.admTeachersLoadError),
             data: (List<TeacherOption> list) => DropdownButton<String?>(
               isExpanded: true,
               value: _teacherId,
-              hint: const Text('من غير معلّم'),
+              hint: Text(l.admNoTeacher),
               items: <DropdownMenuItem<String?>>[
-                const DropdownMenuItem<String?>(child: Text('من غير معلّم')),
+                DropdownMenuItem<String?>(child: Text(l.admNoTeacher)),
                 ...list.map(
                   (TeacherOption t) => DropdownMenuItem<String?>(
                     value: t.id,
@@ -107,7 +108,7 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنحفظ…' : 'حفظ',
+            label: _saving ? l.admSaving : l.admSave,
             onPressed: _saving ? null : _save,
           ),
         ],

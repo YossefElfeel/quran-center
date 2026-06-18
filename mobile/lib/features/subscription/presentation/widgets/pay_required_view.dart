@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 
@@ -8,23 +9,27 @@ class PayRequiredView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacing.xl),
+    final AppL10n l = AppL10n.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(Icons.lock_outline, size: 72, color: AppColors.accent),
-          SizedBox(height: AppSpacing.lg),
+          const Icon(Icons.lock_outline, size: 72, color: AppColors.accent),
+          const SizedBox(height: AppSpacing.lg),
           Text(
-            'اشتراكك مش نشط',
+            l.subsInactiveTitle,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.md),
           Text(
-            'لازم تدفع اشتراك الشهر كاش في الدار عشان تتابع بيانات ابنك.',
+            l.subsInactiveBody,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 16,
+            ),
           ),
         ],
       ),

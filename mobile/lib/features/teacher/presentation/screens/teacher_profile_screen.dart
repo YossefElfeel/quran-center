@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -40,6 +41,7 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
       .toList();
 
   Future<void> _save() async {
+    final AppL10n l = AppL10n.of(context);
     setState(() => _saving = true);
     try {
       await ref
@@ -52,12 +54,12 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('اتسجّل ملفّك')));
+      ).showSnackBar(SnackBar(content: Text(l.tchProfileSaved)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نحفظ — جرّب تاني')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.tchProfileSaveFailed)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -77,15 +79,16 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
         _prefilled = true;
       }
     });
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<TeacherProfile?> state = ref.watch(
       myTeacherProfileProvider,
     );
     return AppScaffold(
-      title: 'ملفّي',
+      title: l.tchProfileTitle,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الملف',
+          message: l.tchProfileLoadFailed,
           onRetry: () => ref.invalidate(myTeacherProfileProvider),
         ),
         data: (TeacherProfile? _) => ListView(
@@ -95,9 +98,9 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
               controller: _cv,
               minLines: 3,
               maxLines: 6,
-              decoration: const InputDecoration(
-                labelText: 'السيرة الذاتية',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.tchCvLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -105,9 +108,9 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
               controller: _quals,
               minLines: 2,
               maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'المؤهّلات (كل سطر مؤهّل)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.tchQualificationsLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -115,14 +118,14 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
               controller: _certs,
               minLines: 2,
               maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'الشهادات/الإجازات (كل سطر بند)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.tchCertificatesLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: _saving ? 'بنحفظ…' : 'حفظ الملف',
+              label: _saving ? l.tchSaving : l.tchSaveProfile,
               icon: Icons.save,
               onPressed: _saving ? null : _save,
             ),

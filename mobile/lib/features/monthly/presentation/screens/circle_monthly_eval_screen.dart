@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -26,6 +27,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
     WidgetRef ref,
     MonthlyEvalStudent s,
   ) async {
+    final AppL10n l = AppL10n.of(context);
     final TextEditingController summary = TextEditingController(
       text: s.summary ?? '',
     );
@@ -35,7 +37,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: Text('تقييم ${s.studentName}'),
+        title: Text(l.monEvalStudentTitle(s.studentName)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -43,25 +45,27 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
               controller: summary,
               minLines: 2,
               maxLines: 4,
-              decoration: const InputDecoration(labelText: 'ملخّص الأداء'),
+              decoration: InputDecoration(
+                labelText: l.monPerformanceSummaryLabel,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: behavior,
               minLines: 1,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'السلوك'),
+              decoration: InputDecoration(labelText: l.monBehaviorLabel),
             ),
           ],
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('إرسال للاعتماد'),
+            child: Text(l.monSubmitForApproval),
           ),
         ],
       ),
@@ -78,6 +82,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
   }
 
   Future<void> _pickTop(BuildContext context, WidgetRef ref) async {
+    final AppL10n l = AppL10n.of(context);
     final List<MonthlyEvalStudent> students =
         ref.read(circleMonthlyEvalsProvider(circleId)).asData?.value ??
         <MonthlyEvalStudent>[];
@@ -88,12 +93,15 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
         child: ListView(
           shrinkWrap: true,
           children: <Widget>[
-            const Padding(
-              padding: EdgeInsets.all(AppSpacing.md),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Text(
-                'اختار متفوّق الشهر',
+                l.monPickTopTitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             for (final MonthlyEvalStudent s in students)
@@ -115,7 +123,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${s.studentName} متفوّق الشهر 🏆'),
+                        content: Text(l.monTopStudentSnack(s.studentName)),
                       ),
                     );
                   }
@@ -129,14 +137,15 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<MonthlyEvalStudent>> state = ref.watch(
       circleMonthlyEvalsProvider(circleId),
     );
     return AppScaffold(
-      title: 'تقييم شهري — $circleName',
+      title: l.monEvalScreenTitle(circleName),
       actions: <Widget>[
         IconButton(
-          tooltip: 'متفوّق الشهر',
+          tooltip: l.monTopStudentTooltip,
           icon: const Icon(Icons.emoji_events),
           onPressed: () => _pickTop(context, ref),
         ),
@@ -144,12 +153,12 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الطلبة',
+          message: l.monLoadStudentsFailed,
           onRetry: () => ref.invalidate(circleMonthlyEvalsProvider(circleId)),
         ),
         data: (List<MonthlyEvalStudent> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش طلبة في الحلقة',
+            ? EmptyState(
+                message: l.monNoStudentsInCircle,
                 icon: Icons.groups_outlined,
               )
             : ListView.builder(
@@ -158,10 +167,10 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                 itemBuilder: (BuildContext context, int i) {
                   final MonthlyEvalStudent s = items[i];
                   final (String label, Color color) = s.isApproved
-                      ? ('معتمد', AppColors.success)
+                      ? (l.monStatusApproved, AppColors.success)
                       : s.isSubmitted
-                      ? ('مُرسل', AppColors.accent)
-                      : ('لسه', AppColors.textSecondary);
+                      ? (l.monStatusSubmitted, AppColors.accent)
+                      : (l.monStatusPending, AppColors.textSecondary);
                   return Card(
                     margin: const EdgeInsets.symmetric(
                       vertical: AppSpacing.xs,
@@ -180,7 +189,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                         onPressed: s.isApproved
                             ? null
                             : () => _edit(context, ref, s),
-                        child: Text(s.isSubmitted ? 'تعديل' : 'تقييم'),
+                        child: Text(s.isSubmitted ? l.monEdit : l.monEvaluate),
                       ),
                     ),
                   );
