@@ -19,6 +19,7 @@ import '../../features/parent_portal/presentation/screens/child_card_screen.dart
 import '../../features/parent_portal/presentation/screens/children_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
+import '../../features/subscription/presentation/screens/household_members_screen.dart';
 import '../../features/subscription/presentation/screens/subscriptions_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/attention_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
@@ -100,6 +101,14 @@ GoRouter appRouter(Ref ref) {
         path: Routes.adminGuardians,
         builder: (BuildContext context, GoRouterState state) =>
             const GuardianLinksScreen(),
+      ),
+      GoRoute(
+        path: Routes.householdMembersPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            HouseholdMembersScreen(
+              householdId: state.pathParameters['householdId']!,
+              householdName: state.uri.queryParameters['name'] ?? 'الأسرة',
+            ),
       ),
       GoRoute(
         path: Routes.teacherCircles,

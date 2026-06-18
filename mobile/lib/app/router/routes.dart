@@ -9,6 +9,10 @@ abstract final class Routes {
   static const String adminWaiting = '/admin/waiting';
   static const String adminSubscriptions = '/admin/subscriptions';
   static const String adminGuardians = '/admin/guardians';
+  static const String householdMembersPattern =
+      '/admin/household/:householdId/members';
+  static String householdMembers(String householdId, String name) =>
+      '/admin/household/$householdId/members?name=${Uri.encodeComponent(name)}';
 
   // مستويات منهج
   static const String levelsPattern = '/admin/curricula/:curriculumId/levels';
