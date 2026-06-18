@@ -53,14 +53,15 @@ integration/RLS كاملة شغّالة قبل التطبيق عشان مايك�
 
 ---
 
-## 2) Edge Functions للنشر (source جاهز، النشر بتأكيد المستخدم)
-المفتاح اتدوّر (1-أ) فالنشر مفتوح. بعد ضبط الـ secrets (`supabase secrets set ...`):
-- `invite-user` — دعوة مستخدم (أدمن) → بيعمل auth user + person + role. **حسّاس
-  (auth): النشر/أول دعوة حقيقية بتأكيد المستخدم.**
-- `upload-media` — رفع وسائط بفحص الموافقة. **TODO قبل الإنتاج: علامة مائية +
-  ضغط فيديو سيرفر-سايد.**
-- `submit-public-application` — تقديم عام للمسابقة (consent + dedupe موبايل).
-- نشر: `supabase functions deploy <name>`.
+## 2) Edge Functions
+- ✅ **`invite-user`** — منشورة (ACTIVE, verify_jwt, 2026-06-18). دعوة أدمن →
+  auth user + person + role. فاضل: **شاشة الدعوة في التطبيق** (M3 UI) + أول دعوة
+  حقيقية بإيد الأدمن.
+- ✅ **`submit-public-application`** — منشورة (ACTIVE, verify_jwt). تقديم المسابقة
+  العام (consent + dedupe موبايل). فاضل: rate-limit/OTP + الصفحة العامة (M7).
+- ⏸️ **`upload-media`** — مؤجّلة: العلامة المائية/ضغط الفيديو سيرفر-سايد مش عملي في
+  Deno Edge (مفيش ffmpeg). يتحسم (علامة صور بس / خدمة ترميز / overlay كلاينت) قبل
+  تفعيل رفع الفيديو. معرض الوسائط (Phase 7a) متوقّف عليها.
 
 ## 3) Cron (pg_cron) — ✅ مفعّل (1.6.4)
 **اتعمل واتحقّق منه (DB smoke):**
