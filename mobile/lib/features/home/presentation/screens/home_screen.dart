@@ -104,6 +104,16 @@ class _HomeBody extends StatelessWidget {
               onPressed: () => context.go(Routes.teacherCircles),
             ),
           ],
+          if (roles.contains('supervisor') ||
+              roles.contains('admin') ||
+              roles.contains('super_admin')) ...<Widget>[
+            const SizedBox(height: AppSpacing.xl),
+            AppButton(
+              label: 'تقييم الحلقات',
+              icon: Icons.fact_check,
+              onPressed: () => context.go(Routes.supervisorEval),
+            ),
+          ],
         ],
       ),
     );

@@ -27,4 +27,11 @@ abstract final class Routes {
   static const String sessionPattern = '/teacher/session/:circleId';
   static String session(String circleId, String name) =>
       '/teacher/session/$circleId?name=${Uri.encodeComponent(name)}';
+
+  // المشرف: تقييم الحلقات (٣×١٠)
+  static const String supervisorEval = '/supervisor/eval';
+  static const String supervisorCircleEvalPattern =
+      '/supervisor/eval/:circleId';
+  static String supervisorCircleEval(String circleId, String name) =>
+      '/supervisor/eval/$circleId?name=${Uri.encodeComponent(name)}';
 }

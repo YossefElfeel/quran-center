@@ -14,6 +14,8 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
+import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
+import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -86,6 +88,19 @@ GoRouter appRouter(Ref ref) {
         path: Routes.sessionPattern,
         builder: (BuildContext context, GoRouterState state) =>
             TodaySessionScreen(
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.supervisorEval,
+        builder: (BuildContext context, GoRouterState state) =>
+            const EvalCirclesScreen(),
+      ),
+      GoRoute(
+        path: Routes.supervisorCircleEvalPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CircleEvalScreen(
               circleId: state.pathParameters['circleId']!,
               circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
             ),
