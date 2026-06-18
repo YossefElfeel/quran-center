@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
 import '../../admin_setup/domain/circle.dart';
-import '../../progress_engine/domain/progress_engine.dart';
 import '../domain/circle_pass_rate.dart';
 import '../domain/eval_criterion.dart';
 import '../domain/eval_student.dart';
@@ -78,7 +77,8 @@ class SupervisorEvalRepository {
   }
 
   /// الطلبة المتعثّرين: عليهم دَيْن وعدد محاولاتهم وصل حد التعثّر أو أكتر.
-  Future<List<StrugglingStudent>> fetchStruggling() async {
+  /// [threshold] بييجي من إعدادات النظام (struggle_failed_attempts).
+  Future<List<StrugglingStudent>> fetchStruggling(int threshold) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('portion_ledger_entry')
         .select(
@@ -86,7 +86,7 @@ class SupervisorEvalRepository {
           'student:student_person_id(full_name), portion:portion_id(name)',
         )
         .eq('state', 'failed_retry')
-        .gte('attempts_count', ProgressEngine.defaultStruggleThreshold)
+        .gte('attempts_count', threshold)
         .order('attempts_count', ascending: false);
     return rows.map(StrugglingStudent.fromMap).toList();
   }

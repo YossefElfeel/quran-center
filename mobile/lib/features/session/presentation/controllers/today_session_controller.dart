@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/settings/settings_repository.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../../excuse/data/excuse_repository.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
@@ -162,9 +163,10 @@ class TodaySessionController extends _$TodaySessionController {
         ? current.requiredRevision
         : current.currentPortion;
     if (portion == null) return;
+    final AppSettings settings = await ref.read(appSettingsProvider.future);
     final bool passed = ProgressEngine.isPassing(
       score: score,
-      threshold: ProgressEngine.defaultPassThreshold,
+      threshold: settings.passThreshold,
     );
     final String? teacherId = await ref.read(currentPersonIdProvider.future);
     final LedgerState next = await ref

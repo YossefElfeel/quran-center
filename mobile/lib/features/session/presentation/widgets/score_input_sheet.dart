@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/settings/settings_repository.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../progress_engine/domain/progress_engine.dart';
@@ -61,9 +62,11 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final int threshold =
+        ref.watch(appSettingsProvider).asData?.value.passThreshold ??
+        ProgressEngine.defaultPassThreshold;
     final int? score = _score;
-    final bool passed =
-        score != null && score >= ProgressEngine.defaultPassThreshold;
+    final bool passed = score != null && score >= threshold;
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -103,7 +106,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
           const SizedBox(height: AppSpacing.lg),
           ScorePad(
             selected: _score,
-            threshold: ProgressEngine.defaultPassThreshold,
+            threshold: threshold,
             onSelected: (int v) => setState(() => _score = v),
           ),
           const SizedBox(height: AppSpacing.lg),
