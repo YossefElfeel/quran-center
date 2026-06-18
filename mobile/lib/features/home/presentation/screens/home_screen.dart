@@ -113,6 +113,12 @@ class _HomeBody extends StatelessWidget {
               icon: Icons.fact_check,
               onPressed: () => context.go(Routes.supervisorEval),
             ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: 'أعذار الغياب',
+              icon: Icons.event_busy,
+              onPressed: () => context.go(Routes.supervisorExcuses),
+            ),
           ],
         ],
       ),

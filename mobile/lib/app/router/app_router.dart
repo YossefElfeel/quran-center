@@ -10,6 +10,7 @@ import '../../features/admin_setup/presentation/screens/curricula_screen.dart';
 import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
+import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
@@ -96,6 +97,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.supervisorEval,
         builder: (BuildContext context, GoRouterState state) =>
             const EvalCirclesScreen(),
+      ),
+      GoRoute(
+        path: Routes.supervisorExcuses,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ExcuseQueueScreen(),
       ),
       GoRoute(
         path: Routes.supervisorCircleEvalPattern,

@@ -34,4 +34,7 @@ abstract final class Routes {
       '/supervisor/eval/:circleId';
   static String supervisorCircleEval(String circleId, String name) =>
       '/supervisor/eval/$circleId?name=${Uri.encodeComponent(name)}';
+
+  // المشرف: طابور أعذار الغياب
+  static const String supervisorExcuses = '/supervisor/excuses';
 }

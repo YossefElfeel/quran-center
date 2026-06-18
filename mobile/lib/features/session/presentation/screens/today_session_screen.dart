@@ -98,6 +98,19 @@ class _SessionBody extends ConsumerWidget {
     }
   }
 
+  Future<void> _requestExcuse(
+    BuildContext context,
+    TodaySessionController notifier,
+    String enrollmentId,
+  ) async {
+    await notifier.requestExcuse(enrollmentId);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('اتبعت طلب العذر للمشرف')));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (session.roster.isEmpty) {
@@ -148,6 +161,9 @@ class _SessionBody extends ConsumerWidget {
                 onAttendanceChanged: (AttendanceStatus s) =>
                     notifier.setAttendance(e.enrollmentId, s),
                 onTasmee: () => _openTasmee(context, e, hasRevision),
+                onRequestExcuse: e.attendance == AttendanceStatus.absent
+                    ? () => _requestExcuse(context, notifier, e.enrollmentId)
+                    : null,
               );
             },
           ),
