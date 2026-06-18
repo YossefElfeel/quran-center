@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../../admin_setup/domain/circle.dart';
 import '../../progress_engine/domain/progress_engine.dart';
+import '../domain/circle_pass_rate.dart';
 import '../domain/eval_criterion.dart';
 import '../domain/eval_student.dart';
 import '../domain/struggling_student.dart';
@@ -88,6 +89,15 @@ class SupervisorEvalRepository {
         .gte('attempts_count', ProgressEngine.defaultStruggleThreshold)
         .order('attempts_count', ascending: false);
     return rows.map(StrugglingStudent.fromMap).toList();
+  }
+
+  /// نِسَب نجاح كل حلقة على مقطعها الحالي (عبر دالة السيرفر التجميعية).
+  Future<List<CirclePassRate>> fetchCirclePassRates() async {
+    final dynamic res = await _client.rpc('circle_pass_rates');
+    final List<dynamic> rows = res as List<dynamic>;
+    return rows
+        .map((dynamic r) => CirclePassRate.fromMap(r as Map<String, dynamic>))
+        .toList();
   }
 }
 
