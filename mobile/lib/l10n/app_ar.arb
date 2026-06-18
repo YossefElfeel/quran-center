@@ -25,5 +25,14 @@
   "roleTeacher": "معلّم",
   "roleSupervisor": "مشرف",
   "roleAdmin": "أدمن",
-  "roleParent": "ولي أمر"
+  "roleParent": "ولي أمر",
+
+  "emailLabel": "الإيميل",
+  "@emailLabel": { "description": "حقل الإيميل في الدخول" },
+  "emailRequired": "اكتب الإيميل",
+  "passwordLabel": "الباسورد",
+  "passwordRequired": "اكتب الباسورد",
+  "signIn": "دخول",
+  "signingIn": "بنحاول…",
+  "loginFailed": "فشل الدخول — اتأكد من الإيميل والباسورد"
 }
