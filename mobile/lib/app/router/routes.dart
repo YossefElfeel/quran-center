@@ -8,6 +8,7 @@ abstract final class Routes {
   static const String adminCurricula = '/admin/curricula';
   static const String adminWaiting = '/admin/waiting';
   static const String adminSubscriptions = '/admin/subscriptions';
+  static const String adminGuardians = '/admin/guardians';
 
   // مستويات منهج
   static const String levelsPattern = '/admin/curricula/:curriculumId/levels';

@@ -11,6 +11,7 @@ import '../../features/admin_setup/presentation/screens/levels_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
+import '../../features/family/presentation/screens/guardian_links_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
@@ -94,6 +95,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.adminSubscriptions,
         builder: (BuildContext context, GoRouterState state) =>
             const SubscriptionsScreen(),
+      ),
+      GoRoute(
+        path: Routes.adminGuardians,
+        builder: (BuildContext context, GoRouterState state) =>
+            const GuardianLinksScreen(),
       ),
       GoRoute(
         path: Routes.teacherCircles,

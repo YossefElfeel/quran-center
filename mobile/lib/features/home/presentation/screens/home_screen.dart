@@ -104,6 +104,12 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.payments,
                 onPressed: () => context.go(Routes.adminSubscriptions),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'ربط أولياء الأمور',
+                icon: Icons.link,
+                onPressed: () => context.go(Routes.adminGuardians),
+              ),
             ],
             if (roles.contains('teacher')) ...<Widget>[
               const SizedBox(height: AppSpacing.xl),
