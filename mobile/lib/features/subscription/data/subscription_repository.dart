@@ -53,6 +53,12 @@ class SubscriptionRepository {
       'recorded_by': ?recordedBy,
     });
   }
+
+  /// هل اشتراك المستخدم الحالي (ولي الأمر) نشط؟ (لبوابة الوصول).
+  Future<bool> mySubscriptionActive() async {
+    final dynamic res = await _client.rpc('my_subscription_active');
+    return (res as bool?) ?? false;
+  }
 }
 
 @riverpod

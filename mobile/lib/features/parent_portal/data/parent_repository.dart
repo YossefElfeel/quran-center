@@ -45,10 +45,12 @@ class ParentRepository {
       return const ChildCard(present: 0, absent: 0, excused: 0, late: 0);
     }
 
+    // آخر تسميع حفظ (مش مراجعة) — ده مؤشّر التقدّم لولي الأمر.
     final List<Map<String, dynamic>> tasmee = await _client
         .from('daily_tasmee')
         .select('score, passed, portion:portion_id(name)')
         .eq('enrollment_id', enrollmentId)
+        .eq('kind', 'memorization')
         .order('attempt_date', ascending: false)
         .order('created_at', ascending: false)
         .limit(1);
