@@ -68,6 +68,9 @@ abstract final class Routes {
   static const String complaintsMine = '/complaints';
   static const String complaintsInbox = '/admin/complaints';
 
+  // الكورسات المجانية
+  static const String courses = '/courses';
+
   // المسابقات
   static const String competitions = '/competitions';
   static const String competitionDetailPattern = '/competitions/:id';

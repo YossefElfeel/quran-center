@@ -184,6 +184,12 @@ class _HomeBody extends StatelessWidget {
                 onPressed: () => context.go(Routes.competitions),
               ),
             ],
+            const SizedBox(height: AppSpacing.xl),
+            AppButton(
+              label: 'الكورسات',
+              icon: Icons.ondemand_video,
+              onPressed: () => context.go(Routes.courses),
+            ),
           ],
         ),
       ),

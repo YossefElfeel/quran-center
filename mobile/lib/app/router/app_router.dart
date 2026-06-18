@@ -12,6 +12,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/competition/presentation/screens/competition_detail_screen.dart';
 import '../../features/competition/presentation/screens/competition_results_screen.dart';
 import '../../features/competition/presentation/screens/competitions_screen.dart';
+import '../../features/courses/presentation/screens/courses_screen.dart';
 import '../../features/documents/presentation/screens/certificate_preview_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
@@ -179,6 +180,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.complaintsInbox,
         builder: (BuildContext context, GoRouterState state) =>
             const ComplaintInboxScreen(),
+      ),
+      GoRoute(
+        path: Routes.courses,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CoursesScreen(),
       ),
       GoRoute(
         path: Routes.competitions,
