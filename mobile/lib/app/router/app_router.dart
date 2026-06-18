@@ -26,6 +26,8 @@ import '../../features/subscription/presentation/screens/subscriptions_screen.da
 import '../../features/supervisor_eval/presentation/screens/attention_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
+import '../../features/teacher/presentation/screens/development_approval_screen.dart';
+import '../../features/teacher/presentation/screens/teacher_development_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -147,6 +149,16 @@ GoRouter appRouter(Ref ref) {
         path: Routes.supervisorAttention,
         builder: (BuildContext context, GoRouterState state) =>
             const AttentionScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherDevelopment,
+        builder: (BuildContext context, GoRouterState state) =>
+            const TeacherDevelopmentScreen(),
+      ),
+      GoRoute(
+        path: Routes.supervisorDevApproval,
+        builder: (BuildContext context, GoRouterState state) =>
+            const DevelopmentApprovalScreen(),
       ),
       GoRoute(
         path: Routes.parentChildren,

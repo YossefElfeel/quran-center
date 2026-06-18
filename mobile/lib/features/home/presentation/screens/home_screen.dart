@@ -118,6 +118,12 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.menu_book,
                 onPressed: () => context.go(Routes.teacherCircles),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'ملفّي وتطوّري',
+                icon: Icons.trending_up,
+                onPressed: () => context.go(Routes.teacherDevelopment),
+              ),
             ],
             if (roles.contains('parent')) ...<Widget>[
               const SizedBox(height: AppSpacing.xl),
@@ -147,6 +153,12 @@ class _HomeBody extends StatelessWidget {
                 label: 'محتاج انتباه',
                 icon: Icons.warning_amber,
                 onPressed: () => context.go(Routes.supervisorAttention),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'تطوّر المعلّمين',
+                icon: Icons.school,
+                onPressed: () => context.go(Routes.supervisorDevApproval),
               ),
             ],
           ],

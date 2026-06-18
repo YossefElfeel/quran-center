@@ -41,6 +41,10 @@ abstract final class Routes {
   static String monthlyPlan(String circleId, String name) =>
       '/teacher/circle/$circleId/monthly-plan?name=${Uri.encodeComponent(name)}';
 
+  // المعلّم: ملفّه وتطوّره — والمشرف: اعتماد التطوّر
+  static const String teacherDevelopment = '/teacher/development';
+  static const String supervisorDevApproval = '/supervisor/development';
+
   // المشرف: تقييم الحلقات (٣×١٠)
   static const String supervisorEval = '/supervisor/eval';
   static const String supervisorCircleEvalPattern =
