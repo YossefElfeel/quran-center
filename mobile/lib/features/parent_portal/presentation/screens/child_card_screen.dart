@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../documents/domain/progress_card_pdf.dart';
 import '../../../feedback/presentation/widgets/rate_teacher_sheet.dart';
 import '../../domain/child_card.dart';
 import '../controllers/child_card_controller.dart';
@@ -26,6 +30,28 @@ class ChildCardScreen extends ConsumerWidget {
   final String studentPersonId;
   final String childName;
 
+  Future<void> _printProgressCard(BuildContext context, WidgetRef ref) async {
+    final ChildCard? card = ref
+        .read(childCardProvider(studentPersonId))
+        .asData
+        ?.value;
+    if (card == null) return;
+    final ByteData fontData = await rootBundle.load('assets/fonts/Cairo.ttf');
+    final LatestTasmee? lt = card.latestTasmee;
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat _) => buildProgressCardPdf(
+        studentName: childName,
+        circleName: card.circleName ?? 'الحلقة',
+        present: card.present,
+        absent: card.absent,
+        excused: card.excused,
+        late: card.late,
+        latestScore: lt != null ? '${arabicNumber(lt.score)}/١٠' : null,
+        fontData: fontData,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<ChildCard> state = ref.watch(
@@ -34,6 +60,11 @@ class ChildCardScreen extends ConsumerWidget {
     return AppScaffold(
       title: childName,
       actions: <Widget>[
+        IconButton(
+          tooltip: 'بطاقة تقدّم (PDF)',
+          icon: const Icon(Icons.print),
+          onPressed: () => _printProgressCard(context, ref),
+        ),
         IconButton(
           tooltip: 'قيّم المحفّظ',
           icon: const Icon(Icons.star_rate),

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 
+import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../documents/domain/attendance_sheet_pdf.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
 import '../controllers/today_session_controller.dart';
@@ -32,6 +37,30 @@ class TodaySessionScreen extends ConsumerWidget {
   final String circleId;
   final String circleName;
 
+  Future<void> _printAttendance(BuildContext context, WidgetRef ref) async {
+    final TodaySession? s = ref
+        .read(todaySessionControllerProvider(circleId))
+        .asData
+        ?.value;
+    if (s == null || s.roster.isEmpty) return;
+    final ByteData fontData = await rootBundle.load('assets/fonts/Cairo.ttf');
+    final DateTime now = DateTime.now();
+    final String date =
+        '${arabicNumber(now.day)}/${arabicNumber(now.month)}/'
+        '${arabicNumber(now.year)}';
+    final List<String> names = s.roster
+        .map((RosterEntry e) => e.studentName)
+        .toList();
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat _) => buildAttendanceSheetPdf(
+        circleName: circleName,
+        dateLabel: date,
+        studentNames: names,
+        fontData: fontData,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<TodaySession> state = ref.watch(
@@ -39,6 +68,13 @@ class TodaySessionScreen extends ConsumerWidget {
     );
     return AppScaffold(
       title: circleName,
+      actions: <Widget>[
+        IconButton(
+          tooltip: 'كشف حضور (PDF)',
+          icon: const Icon(Icons.print),
+          onPressed: () => _printAttendance(context, ref),
+        ),
+      ],
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
