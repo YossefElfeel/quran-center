@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -15,14 +16,15 @@ class NotificationListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<AppNotification>> state = ref.watch(
       notificationsControllerProvider,
     );
     return AppScaffold(
-      title: 'الإشعارات',
+      title: l.notificationsTitle,
       actions: <Widget>[
         IconButton(
-          tooltip: 'علّم الكل مقروء',
+          tooltip: l.markAllRead,
           icon: const Icon(Icons.done_all),
           onPressed: () =>
               ref.read(notificationsControllerProvider.notifier).markAllRead(),
@@ -31,12 +33,12 @@ class NotificationListScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الإشعارات',
+          message: l.notificationsLoadError,
           onRetry: () => ref.invalidate(notificationsControllerProvider),
         ),
         data: (List<AppNotification> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش إشعارات',
+            ? EmptyState(
+                message: l.noNotifications,
                 icon: Icons.notifications_none,
               )
             : ListView.builder(

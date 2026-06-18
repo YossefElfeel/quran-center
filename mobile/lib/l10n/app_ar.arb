@@ -60,5 +60,19 @@
   "navTeacherRatings": "تقييمات المحفّظين",
   "navCompetitions": "المسابقات",
   "navHonorBoard": "لوحة الشرف",
-  "navCourses": "الكورسات"
+  "navCourses": "الكورسات",
+
+  "notificationsTitle": "الإشعارات",
+  "markAllRead": "علّم الكل مقروء",
+  "notificationsLoadError": "مش قادرين نحمّل الإشعارات",
+  "noNotifications": "مفيش إشعارات",
+  "coursesLoadError": "مش قادرين نحمّل الكورسات",
+  "noCourses": "لسه مفيش كورسات",
+  "courseNew": "كورس جديد",
+  "courseTitleLabel": "العنوان",
+  "courseUrlLabel": "رابط الفيديو",
+  "courseDescLabel": "وصف (اختياري)",
+  "videoOpenError": "مش قادرين نفتح الفيديو",
+  "cancel": "إلغاء",
+  "add": "إضافة"
 }
