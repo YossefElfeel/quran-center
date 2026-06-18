@@ -1,19 +1,20 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../../progress_engine/domain/progress_engine.dart';
+import '../../data/current_cycle.dart';
 import '../../data/session_repository.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/portion.dart';
 import '../../domain/roster_entry.dart';
+import '../../domain/tasmee_kind.dart';
 
 part 'today_session_controller.g.dart';
 
-/// "حصة النهارده" لحلقة: تحميل الحصة المفتوحة + المقطع الحالي + الروستر
-/// + الحضور + الدَيْن، وفتح/قفل الحصة وتعديل الحضور وتسجيل التسميع.
+/// "حصة النهارده" لحلقة: تحميل الحصة + المقطع الحالي + المقام المجمّد
+/// + المراجعة المطلوبة + الروستر + الدَيْن، مع فتح/قفل/حضور/تسميع/انتقال.
 @riverpod
 class TodaySessionController extends _$TodaySessionController {
   @override
@@ -23,10 +24,14 @@ class TodaySessionController extends _$TodaySessionController {
     final List<Map<String, dynamic>> rosterRows = await repo.fetchRoster(
       circleId,
     );
-    final Portion? portion = await repo.currentPortion(circleId);
+    final CurrentCycle? cycle = await repo.currentCycle(circleId);
+    final Portion? portion = cycle?.portion;
     final Map<String, String> att = sessionId != null
         ? await repo.fetchAttendance(sessionId)
         : const <String, String>{};
+    final Portion? requiredRevision = sessionId != null
+        ? await repo.fetchRequiredRevision(circleId)
+        : null;
 
     final List<String> studentIds = <String>[
       for (final Map<String, dynamic> r in rosterRows)
@@ -54,6 +59,8 @@ class TodaySessionController extends _$TodaySessionController {
       sessionId: sessionId,
       roster: roster,
       currentPortion: portion,
+      activeAtOpen: cycle?.activeAtOpen ?? 0,
+      requiredRevision: requiredRevision,
     );
   }
 
@@ -88,7 +95,7 @@ class TodaySessionController extends _$TodaySessionController {
     state = AsyncData<TodaySession>(current.copyWith(roster: roster));
   }
 
-  /// تحديد مقطع الحفظ الحالي للحلقة (ينشئ مقطع + يفتح دورة).
+  /// تحديد أول مقطع حفظ للحلقة (ينشئ مقطع + يفتح دورة + يجمّد المقام).
   Future<void> setPortion({
     required String name,
     required int surahStart,
@@ -110,15 +117,50 @@ class TodaySessionController extends _$TodaySessionController {
     await future;
   }
 
-  /// تسجيل تسميع لطالب على المقطع الحالي (درجة /١٠).
+  /// نقل المجموعة لمقطع جديد (بعد تأكيد المعلّم) — يقفل الدورة الحالية ويفتح جديدة.
+  Future<void> advance({
+    required String name,
+    required int surahStart,
+    required int ayahStart,
+    required int surahEnd,
+    required int ayahEnd,
+  }) async {
+    final TodaySession? current = state.asData?.value;
+    if (current == null) return;
+    final double passRate = ProgressEngine.passRateForCycle(
+      activeAtPortionOpen: current.activeAtOpen,
+      passedCount: current.passedCount,
+    );
+    await ref
+        .read(sessionRepositoryProvider)
+        .advanceGroup(
+          circleId: circleId,
+          passRate: passRate,
+          name: name,
+          surahStart: surahStart,
+          ayahStart: ayahStart,
+          surahEnd: surahEnd,
+          ayahEnd: ayahEnd,
+        );
+    ref.invalidateSelf();
+    await future;
+  }
+
+  /// تسجيل تسميع لطالب (حفظ على المقطع الحالي أو مراجعة على مقطع المراجعة).
+  /// [idempotencyKey] بييجي من الشيت (نفس المحاولة = نفس المفتاح عند الإعادة).
   Future<void> recordTasmee({
     required String enrollmentId,
     required String studentPersonId,
     required int score,
+    required String idempotencyKey,
+    TasmeeKind kind = TasmeeKind.memorization,
   }) async {
     final TodaySession? current = state.asData?.value;
-    final Portion? portion = current?.currentPortion;
-    if (current == null || portion == null) return;
+    if (current == null) return;
+    final Portion? portion = kind == TasmeeKind.revision
+        ? current.requiredRevision
+        : current.currentPortion;
+    if (portion == null) return;
     final bool passed = ProgressEngine.isPassing(
       score: score,
       threshold: ProgressEngine.defaultPassThreshold,
@@ -132,24 +174,49 @@ class TodaySessionController extends _$TodaySessionController {
           portionId: portion.id,
           score: score,
           passed: passed,
-          idempotencyKey: const Uuid().v4(),
+          idempotencyKey: idempotencyKey,
+          kind: kind,
           teacherId: teacherId,
           sessionId: current.sessionId,
         );
-    final List<RosterEntry> roster = current.roster
-        .map(
-          (RosterEntry e) => e.studentPersonId == studentPersonId
-              ? e.copyWith(ledgerState: next)
-              : e,
-        )
-        .toList();
-    state = AsyncData<TodaySession>(current.copyWith(roster: roster));
+    // المراجعة مابتغيّرش الدَيْن → مفيش تحديث متفائل للروستر.
+    if (kind == TasmeeKind.memorization) {
+      final List<RosterEntry> roster = current.roster
+          .map(
+            (RosterEntry e) => e.studentPersonId == studentPersonId
+                ? e.copyWith(ledgerState: next)
+                : e,
+          )
+          .toList();
+      state = AsyncData<TodaySession>(current.copyWith(roster: roster));
+    }
   }
 
-  Future<void> close() async {
-    final String? sessionId = state.asData?.value.sessionId;
-    if (sessionId == null) return;
-    await ref.read(sessionRepositoryProvider).closeSession(sessionId);
+  /// قفل الحصة بخطة المراجعة الجاية + تسجيل حصيلة الحفظ النهارده (المقطع الحالي).
+  Future<void> closeWithPlan({
+    String? revisionName,
+    int? revSurahStart,
+    int? revAyahStart,
+    int? revSurahEnd,
+    int? revAyahEnd,
+  }) async {
+    final TodaySession? current = state.asData?.value;
+    final String? sessionId = current?.sessionId;
+    if (current == null || sessionId == null) return;
+    final String? teacherId = await ref.read(currentPersonIdProvider.future);
+    await ref
+        .read(sessionRepositoryProvider)
+        .closeSessionWithPlan(
+          circleId: circleId,
+          sessionId: sessionId,
+          revisionName: revisionName,
+          revSurahStart: revSurahStart,
+          revAyahStart: revAyahStart,
+          revSurahEnd: revSurahEnd,
+          revAyahEnd: revAyahEnd,
+          memorizedTodayPortionId: current.currentPortion?.id,
+          teacherId: teacherId,
+        );
     ref.invalidateSelf();
     await future;
   }

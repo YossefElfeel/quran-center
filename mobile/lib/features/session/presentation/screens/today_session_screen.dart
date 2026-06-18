@@ -10,13 +10,17 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
 import '../controllers/today_session_controller.dart';
+import '../widgets/advance_confirmation_dialog.dart';
+import '../widgets/advance_suggestion_banner.dart';
+import '../widgets/close_session_sheet.dart';
 import '../widgets/current_portion_card.dart';
 import '../widgets/debt_strip.dart';
+import '../widgets/required_revision_banner.dart';
 import '../widgets/score_input_sheet.dart';
 import '../widgets/set_portion_sheet.dart';
 import '../widgets/student_tile.dart';
 
-/// حصة النهارده — فتح الحصة + المقطع الحالي + الحضور + التسميع + القفل.
+/// حصة النهارده — فتح/مقطع/حضور/تسميع/مراجعة/اقتراح انتقال/قفل بخطة.
 class TodaySessionScreen extends ConsumerWidget {
   const TodaySessionScreen({
     required this.circleId,
@@ -54,21 +58,44 @@ class _SessionBody extends ConsumerWidget {
   final String circleId;
   final TodaySession session;
 
-  void _openSetPortion(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext _) => SetPortionSheet(circleId: circleId),
-    );
-  }
-
-  void _openTasmee(BuildContext context, RosterEntry entry) {
+  void _openSetPortion(BuildContext context, {bool advanceMode = false}) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) =>
-          ScoreInputSheet(circleId: circleId, entry: entry),
+          SetPortionSheet(circleId: circleId, advanceMode: advanceMode),
     );
+  }
+
+  void _openTasmee(BuildContext context, RosterEntry entry, bool hasRevision) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext _) => ScoreInputSheet(
+        circleId: circleId,
+        entry: entry,
+        hasRevision: hasRevision,
+      ),
+    );
+  }
+
+  void _openClose(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext _) => CloseSessionSheet(circleId: circleId),
+    );
+  }
+
+  Future<void> _confirmAdvance(BuildContext context) async {
+    final bool? ok = await showAdvanceConfirmationDialog(
+      context,
+      passedCount: session.passedCount,
+      activeAtOpen: session.activeAtOpen,
+    );
+    if (ok == true && context.mounted) {
+      _openSetPortion(context, advanceMode: true);
+    }
   }
 
   @override
@@ -87,17 +114,26 @@ class _SessionBody extends ConsumerWidget {
       return _ClosedView(onOpen: notifier.openSession);
     }
 
+    final bool hasRevision = session.requiredRevision != null;
     return Column(
       children: <Widget>[
         CurrentPortionCard(
           portion: session.currentPortion,
           onSetPortion: () => _openSetPortion(context),
         ),
+        if (hasRevision)
+          RequiredRevisionBanner(revision: session.requiredRevision!),
         if (session.hasPortion)
           DebtStrip(
             passedCount: session.passedCount,
             debtCount: session.debtCount,
             total: session.roster.length,
+          ),
+        if (session.shouldAdvance)
+          AdvanceSuggestionBanner(
+            passedCount: session.passedCount,
+            activeAtOpen: session.activeAtOpen,
+            onAdvance: () => _confirmAdvance(context),
           ),
         Expanded(
           child: ListView.builder(
@@ -111,7 +147,7 @@ class _SessionBody extends ConsumerWidget {
                 canRecordTasmee: session.hasPortion,
                 onAttendanceChanged: (AttendanceStatus s) =>
                     notifier.setAttendance(e.enrollmentId, s),
-                onTasmee: () => _openTasmee(context, e),
+                onTasmee: () => _openTasmee(context, e, hasRevision),
               );
             },
           ),
@@ -121,7 +157,7 @@ class _SessionBody extends ConsumerWidget {
           child: AppButton(
             label: 'اقفل الحصة',
             icon: Icons.check_circle,
-            onPressed: () => notifier.close(),
+            onPressed: () => _openClose(context),
           ),
         ),
       ],

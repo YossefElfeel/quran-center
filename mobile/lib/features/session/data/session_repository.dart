@@ -4,13 +4,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../../admin_setup/domain/circle.dart';
 import '../../progress_engine/domain/ledger_state.dart';
-import '../../progress_engine/domain/progress_engine.dart';
 import '../domain/portion.dart';
+import '../domain/tasmee_kind.dart';
+import 'current_cycle.dart';
 import 'surah_option.dart';
 
 part 'session_repository.g.dart';
 
-/// بيانات "حصة النهارده": حلقات المعلّم + دورة حياة الحصة + الحضور + التسميع.
+/// بيانات "حصة النهارده": حلقات المعلّم + دورة حياة الحصة + الحضور + التسميع
+/// + الانتقال + قفل الحصة بخطة.
 class SessionRepository {
   SessionRepository(this._client);
 
@@ -83,31 +85,21 @@ class SessionRepository {
     }, onConflict: 'session_id,enrollment_id');
   }
 
-  Future<void> closeSession(String sessionId) async {
-    await _client
-        .from('circle_session')
-        .update(<String, dynamic>{
-          'status': 'closed',
-          'closed_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', sessionId);
-  }
+  // ===== المقطع الحالي + التسميع + الانتقال =====
 
-  // ===== المقطع الحالي + التسميع =====
-
-  /// المقطع الحالي للحلقة (الدورة المفتوحة) أو null لو لسه ماتحدّدش.
-  Future<Portion?> currentPortion(String circleId) async {
+  /// الدورة المفتوحة للحلقة (المقطع الحالي + المقام المجمّد) أو null.
+  Future<CurrentCycle?> currentCycle(String circleId) async {
     final Map<String, dynamic>? row = await _client
         .from('group_portion_cycle')
         .select(
-          'portion:portion_id'
+          'id, active_at_open, portion:portion_id'
           '(id, name, surah_start, ayah_start, surah_end, ayah_end)',
         )
         .eq('circle_id', circleId)
         .isFilter('advanced_at', null)
         .maybeSingle();
     if (row == null) return null;
-    return Portion.fromMap(row['portion'] as Map<String, dynamic>);
+    return CurrentCycle.fromMap(row);
   }
 
   /// السور المرجعية (لاختيار نطاق المقطع).
@@ -119,16 +111,15 @@ class SessionRepository {
     return rows.map(SurahOption.fromMap).toList();
   }
 
-  /// ينشئ مقطعًا جديدًا ويفتحه كدورة (المقطع الحالي) للحلقة.
-  Future<void> setCurrentPortion({
-    required String circleId,
+  /// ينشئ مقطعًا ويرجّع معرّفه.
+  Future<String> _insertPortion({
     required String name,
     required int surahStart,
     required int ayahStart,
     required int surahEnd,
     required int ayahEnd,
   }) async {
-    final Map<String, dynamic> portion = await _client
+    final Map<String, dynamic> row = await _client
         .from('portion')
         .insert(<String, dynamic>{
           'name': name,
@@ -139,7 +130,37 @@ class SessionRepository {
         })
         .select('id')
         .single();
-    final String portionId = portion['id'] as String;
+    return row['id'] as String;
+  }
+
+  /// عدد التسجيلات الفعّالة دلوقتي (المقام المجمّد عند فتح المقطع).
+  Future<int> _activeEnrollmentCount(String circleId) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('enrollment')
+        .select('id')
+        .eq('circle_id', circleId)
+        .eq('status', 'active');
+    return rows.length;
+  }
+
+  /// ينشئ مقطعًا جديدًا ويفتحه كدورة (المقطع الحالي) للحلقة + يجمّد المقام.
+  /// لازم يتنده والحلقة مفيهاش دورة مفتوحة (أول مقطع)؛ الانتقال بيستخدم advanceGroup.
+  Future<void> setCurrentPortion({
+    required String circleId,
+    required String name,
+    required int surahStart,
+    required int ayahStart,
+    required int surahEnd,
+    required int ayahEnd,
+  }) async {
+    final String portionId = await _insertPortion(
+      name: name,
+      surahStart: surahStart,
+      ayahStart: ayahStart,
+      surahEnd: surahEnd,
+      ayahEnd: ayahEnd,
+    );
+    final int activeAtOpen = await _activeEnrollmentCount(circleId);
 
     final Map<String, dynamic>? last = await _client
         .from('group_portion_cycle')
@@ -154,7 +175,37 @@ class SessionRepository {
       'circle_id': circleId,
       'portion_id': portionId,
       'ord': nextOrd,
+      'active_at_open': activeAtOpen,
     });
+  }
+
+  /// ينقل المجموعة: يقفل الدورة المفتوحة (advanced_at + pass_rate) ثم يفتح
+  /// دورة جديدة للمقطع التالي. الترتيب (قفل ثم فتح) بيحترم gpc_one_open.
+  Future<void> advanceGroup({
+    required String circleId,
+    required double passRate,
+    required String name,
+    required int surahStart,
+    required int ayahStart,
+    required int surahEnd,
+    required int ayahEnd,
+  }) async {
+    await _client
+        .from('group_portion_cycle')
+        .update(<String, dynamic>{
+          'advanced_at': DateTime.now().toUtc().toIso8601String(),
+          'pass_rate': passRate,
+        })
+        .eq('circle_id', circleId)
+        .isFilter('advanced_at', null);
+    await setCurrentPortion(
+      circleId: circleId,
+      name: name,
+      surahStart: surahStart,
+      ayahStart: ayahStart,
+      surahEnd: surahEnd,
+      ayahEnd: ayahEnd,
+    );
   }
 
   /// حالات الدَيْن لمجموعة طلبة على مقطع معيّن.
@@ -176,7 +227,8 @@ class SessionRepository {
     };
   }
 
-  /// يسجّل محاولة تسميع (تتحفظ كلها) + يحدّث دفتر الدَيْن، ويرجّع الحالة الجديدة.
+  /// يسجّل تسميع عبر دالة السيرفر الذرّية (idempotent + التاريخ من السيرفر)
+  /// ويرجّع حالة الدفتر الجديدة.
   Future<LedgerState> recordTasmee({
     required String enrollmentId,
     required String studentPersonId,
@@ -184,51 +236,96 @@ class SessionRepository {
     required int score,
     required bool passed,
     required String idempotencyKey,
+    TasmeeKind kind = TasmeeKind.memorization,
     String? teacherId,
     String? sessionId,
   }) async {
-    await _client.from('daily_tasmee').insert(<String, dynamic>{
-      'enrollment_id': enrollmentId,
-      'portion_id': portionId,
-      'score': score,
-      'passed': passed,
-      'idempotency_key': idempotencyKey,
-      'teacher_id': ?teacherId,
-      'session_id': ?sessionId,
-    });
-
-    final Map<String, dynamic>? existing = await _client
-        .from('portion_ledger_entry')
-        .select('state, attempts_count, passed_on')
-        .eq('student_person_id', studentPersonId)
-        .eq('portion_id', portionId)
-        .maybeSingle();
-
-    final LedgerState current = LedgerState.fromDb(
-      (existing?['state'] as String?) ?? 'assigned',
+    final dynamic res = await _client.rpc<dynamic>(
+      'record_tasmee',
+      params: <String, dynamic>{
+        'p_enrollment_id': enrollmentId,
+        'p_student_person_id': studentPersonId,
+        'p_portion_id': portionId,
+        'p_score': score,
+        'p_passed': passed,
+        'p_idempotency_key': idempotencyKey,
+        'p_kind': kind.dbValue,
+        'p_session_id': sessionId,
+        'p_teacher_id': teacherId,
+      },
     );
-    final LedgerState next = ProgressEngine.nextLedgerState(
-      current: current,
-      passed: passed,
-    );
-    final int attempts = ((existing?['attempts_count'] as int?) ?? 0) + 1;
-    final String? passedOn = next == LedgerState.passed
-        ? ((existing?['passed_on'] as String?) ?? _utcToday())
-        : null;
-
-    await _client.from('portion_ledger_entry').upsert(<String, dynamic>{
-      'student_person_id': studentPersonId,
-      'portion_id': portionId,
-      'state': next.dbValue,
-      'attempts_count': attempts,
-      'passed_on': passedOn,
-    }, onConflict: 'student_person_id,portion_id');
-
-    return next;
+    return LedgerState.fromDb(res as String);
   }
 
-  static String _utcToday() =>
-      DateTime.now().toUtc().toIso8601String().substring(0, 10);
+  // ===== المراجعة + قفل الحصة بخطة =====
+
+  /// المراجعة المطلوبة في آخر خطة حصة للحلقة (أو null).
+  Future<Portion?> fetchRequiredRevision(String circleId) async {
+    final Map<String, dynamic>? row = await _client
+        .from('session_plan')
+        .select(
+          'revision:revision_portion_id'
+          '(id, name, surah_start, ayah_start, surah_end, ayah_end)',
+        )
+        .eq('circle_id', circleId)
+        .order('set_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    final Object? rev = row?['revision'];
+    if (rev == null) return null;
+    return Portion.fromMap(rev as Map<String, dynamic>);
+  }
+
+  /// يقفل الحصة بخطة: يسجّل خطة المراجعة الجاية + حصيلة الحفظ النهارده ثم يقفل.
+  /// الترتيب: الخطة قبل القفل (لو الخطة فشلت مايتقفلش).
+  Future<void> closeSessionWithPlan({
+    required String circleId,
+    required String sessionId,
+    String? revisionName,
+    int? revSurahStart,
+    int? revAyahStart,
+    int? revSurahEnd,
+    int? revAyahEnd,
+    String? memorizedTodayPortionId,
+    String? teacherId,
+  }) async {
+    String? revisionPortionId;
+    if (revisionName != null &&
+        revSurahStart != null &&
+        revAyahStart != null &&
+        revSurahEnd != null &&
+        revAyahEnd != null) {
+      revisionPortionId = await _insertPortion(
+        name: revisionName,
+        surahStart: revSurahStart,
+        ayahStart: revAyahStart,
+        surahEnd: revSurahEnd,
+        ayahEnd: revAyahEnd,
+      );
+    }
+
+    // for_session_id متساب null: الخطة للحصة الجاية (لسه متفتحتش)، مش للحالية.
+    await _client.from('session_plan').insert(<String, dynamic>{
+      'circle_id': circleId,
+      'revision_portion_id': ?revisionPortionId,
+      'set_by': ?teacherId,
+    });
+
+    if (memorizedTodayPortionId != null) {
+      await _client.from('session_outcome').insert(<String, dynamic>{
+        'session_id': sessionId,
+        'memorized_portion_id': memorizedTodayPortionId,
+      });
+    }
+
+    await _client
+        .from('circle_session')
+        .update(<String, dynamic>{
+          'status': 'closed',
+          'closed_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', sessionId);
+  }
 }
 
 @riverpod
