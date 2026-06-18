@@ -55,6 +55,9 @@ abstract final class Routes {
   // إصدار الشهادات (المشرف/الأدمن)
   static const String issueCertificate = '/issue-certificate';
 
+  // تقييمات المحفّظين (المدير/المشرف)
+  static const String teacherRatings = '/teacher-ratings';
+
   // المشرف: تقييم الحلقات (٣×١٠)
   static const String supervisorEval = '/supervisor/eval';
   static const String supervisorCircleEvalPattern =

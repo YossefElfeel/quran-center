@@ -20,6 +20,7 @@ import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/family/presentation/screens/guardian_links_screen.dart';
 import '../../features/feedback/presentation/screens/complaint_inbox_screen.dart';
 import '../../features/feedback/presentation/screens/my_complaints_screen.dart';
+import '../../features/feedback/presentation/screens/teacher_ratings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/monthly/presentation/screens/circle_monthly_eval_screen.dart';
@@ -162,6 +163,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.issueCertificate,
         builder: (BuildContext context, GoRouterState state) =>
             const IssueCertificateScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherRatings,
+        builder: (BuildContext context, GoRouterState state) =>
+            const TeacherRatingsScreen(),
       ),
       GoRoute(
         path: Routes.supervisorEval,

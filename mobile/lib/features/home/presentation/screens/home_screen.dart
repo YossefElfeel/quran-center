@@ -184,6 +184,12 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.workspace_premium,
                 onPressed: () => context.go(Routes.issueCertificate),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'تقييمات المحفّظين',
+                icon: Icons.star_half,
+                onPressed: () => context.go(Routes.teacherRatings),
+              ),
             ],
             if (roles.contains('admin') ||
                 roles.contains('super_admin') ||
