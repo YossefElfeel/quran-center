@@ -52,6 +52,9 @@ abstract final class Routes {
       '/teacher/circle/$circleId/monthly-eval?name=${Uri.encodeComponent(name)}';
   static const String supervisorMonthlyEval = '/supervisor/monthly-eval';
 
+  // إصدار الشهادات (المشرف/الأدمن)
+  static const String issueCertificate = '/issue-certificate';
+
   // المشرف: تقييم الحلقات (٣×١٠)
   static const String supervisorEval = '/supervisor/eval';
   static const String supervisorCircleEvalPattern =

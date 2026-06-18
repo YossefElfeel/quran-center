@@ -14,6 +14,7 @@ import '../../features/competition/presentation/screens/competition_results_scre
 import '../../features/competition/presentation/screens/competitions_screen.dart';
 import '../../features/courses/presentation/screens/courses_screen.dart';
 import '../../features/documents/presentation/screens/certificate_preview_screen.dart';
+import '../../features/documents/presentation/screens/issue_certificate_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/family/presentation/screens/guardian_links_screen.dart';
@@ -156,6 +157,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.supervisorMonthlyEval,
         builder: (BuildContext context, GoRouterState state) =>
             const MonthlyEvalApprovalScreen(),
+      ),
+      GoRoute(
+        path: Routes.issueCertificate,
+        builder: (BuildContext context, GoRouterState state) =>
+            const IssueCertificateScreen(),
       ),
       GoRoute(
         path: Routes.supervisorEval,

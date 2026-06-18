@@ -178,6 +178,12 @@ class _HomeBody extends StatelessWidget {
                 icon: Icons.assignment_turned_in,
                 onPressed: () => context.go(Routes.supervisorMonthlyEval),
               ),
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: 'إصدار الشهادات',
+                icon: Icons.workspace_premium,
+                onPressed: () => context.go(Routes.issueCertificate),
+              ),
             ],
             if (roles.contains('admin') ||
                 roles.contains('super_admin') ||

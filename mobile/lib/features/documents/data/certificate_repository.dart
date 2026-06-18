@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/certificate_kind.dart';
+import '../domain/eligible_student.dart';
 
 part 'certificate_repository.g.dart';
 
@@ -34,6 +35,15 @@ class CertificateRepository {
         .eq('student_person_id', studentPersonId)
         .order('issued_at', ascending: false);
     return rows.map(CertificateRow.fromMap).toList();
+  }
+
+  /// الطلبة المؤهّلين لشهادة إتمام (zero-debt) — للمشرف/الأدمن.
+  Future<List<EligibleStudent>> fetchEligibleStudents() async {
+    final dynamic res = await _client.rpc('eligible_certificate_students');
+    final List<dynamic> rows = res as List<dynamic>;
+    return rows
+        .map((dynamic r) => EligibleStudent.fromMap(r as Map<String, dynamic>))
+        .toList();
   }
 
   /// إصدار شهادة (الأهلية متفروضة سيرفر-سايد: zero-debt للإتمام).
