@@ -132,6 +132,8 @@
   "supStudentsLoadError": "مش قادرين نحمّل الطلبة",
   "supNoStudentsInCircle": "مفيش طلبة في الحلقة",
   "supRandomPick": "اختيار عشوائي (٣)",
+  "supPrintMonthlyReport": "اطبع تقرير الحلقة الشهري",
+  "supMonthlyReportError": "مش قادرين نجهّز التقرير — جرّب تاني",
 
   "admCurriculaTitle": "المناهج",
   "admNewCurriculum": "منهج جديد",

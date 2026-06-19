@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
@@ -8,6 +11,9 @@ import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../documents/domain/monthly_circle_report.dart';
+import '../../../documents/domain/monthly_circle_report_pdf.dart';
+import '../../data/supervisor_eval_repository.dart';
 import '../../domain/eval_student.dart';
 import '../controllers/circle_eval_controller.dart';
 import '../widgets/criteria_eval_sheet.dart';
@@ -36,6 +42,29 @@ class CircleEvalScreen extends ConsumerWidget {
     );
   }
 
+  /// يجهّز تقرير الحلقة الشهري (للشهر الحالي) ويفتح معاينة الطباعة.
+  Future<void> _printMonthlyReport(BuildContext context, WidgetRef ref) async {
+    final AppL10n l = AppL10n.of(context);
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    try {
+      final DateTime now = DateTime.now();
+      final MonthlyCircleReport report = await ref
+          .read(supervisorEvalRepositoryProvider)
+          .fetchMonthlyCircleReport(
+            circleId: circleId,
+            circleName: circleName,
+            month: DateTime(now.year, now.month),
+          );
+      final ByteData fontData = await rootBundle.load('assets/fonts/Cairo.ttf');
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat _) =>
+            buildMonthlyCircleReportPdf(report: report, fontData: fontData),
+      );
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l.supMonthlyReportError)));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
@@ -44,6 +73,13 @@ class CircleEvalScreen extends ConsumerWidget {
     );
     return AppScaffold(
       title: circleName,
+      actions: <Widget>[
+        IconButton(
+          tooltip: l.supPrintMonthlyReport,
+          icon: const Icon(Icons.print),
+          onPressed: () => _printMonthlyReport(context, ref),
+        ),
+      ],
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(

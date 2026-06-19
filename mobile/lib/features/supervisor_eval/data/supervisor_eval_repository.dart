@@ -2,7 +2,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
+import '../../../core/utils/arabic_date.dart';
 import '../../admin_setup/domain/circle.dart';
+import '../../documents/domain/monthly_circle_report.dart';
 import '../domain/circle_pass_rate.dart';
 import '../domain/eval_criterion.dart';
 import '../domain/eval_student.dart';
@@ -98,6 +100,39 @@ class SupervisorEvalRepository {
     return rows
         .map((dynamic r) => CirclePassRate.fromMap(r as Map<String, dynamic>))
         .toList();
+  }
+
+  /// تقرير الحلقة الشهري لشهر معيّن (تجميع سيرفر-سايد عبر RPC).
+  Future<MonthlyCircleReport> fetchMonthlyCircleReport({
+    required String circleId,
+    required String circleName,
+    required DateTime month,
+  }) async {
+    final String monthIso =
+        '${month.year.toString().padLeft(4, '0')}-'
+        '${month.month.toString().padLeft(2, '0')}-01';
+    final dynamic res = await _client.rpc(
+      'monthly_circle_report',
+      params: <String, dynamic>{'p_circle': circleId, 'p_month': monthIso},
+    );
+    final Map<String, dynamic> m = res as Map<String, dynamic>;
+    final List<dynamic> rawPortions = m['portions'] as List<dynamic>;
+    return MonthlyCircleReport(
+      circleName: circleName,
+      monthLabel: arabicMonthLabel(month),
+      activeStudents: (m['active_students'] as num).toInt(),
+      avgAttendanceRate: (m['avg_attendance_rate'] as num).toDouble(),
+      passRate: (m['pass_rate'] as num).toDouble(),
+      topStudentName: m['top_student_name'] as String,
+      portions: rawPortions.map((dynamic e) {
+        final Map<String, dynamic> p = e as Map<String, dynamic>;
+        return MonthlyCirclePortionProgress(
+          label: p['label'] as String,
+          passed: (p['passed'] as num).toInt(),
+          total: (p['total'] as num).toInt(),
+        );
+      }).toList(),
+    );
   }
 }
 
