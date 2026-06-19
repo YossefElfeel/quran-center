@@ -12,6 +12,7 @@ import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../documents/domain/progress_card_pdf.dart';
 import '../../../feedback/presentation/widgets/rate_teacher_sheet.dart';
+import '../../../media/presentation/widgets/child_media_section.dart';
 import '../../domain/child_card.dart';
 import '../controllers/child_card_controller.dart';
 import '../widgets/child_certificates_section.dart';
@@ -114,6 +115,7 @@ class ChildCardScreen extends ConsumerWidget {
               ChildJourneySection(studentPersonId: studentPersonId),
               if (card.isGirl)
                 ChildConsentSection(studentPersonId: studentPersonId),
+              ChildMediaSection(studentPersonId: studentPersonId),
               ChildCommentsSection(studentPersonId: studentPersonId),
             ],
           );
