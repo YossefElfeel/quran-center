@@ -9,7 +9,10 @@ const NAV = [
   { href: "/settings", label: "إعدادات النظام" },
   { href: "/subscriptions", label: "الاشتراكات" },
   { href: "/complaints", label: "الشكاوى" },
+  { href: "/analytics", label: "تحليلات" },
+  { href: "/content", label: "الكورسات والمسابقات" },
   { href: "/audit", label: "سجل التدقيق" },
+  { href: "/pdpl", label: "الخصوصية" },
 ];
 
 export function Sidebar() {
