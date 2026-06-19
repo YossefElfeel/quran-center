@@ -18,6 +18,22 @@
 >   بتعيد إنتاج السكيمة من الصفر: `rls_auto_enable` (event trigger)، تفعيل
 >   `pg_cron`، ومنح الجداول لأدوار الـ API (`authenticated`/`anon`/`service_role`).
 
+> **تحديث M6 + M9 (2026-06-19):**
+> - **M6 لوحة السوبر أدمن** (D0–D4، CI أخضر): بوابة super_admin + shell · إعدادات
+>   النظام · مستخدمون/أدوار + دعوة · audit (+CSV) · اشتراكات · شكاوى · تحليلات
+>   (recharts) · كورسات/مسابقات · PDPL · **تقمّص الدور مدقّق (read-only + time-box)**.
+> - **M9 تجهيز الإطلاق**: توقيع release من `key.properties` + R8/ProGuard + دليل
+>   `docs/RELEASE_ANDROID.md`. **الـ AAB الموقّع + الرفع لـ Play = إجراؤك** (keystore
+>   + حساب Play). جرّب `--release` على جهاز قبل الرفع (R8 مفعّل).
+>
+> **بنود مؤجّلة عمدًا / إجراؤك (مش أخطاء):**
+> - `invite-user`: الكود اتصلّح (كان بايظ بعد M2.3) — **محتاج إعادة نشر** (`supabase
+>   functions deploy invite-user`) عشان الدعوة تشتغل.
+> - `upload-media` (علامة مائية للفيديو): مؤجّلة — Deno edge مافيهوش ffmpeg.
+> - تقمّص الدور بالـ JWT الكامل (act claim على مستوى RLS): مؤجّل لمراجعة أمنية؛
+>   المتاح حاليًا معاينة قراءة-فقط مدقّقة.
+> - نشر اللوحة + الويب على Vercel، وتفعيل leaked-password (Pro): إجراؤك.
+
 ---
 
 ## 1) أمان
