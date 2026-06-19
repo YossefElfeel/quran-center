@@ -65,42 +65,46 @@ class AppListCard extends StatelessWidget {
           horizontal: AppSpacing.md,
           vertical: AppSpacing.sm + 2,
         ),
-        child: Row(
-          children: <Widget>[
-            if (lead != null) ...<Widget>[
-              lead,
-              const SizedBox(width: AppSpacing.md),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    title,
-                    style: AppTextStyles.titleMd.copyWith(color: p.textPrimary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (subtitle != null) ...<Widget>[
-                    const SizedBox(height: 2),
+        child: MergeSemantics(
+          child: Row(
+            children: <Widget>[
+              if (lead != null) ...<Widget>[
+                lead,
+                const SizedBox(width: AppSpacing.md),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
                     Text(
-                      subtitle,
-                      style: AppTextStyles.bodyMd.copyWith(
-                        color: p.textSecondary,
+                      title,
+                      style: AppTextStyles.titleMd.copyWith(
+                        color: p.textPrimary,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (subtitle != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: AppTextStyles.bodyMd.copyWith(
+                          color: p.textSecondary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            if (trail != null) ...<Widget>[
-              const SizedBox(width: AppSpacing.sm),
-              trail,
+              if (trail != null) ...<Widget>[
+                const SizedBox(width: AppSpacing.sm),
+                trail,
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
