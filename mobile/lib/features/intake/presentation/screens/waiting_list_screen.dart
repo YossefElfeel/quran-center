@@ -4,7 +4,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/waiting_applicant.dart';
@@ -36,39 +37,43 @@ class WaitingListScreen extends ConsumerWidget {
         label: Text(l.itkNewApplicant),
       ),
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.itkWaitingListLoadError,
           onRetry: () => ref.invalidate(waitingListControllerProvider),
         ),
         data: (List<WaitingApplicant> items) => items.isEmpty
             ? EmptyState(message: l.itkNoApplicants, icon: Icons.inbox_outlined)
-            : ListView.builder(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final WaitingApplicant a = items[i];
-                  return ApplicantTile(
-                    applicant: a,
-                    onPlacement: () => showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (BuildContext _) => PlacementSheet(
-                        waitingId: a.waitingId,
-                        studentPersonId: a.personId,
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(waitingListControllerProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final WaitingApplicant a = items[i];
+                    return ApplicantTile(
+                      applicant: a,
+                      onPlacement: () => showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (BuildContext _) => PlacementSheet(
+                          waitingId: a.waitingId,
+                          studentPersonId: a.personId,
+                        ),
                       ),
-                    ),
-                    onEnroll: () => showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (BuildContext _) => EnrollSheet(
-                        waitingId: a.waitingId,
-                        studentPersonId: a.personId,
-                        levelId: a.levelId,
+                      onEnroll: () => showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (BuildContext _) => EnrollSheet(
+                          waitingId: a.waitingId,
+                          studentPersonId: a.personId,
+                          levelId: a.levelId,
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );

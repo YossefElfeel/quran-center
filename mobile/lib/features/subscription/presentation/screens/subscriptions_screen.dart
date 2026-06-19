@@ -6,8 +6,10 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/household_summary.dart';
 import '../controllers/households_controller.dart';
@@ -24,10 +26,10 @@ class SubscriptionsScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text(l.subsNewHousehold),
-        content: TextField(
+        content: AppTextField(
           controller: name,
           autofocus: true,
-          decoration: InputDecoration(labelText: l.subsHouseholdNameLabel),
+          label: l.subsHouseholdNameLabel,
         ),
         actions: <Widget>[
           TextButton(
@@ -66,7 +68,7 @@ class SubscriptionsScreen extends ConsumerWidget {
         ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.subsLoadError,
           onRetry: () => ref.invalidate(householdsControllerProvider),
@@ -76,17 +78,21 @@ class SubscriptionsScreen extends ConsumerWidget {
                 message: l.subsNoHouseholds,
                 icon: Icons.family_restroom,
               )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) => HouseholdTile(
-                  key: ValueKey<String>(items[i].id),
-                  household: items[i],
-                  onRecordPayment: () => ref
-                      .read(householdsControllerProvider.notifier)
-                      .recordPayment(items[i]),
-                  onTap: () => context.go(
-                    Routes.householdMembers(items[i].id, items[i].name),
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(householdsControllerProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) => HouseholdTile(
+                    key: ValueKey<String>(items[i].id),
+                    household: items[i],
+                    onRecordPayment: () => ref
+                        .read(householdsControllerProvider.notifier)
+                        .recordPayment(items[i]),
+                    onTap: () => context.push(
+                      Routes.householdMembers(items[i].id, items[i].name),
+                    ),
                   ),
                 ),
               ),

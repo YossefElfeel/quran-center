@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../domain/parent_comment.dart';
 import '../controllers/child_comments_controller.dart';
 
@@ -28,9 +29,9 @@ class ChildCommentsSection extends ConsumerWidget {
           children: <Widget>[
             Text(
               l.ppYourCommentsToTeacher,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -42,7 +43,7 @@ class ChildCommentsSection extends ConsumerWidget {
               data: (List<ParentComment> items) => items.isEmpty
                   ? Text(
                       l.ppNoComments,
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.palette.textSecondary),
                     )
                   : Column(
                       children: <Widget>[
@@ -90,9 +91,7 @@ class _CommentComposerState extends ConsumerState<_CommentComposer> {
       _controller.clear();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppL10n.of(context).ppCommentAddError)),
-        );
+        AppSnackbar.error(context, AppL10n.of(context).ppCommentAddError);
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -142,10 +141,10 @@ class _CommentTile extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(
+              Icon(
                 Icons.person,
                 size: 16,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
@@ -158,9 +157,9 @@ class _CommentTile extends StatelessWidget {
               const Spacer(),
               Text(
                 _shortDate(comment.createdAt),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textSecondary,
+                  color: context.palette.textSecondary,
                 ),
               ),
             ],

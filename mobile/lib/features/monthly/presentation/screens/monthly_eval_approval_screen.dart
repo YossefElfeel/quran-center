@@ -4,8 +4,11 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/monthly_eval.dart';
@@ -24,40 +27,39 @@ class MonthlyEvalApprovalScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.navMonthlyEvalApproval,
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.monLoadQueueFailed,
           onRetry: () => ref.invalidate(pendingMonthlyEvalsProvider),
         ),
         data: (List<PendingMonthlyEval> items) => items.isEmpty
             ? EmptyState(message: l.monNoPendingEvals, icon: Icons.done_all)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final PendingMonthlyEval e = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      title: Text(e.studentName),
-                      subtitle: Text(
-                        '${e.summary ?? '—'}\n'
-                        '${arabicNumber(e.month.month)}/'
-                        '${arabicNumber(e.month.year)}',
-                      ),
-                      isThreeLine: true,
-                      trailing: FilledButton(
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(pendingMonthlyEvalsProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final PendingMonthlyEval e = items[i];
+                    return AppListCard(
+                      leadingIcon: Icons.grading,
+                      title: e.studentName,
+                      subtitle:
+                          '${e.summary ?? '—'}\n'
+                          '${arabicNumber(e.month.month)}/'
+                          '${arabicNumber(e.month.year)}',
+                      trailing: AppButton(
+                        label: l.monApprove,
                         onPressed: () => ref
                             .read(pendingMonthlyEvalsProvider.notifier)
                             .approve(e.id),
-                        child: Text(l.monApprove),
+                        variant: AppButtonVariant.tonal,
+                        expanded: false,
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );

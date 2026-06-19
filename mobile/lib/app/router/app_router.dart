@@ -21,32 +21,34 @@ import '../../features/family/presentation/screens/guardian_links_screen.dart';
 import '../../features/feedback/presentation/screens/complaint_inbox_screen.dart';
 import '../../features/feedback/presentation/screens/my_complaints_screen.dart';
 import '../../features/feedback/presentation/screens/teacher_ratings_screen.dart';
-import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/dashboard_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
 import '../../features/monthly/presentation/screens/circle_monthly_eval_screen.dart';
 import '../../features/monthly/presentation/screens/monthly_eval_approval_screen.dart';
 import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.dart';
+import '../../features/more/presentation/screens/more_hub_screen.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
-import '../../features/parent_portal/presentation/screens/children_screen.dart';
 import '../../features/recognition/presentation/screens/honor_board_screen.dart';
-import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/subscription/presentation/screens/household_members_screen.dart';
 import '../../features/subscription/presentation/screens/subscriptions_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/attention_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
-import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
 import '../../features/teacher/presentation/screens/development_approval_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_development_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_profile_screen.dart';
 import '../../features/user_invite/presentation/screens/invite_user_screen.dart';
+import '../shell/app_shell.dart';
+import '../shell/primary_tab_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
 
-/// راوتر التطبيق (go_router) — keepAlive، وبيعيد التقييم مع تغيّر الجلسة.
-/// غير مسجّل → /login ؛ مسجّل وفاتح /login → / .
+/// راوتر التطبيق (go_router) — قشرة StatefulShellRoute بشريط تنقّل ثابت لأربع
+/// وجهات (الرئيسية/الأساسي/الإشعارات/المزيد). الدخول وباقي الشاشات الكاملة على
+/// الـ root navigator. غير مسجّل → /login ؛ مسجّل وفاتح /login → / .
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
   final AuthRepository auth = ref.watch(authRepositoryProvider);
@@ -63,20 +65,60 @@ GoRouter appRouter(Ref ref) {
     },
     routes: <RouteBase>[
       GoRoute(
-        path: Routes.home,
-        builder: (BuildContext context, GoRouterState state) =>
-            const HomeScreen(),
-      ),
-      GoRoute(
         path: Routes.login,
         builder: (BuildContext context, GoRouterState state) =>
             const LoginScreen(),
       ),
-      GoRoute(
-        path: Routes.notifications,
-        builder: (BuildContext context, GoRouterState state) =>
-            const NotificationListScreen(),
+
+      // قشرة التنقّل الأساسية — ٤ فروع ثابتة بشريط سفلي/ريل.
+      StatefulShellRoute.indexedStack(
+        builder:
+            (
+              BuildContext context,
+              GoRouterState state,
+              StatefulNavigationShell navigationShell,
+            ) => AppShell(navigationShell: navigationShell),
+        branches: <StatefulShellBranch>[
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: Routes.home,
+                builder: (BuildContext context, GoRouterState state) =>
+                    const DashboardScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: Routes.primaryTab,
+                builder: (BuildContext context, GoRouterState state) =>
+                    const PrimaryTabScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: Routes.notifications,
+                builder: (BuildContext context, GoRouterState state) =>
+                    const NotificationListScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: Routes.more,
+                builder: (BuildContext context, GoRouterState state) =>
+                    const MoreHubScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
+
+      // باقي الشاشات (كاملة الشاشة على الـ root navigator — تُفتح بـ push).
       GoRoute(
         path: Routes.adminCurricula,
         builder: (BuildContext context, GoRouterState state) =>
@@ -135,7 +177,7 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.teacherCircles,
         builder: (BuildContext context, GoRouterState state) =>
-            const MyCirclesScreen(),
+            const PrimaryTabScreen(),
       ),
       GoRoute(
         path: Routes.sessionPattern,
@@ -179,7 +221,7 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.supervisorEval,
         builder: (BuildContext context, GoRouterState state) =>
-            const EvalCirclesScreen(),
+            const PrimaryTabScreen(),
       ),
       GoRoute(
         path: Routes.supervisorExcuses,
@@ -209,7 +251,7 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.parentChildren,
         builder: (BuildContext context, GoRouterState state) =>
-            const ChildrenScreen(),
+            const PrimaryTabScreen(),
       ),
       GoRoute(
         path: Routes.complaintsMine,
@@ -258,6 +300,11 @@ GoRouter appRouter(Ref ref) {
           studentPersonId: state.pathParameters['studentId']!,
           childName: state.uri.queryParameters['name'] ?? 'الطفل',
         ),
+      ),
+      GoRoute(
+        path: Routes.settings,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SettingsScreen(),
       ),
       GoRoute(
         path: Routes.certificatePreviewPattern,

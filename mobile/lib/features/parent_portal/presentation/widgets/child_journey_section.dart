@@ -31,9 +31,9 @@ class ChildJourneySection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppChildJourney,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: context.palette.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -66,7 +66,9 @@ class _StopTile extends StatelessWidget {
           Icon(
             stop.ongoing ? Icons.play_circle : Icons.check_circle,
             size: 18,
-            color: stop.ongoing ? AppColors.accent : AppColors.success,
+            color: stop.ongoing
+                ? context.palette.accent
+                : context.palette.success,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -80,7 +82,7 @@ class _StopTile extends StatelessWidget {
                 if (range.isNotEmpty)
                   Text(
                     range,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: context.palette.textSecondary),
                   ),
               ],
             ),

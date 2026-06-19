@@ -6,7 +6,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/curriculum.dart';
@@ -36,20 +37,24 @@ class CurriculaScreen extends ConsumerWidget {
         label: Text(l.admNewCurriculum),
       ),
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.admCurriculaLoadError,
           onRetry: () => ref.invalidate(curriculaControllerProvider),
         ),
         data: (List<Curriculum> items) => items.isEmpty
             ? EmptyState(message: l.admCurriculaEmpty)
-            : ListView.builder(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) => CurriculumTile(
-                  curriculum: items[i],
-                  onTap: () =>
-                      context.go(Routes.levels(items[i].id, items[i].name)),
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(curriculaControllerProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) => CurriculumTile(
+                    curriculum: items[i],
+                    onTap: () =>
+                        context.push(Routes.levels(items[i].id, items[i].name)),
+                  ),
                 ),
               ),
       ),

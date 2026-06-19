@@ -50,7 +50,8 @@ class _ScoreCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color base = isPass ? AppColors.success : AppColors.error;
+    final AppPalette palette = context.palette;
+    final Color base = isPass ? palette.success : palette.error;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.md),
@@ -59,7 +60,7 @@ class _ScoreCell extends StatelessWidget {
         height: AppSizes.minTouch,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? base : AppColors.surface,
+          color: isSelected ? base : palette.surface,
           borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(color: base, width: 1.5),
         ),

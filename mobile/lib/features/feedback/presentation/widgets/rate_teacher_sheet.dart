@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/feedback_repository.dart';
 
 /// شيت تقييم المحفّظ (نجوم + تعليق) — خاص للمدير/المشرف، المعلّم مايشوفوش.
@@ -39,10 +40,12 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
     if (!mounted) return;
     setState(() => _saving = false);
     final AppL10n l = AppL10n.of(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(err ?? l.fbkRateThanks)));
-    if (err == null) Navigator.of(context).pop();
+    if (err == null) {
+      AppSnackbar.success(context, l.fbkRateThanks);
+      Navigator.of(context).pop();
+    } else {
+      AppSnackbar.error(context, err);
+    }
   }
 
   @override
@@ -68,9 +71,9 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
           Text(
             l.fbkRatePrivateNote,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -81,7 +84,7 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
                 IconButton(
                   icon: Icon(
                     i <= _stars ? Icons.star : Icons.star_border,
-                    color: AppColors.accent,
+                    color: context.palette.accent,
                     size: 36,
                   ),
                   onPressed: () => setState(() => _stars = i),
@@ -102,6 +105,7 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
           AppButton(
             label: _saving ? l.fbkSending : l.fbkSubmitRating,
             icon: Icons.send,
+            isLoading: _saving,
             onPressed: _saving ? null : _submit,
           ),
         ],

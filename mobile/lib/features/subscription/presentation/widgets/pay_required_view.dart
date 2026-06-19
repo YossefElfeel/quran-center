@@ -15,7 +15,7 @@ class PayRequiredView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          const Icon(Icons.lock_outline, size: 72, color: AppColors.accent),
+          Icon(Icons.lock_outline, size: 72, color: context.palette.accent),
           const SizedBox(height: AppSpacing.lg),
           Text(
             l.subsInactiveTitle,
@@ -26,8 +26,8 @@ class PayRequiredView extends StatelessWidget {
           Text(
             l.subsInactiveBody,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: context.palette.textSecondary,
               fontSize: 16,
             ),
           ),

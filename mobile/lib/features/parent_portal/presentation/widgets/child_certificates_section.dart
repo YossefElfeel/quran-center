@@ -39,25 +39,25 @@ class ChildCertificatesSection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppCertificates,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: context.palette.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 for (final CertificateRow c in certs)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.workspace_premium,
-                      color: AppColors.accent,
+                      color: context.palette.accent,
                     ),
                     title: Text(c.kind.labelAr),
                     subtitle: Text(_date(c.issuedAt)),
                     trailing: TextButton.icon(
                       icon: const Icon(Icons.picture_as_pdf),
                       label: Text(l.ppView),
-                      onPressed: () => context.go(
+                      onPressed: () => context.push(
                         Routes.certificatePreview(
                           childName,
                           c.kind.labelAr,

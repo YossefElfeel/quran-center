@@ -5,6 +5,11 @@ abstract final class Routes {
   static const String home = '/';
   static const String login = '/login';
   static const String notifications = '/notifications';
+
+  // تبويب "الأساسي" (يتغيّر محتواه حسب الدور) + مركز "المزيد" القابل للبحث.
+  static const String primaryTab = '/me';
+  static const String more = '/more';
+  static const String settings = '/settings';
   static const String adminCurricula = '/admin/curricula';
   static const String adminWaiting = '/admin/waiting';
   static const String adminSubscriptions = '/admin/subscriptions';

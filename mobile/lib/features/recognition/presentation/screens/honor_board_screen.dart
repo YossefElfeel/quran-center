@@ -4,8 +4,11 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../data/recognition_repository.dart';
@@ -22,7 +25,7 @@ class HonorBoardScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.recHonorBoardTitle,
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.recHonorBoardLoadError,
           onRetry: () => ref.invalidate(honorBoardProvider),
@@ -32,36 +35,29 @@ class HonorBoardScreen extends ConsumerWidget {
                 message: l.recNoTopStudents,
                 icon: Icons.emoji_events_outlined,
               )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final TopStudentRow t = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      leading: const Icon(
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(honorBoardProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final TopStudentRow t = items[i];
+                    return AppListCard(
+                      leading: AppAvatar(name: t.studentName),
+                      trailing: Icon(
                         Icons.emoji_events,
-                        color: AppColors.accent,
-                        size: 32,
+                        color: context.palette.accent,
+                        size: 28,
                       ),
-                      title: Text(
-                        t.studentName,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        '${t.circleName} — '
-                        '${arabicNumber(t.month.month)}/'
-                        '${arabicNumber(t.month.year)}'
-                        '${t.reason != null ? '\n${t.reason}' : ''}',
-                      ),
-                      isThreeLine: t.reason != null,
-                    ),
-                  );
-                },
+                      title: t.studentName,
+                      subtitle:
+                          '${t.circleName} — '
+                          '${arabicNumber(t.month.month)}/'
+                          '${arabicNumber(t.month.year)}'
+                          '${t.reason != null ? '\n${t.reason}' : ''}',
+                    );
+                  },
+                ),
               ),
       ),
     );

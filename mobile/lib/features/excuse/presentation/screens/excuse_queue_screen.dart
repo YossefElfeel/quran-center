@@ -4,7 +4,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/pending_excuse.dart';
@@ -24,7 +25,7 @@ class ExcuseQueueScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.excQueueTitle,
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.excLoadError,
           onRetry: () => ref.invalidate(pendingExcusesControllerProvider),
@@ -36,14 +37,18 @@ class ExcuseQueueScreen extends ConsumerWidget {
           final PendingExcusesController notifier = ref.read(
             pendingExcusesControllerProvider.notifier,
           );
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            itemCount: items.length,
-            itemBuilder: (BuildContext context, int i) => ExcuseDecisionTile(
-              key: ValueKey<String>(items[i].id),
-              excuse: items[i],
-              onApprove: () => notifier.decide(items[i], approve: true),
-              onReject: () => notifier.decide(items[i], approve: false),
+          return AppRefreshIndicator(
+            onRefresh: () async =>
+                ref.invalidate(pendingExcusesControllerProvider),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              itemCount: items.length,
+              itemBuilder: (BuildContext context, int i) => ExcuseDecisionTile(
+                key: ValueKey<String>(items[i].id),
+                excuse: items[i],
+                onApprove: () => notifier.decide(items[i], approve: true),
+                onReject: () => notifier.decide(items[i], approve: false),
+              ),
             ),
           );
         },

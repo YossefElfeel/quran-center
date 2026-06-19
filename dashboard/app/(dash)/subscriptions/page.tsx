@@ -1,8 +1,11 @@
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { HouseholdForm, PaymentForm, VoidButton } from "./forms";
+
 type Household = { id: string; name: string; monthly_amount: number };
 type Payment = {
+  id: string;
   household_id: string;
   period_month: string;
   paid_at: string;
@@ -15,7 +18,7 @@ export default async function SubscriptionsPage() {
     supabase.from("household").select("id, name, monthly_amount"),
     supabase
       .from("subscription_payment")
-      .select("household_id, period_month, paid_at, amount")
+      .select("id, household_id, period_month, paid_at, amount")
       .eq("voided", false)
       .order("period_month", { ascending: false }),
   ]);
@@ -46,9 +49,11 @@ export default async function SubscriptionsPage() {
       <div>
         <h1 className="text-2xl font-bold">الاشتراكات</h1>
         <p className="mt-1 text-sm text-foreground/60">
-          حالة اشتراك كل أسرة (كاش — الأدمن بيسجّل الدفع من التطبيق).
+          حالة اشتراك كل أسرة (كاش). سجّل دفع الشهر أو أبطل آخر دفعة بسبب.
         </p>
       </div>
+
+      <HouseholdForm />
 
       <div className="overflow-x-auto rounded-xl border border-border bg-white">
         <table className="w-full text-right text-sm">
@@ -58,13 +63,14 @@ export default async function SubscriptionsPage() {
               <th className="px-4 py-2 font-medium">الاشتراك الشهري</th>
               <th className="px-4 py-2 font-medium">آخر دفعة</th>
               <th className="px-4 py-2 font-medium">الحالة</th>
+              <th className="px-4 py-2 font-medium">إجراءات</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-4 py-6 text-center text-foreground/50"
                 >
                   مفيش أسر مسجّلة لسه.
@@ -90,6 +96,15 @@ export default async function SubscriptionsPage() {
                         متأخّر
                       </span>
                     )}
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <PaymentForm
+                        householdId={h.id}
+                        defaultAmount={h.monthly_amount}
+                      />
+                      {h.last ? <VoidButton paymentId={h.last.id} /> : null}
+                    </div>
                   </td>
                 </tr>
               ))
