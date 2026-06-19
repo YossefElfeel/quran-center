@@ -7,6 +7,8 @@ const NAV = [
   { href: "/", label: "نظرة عامة" },
   { href: "/users", label: "المستخدمون والأدوار" },
   { href: "/settings", label: "إعدادات النظام" },
+  { href: "/subscriptions", label: "الاشتراكات" },
+  { href: "/complaints", label: "الشكاوى" },
   { href: "/audit", label: "سجل التدقيق" },
 ];
 
