@@ -7,6 +7,9 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../core/auth/auth_providers.dart';
 import '../../core/network/network_status.dart';
 import '../../features/notifications/presentation/controllers/notifications_controller.dart';
+import '../../features/onboarding/onboarding_provider.dart';
+import '../../features/onboarding/presentation/onboarding_view.dart';
+import '../../shared/widgets/account_suspended_view.dart';
 import '../../shared/widgets/app_inline_banner.dart';
 import 'nav_destinations.dart';
 
@@ -30,6 +33,14 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
+
+    // مسجّل دخول بس من غير هوية (current_person_id() = NULL) = محظور/موقوف →
+    // شاشة إيقاف واضحة بدل القشرة الفاضية. (loading/error → نكمّل عادي.)
+    final AsyncValue<String?> personId = ref.watch(currentPersonIdProvider);
+    if (personId is AsyncData<String?> && personId.value == null) {
+      return const AccountSuspendedView();
+    }
+
     final List<String> roles =
         ref.watch(currentRolesProvider).asData?.value ?? const <String>[];
     final int unread = ref.watch(unreadCountProvider).asData?.value ?? 0;
@@ -37,6 +48,17 @@ class AppShell extends ConsumerWidget {
     final int current = navigationShell.currentIndex;
     final bool online =
         ref.watch(connectivityOnlineProvider).asData?.value ?? true;
+    final bool onboardingSeen = ref.watch(onboardingSeenProvider);
+
+    // غلاف يعرض شاشة الترحيب فوق القشرة كلها (شاملة الشريط) أول تشغيل.
+    Widget withOnboarding(Widget shell) => onboardingSeen
+        ? shell
+        : Stack(
+            children: <Widget>[
+              shell,
+              const Positioned.fill(child: OnboardingView()),
+            ],
+          );
 
     Widget badgeWrap(Widget icon, int index) {
       // شارة العدّاد على تبويب الإشعارات (index 2).
@@ -55,45 +77,49 @@ class AppShell extends ConsumerWidget {
     final bool wide = MediaQuery.sizeOf(context).width >= _railBreakpoint;
 
     if (wide) {
-      return Scaffold(
-        body: Row(
-          children: <Widget>[
-            NavigationRail(
-              selectedIndex: current,
-              onDestinationSelected: _onSelect,
-              labelType: NavigationRailLabelType.all,
-              destinations: <NavigationRailDestination>[
-                for (int i = 0; i < destinations.length; i++)
-                  NavigationRailDestination(
-                    icon: badgeWrap(Icon(destinations[i].icon), i),
-                    selectedIcon: badgeWrap(
-                      Icon(destinations[i].selectedIcon),
-                      i,
+      return withOnboarding(
+        Scaffold(
+          body: Row(
+            children: <Widget>[
+              NavigationRail(
+                selectedIndex: current,
+                onDestinationSelected: _onSelect,
+                labelType: NavigationRailLabelType.all,
+                destinations: <NavigationRailDestination>[
+                  for (int i = 0; i < destinations.length; i++)
+                    NavigationRailDestination(
+                      icon: badgeWrap(Icon(destinations[i].icon), i),
+                      selectedIcon: badgeWrap(
+                        Icon(destinations[i].selectedIcon),
+                        i,
+                      ),
+                      label: Text(destinations[i].label),
                     ),
-                    label: Text(destinations[i].label),
-                  ),
-              ],
-            ),
-            const VerticalDivider(width: 1),
-            Expanded(child: shellBody),
-          ],
+                ],
+              ),
+              const VerticalDivider(width: 1),
+              Expanded(child: shellBody),
+            ],
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      body: shellBody,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: current,
-        onDestinationSelected: _onSelect,
-        destinations: <NavigationDestination>[
-          for (int i = 0; i < destinations.length; i++)
-            NavigationDestination(
-              icon: badgeWrap(Icon(destinations[i].icon), i),
-              selectedIcon: badgeWrap(Icon(destinations[i].selectedIcon), i),
-              label: destinations[i].label,
-            ),
-        ],
+    return withOnboarding(
+      Scaffold(
+        body: shellBody,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: current,
+          onDestinationSelected: _onSelect,
+          destinations: <NavigationDestination>[
+            for (int i = 0; i < destinations.length; i++)
+              NavigationDestination(
+                icon: badgeWrap(Icon(destinations[i].icon), i),
+                selectedIcon: badgeWrap(Icon(destinations[i].selectedIcon), i),
+                label: destinations[i].label,
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -19,8 +19,6 @@ import '../../../monthly/presentation/controllers/monthly_eval_controllers.dart'
 import '../../../more/favorites_provider.dart';
 import '../../../more/feature_catalog.dart';
 import '../../../notifications/presentation/controllers/notifications_controller.dart';
-import '../../../onboarding/onboarding_provider.dart';
-import '../../../onboarding/presentation/onboarding_view.dart';
 import '../../../parent_portal/presentation/controllers/my_children_controller.dart';
 import '../../../session/presentation/controllers/my_circles_controller.dart';
 import '../../../supervisor_eval/presentation/controllers/struggling_controller.dart';
@@ -59,35 +57,29 @@ class DashboardScreen extends ConsumerWidget {
       currentPersonIdProvider,
     );
     final AsyncValue<List<String>> rolesAsync = ref.watch(currentRolesProvider);
-    final bool onboardingSeen = ref.watch(onboardingSeenProvider);
 
     return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          personIdAsync.when(
+      body: personIdAsync.when(
+        loading: () => AppLoader(message: l.loading),
+        error: (Object e, StackTrace _) => AppErrorView(
+          message: l.genericError,
+          onRetry: () => ref.invalidate(currentPersonIdProvider),
+        ),
+        data: (String? personId) {
+          if (personId == null) {
+            return _SuspendedBody(
+              onSignOut: () => ref.read(authRepositoryProvider).signOut(),
+            );
+          }
+          return rolesAsync.when(
             loading: () => AppLoader(message: l.loading),
             error: (Object e, StackTrace _) => AppErrorView(
               message: l.genericError,
-              onRetry: () => ref.invalidate(currentPersonIdProvider),
+              onRetry: () => ref.invalidate(currentRolesProvider),
             ),
-            data: (String? personId) {
-              if (personId == null) {
-                return _SuspendedBody(
-                  onSignOut: () => ref.read(authRepositoryProvider).signOut(),
-                );
-              }
-              return rolesAsync.when(
-                loading: () => AppLoader(message: l.loading),
-                error: (Object e, StackTrace _) => AppErrorView(
-                  message: l.genericError,
-                  onRetry: () => ref.invalidate(currentRolesProvider),
-                ),
-                data: (List<String> roles) => _DashboardBody(roles: roles),
-              );
-            },
-          ),
-          if (!onboardingSeen) const Positioned.fill(child: OnboardingView()),
-        ],
+            data: (List<String> roles) => _DashboardBody(roles: roles),
+          );
+        },
       ),
     );
   }
