@@ -6,7 +6,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/level.dart';
@@ -44,20 +45,25 @@ class LevelsScreen extends ConsumerWidget {
         label: Text(l.admNewLevel),
       ),
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.admLevelsLoadError,
           onRetry: () => ref.invalidate(levelsControllerProvider(curriculumId)),
         ),
         data: (List<Level> items) => items.isEmpty
             ? EmptyState(message: l.admLevelsEmpty)
-            : ListView.builder(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) => LevelTile(
-                  level: items[i],
-                  onTap: () =>
-                      context.go(Routes.circles(items[i].id, items[i].name)),
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(levelsControllerProvider(curriculumId)),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) => LevelTile(
+                    level: items[i],
+                    onTap: () => context.push(
+                      Routes.circles(items[i].id, items[i].name),
+                    ),
+                  ),
                 ),
               ),
       ),

@@ -7,8 +7,12 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/competition_models.dart';
 import '../controllers/competition_controllers.dart';
@@ -62,11 +66,22 @@ class CompetitionDetailScreen extends ConsumerWidget {
             .score(app.id, value);
       } catch (_) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(l.cmpScoreForbidden)));
+          AppSnackbar.error(context, l.cmpScoreForbidden);
         }
       }
+    }
+  }
+
+  AppStatusKind _statusKind(String status) {
+    switch (status) {
+      case 'accepted':
+        return AppStatusKind.success;
+      case 'rejected':
+        return AppStatusKind.error;
+      case 'pending':
+        return AppStatusKind.warning;
+      default:
+        return AppStatusKind.neutral;
     }
   }
 
@@ -86,13 +101,13 @@ class CompetitionDetailScreen extends ConsumerWidget {
         IconButton(
           tooltip: l.cmpResults,
           icon: const Icon(Icons.leaderboard),
-          onPressed: () => context.go(
+          onPressed: () => context.push(
             Routes.competitionResults(competitionId, competitionName),
           ),
         ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.cmpApplicantsLoadError,
           onRetry: () =>
@@ -100,32 +115,31 @@ class CompetitionDetailScreen extends ConsumerWidget {
         ),
         data: (List<CompetitionApplicationRow> items) => items.isEmpty
             ? EmptyState(message: l.cmpNoApplicants, icon: Icons.how_to_reg)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final CompetitionApplicationRow a = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.record_voice_over,
-                        color: AppColors.primary,
-                      ),
-                      title: Text(a.applicantName),
-                      subtitle: Text(a.status),
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(
+                  competitionApplicationsProvider(competitionId),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final CompetitionApplicationRow a = items[i];
+                    return AppListCard(
+                      leadingIcon: Icons.record_voice_over,
+                      title: a.applicantName,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
+                          AppStatusBadge(
+                            label: a.status,
+                            kind: _statusKind(a.status),
+                          ),
                           if (isAdmin && a.status == 'pending') ...<Widget>[
                             IconButton(
                               tooltip: l.cmpAccept,
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.check_circle,
-                                color: AppColors.success,
+                                color: context.palette.success,
                               ),
                               onPressed: () => ref
                                   .read(
@@ -137,9 +151,9 @@ class CompetitionDetailScreen extends ConsumerWidget {
                             ),
                             IconButton(
                               tooltip: l.cmpReject,
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.cancel,
-                                color: AppColors.error,
+                                color: context.palette.error,
                               ),
                               onPressed: () => ref
                                   .read(
@@ -157,9 +171,9 @@ class CompetitionDetailScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );

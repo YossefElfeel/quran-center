@@ -6,11 +6,13 @@ import 'package:printing/printing.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/attendance_sheet_pdf.dart';
 import '../../domain/attendance_status.dart';
@@ -156,10 +158,7 @@ class _SessionBody extends ConsumerWidget {
   ) async {
     await notifier.requestExcuse(enrollmentId);
     if (context.mounted) {
-      final AppL10n l = AppL10n.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.sesExcuseRequestSent)));
+      AppSnackbar.success(context, AppL10n.of(context).sesExcuseRequestSent);
     }
   }
 
@@ -243,17 +242,18 @@ class _ClosedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          const Icon(Icons.event_available, size: 64, color: AppColors.primary),
+          Icon(Icons.event_available, size: 64, color: p.primary),
           const SizedBox(height: AppSpacing.md),
           Text(
             l.sesSessionStillClosed,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18),
+            style: AppTextStyles.bodyLg.copyWith(color: p.textPrimary),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(

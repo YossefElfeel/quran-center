@@ -6,8 +6,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/course.dart';
 import '../controllers/courses_controller.dart';
@@ -21,9 +24,7 @@ class CoursesScreen extends ConsumerWidget {
     final Uri uri = Uri.tryParse(url) ?? Uri();
     final bool ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.videoOpenError)));
+      AppSnackbar.error(context, l.videoOpenError);
     }
   }
 
@@ -97,31 +98,22 @@ class CoursesScreen extends ConsumerWidget {
           ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.coursesLoadError,
           onRetry: () => ref.invalidate(coursesProvider),
         ),
         data: (List<Course> items) => items.isEmpty
             ? EmptyState(message: l.noCourses, icon: Icons.ondemand_video)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) => Card(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.xs,
-                    horizontal: AppSpacing.md,
-                  ),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.play_circle_fill,
-                      color: AppColors.primary,
-                      size: 36,
-                    ),
-                    title: Text(items[i].title),
-                    subtitle: items[i].description != null
-                        ? Text(items[i].description!)
-                        : null,
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(coursesProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) => AppListCard(
+                    leadingIcon: Icons.play_circle_fill,
+                    title: items[i].title,
+                    subtitle: items[i].description,
                     onTap: () => _open(context, items[i].videoUrl),
                   ),
                 ),

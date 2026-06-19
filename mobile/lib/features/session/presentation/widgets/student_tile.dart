@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
-import '../../../enrollment/domain/gender.dart';
+import '../../../../shared/widgets/app_avatar.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
@@ -33,6 +35,7 @@ class StudentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette palette = context.palette;
     return Card(
       margin: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
@@ -42,13 +45,7 @@ class StudentTile extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Row(
           children: <Widget>[
-            CircleAvatar(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              child: Icon(
-                entry.gender == Gender.female ? Icons.girl : Icons.boy,
-              ),
-            ),
+            AppAvatar(name: entry.studentName, radius: 20),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
@@ -56,9 +53,8 @@ class StudentTile extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     entry.studentName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    style: AppTextStyles.titleMd.copyWith(
+                      color: palette.textPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -73,7 +69,7 @@ class StudentTile extends StatelessWidget {
                       ),
                       child: Text(
                         l.sesRequestExcuse,
-                        style: const TextStyle(fontSize: 12),
+                        style: AppTextStyles.labelSm,
                       ),
                     ),
                 ],
@@ -112,29 +108,12 @@ class _LedgerBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    final (String label, Color color) = switch (state) {
-      LedgerState.passed => (l.sesLedgerPassed, AppColors.success),
-      LedgerState.failedRetry => (l.sesLedgerOwed, AppColors.error),
-      _ => (l.sesLedgerPending, AppColors.textSecondary),
+    final (String label, AppStatusKind kind) = switch (state) {
+      LedgerState.passed => (l.sesLedgerPassed, AppStatusKind.success),
+      LedgerState.failedRetry => (l.sesLedgerOwed, AppStatusKind.error),
+      _ => (l.sesLedgerPending, AppStatusKind.neutral),
     };
-    return Container(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
+    return AppStatusBadge(label: label, kind: kind);
   }
 }
 

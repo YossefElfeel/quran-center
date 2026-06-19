@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 
 /// شريط بيظهر لما المجموعة تعدّي >٥٠٪ المقطع الحالي — يقترح الانتقال (بتأكيد).
@@ -20,17 +21,18 @@ class AdvanceSuggestionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
     return Card(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      color: AppColors.success.withValues(alpha: 0.1),
+      color: p.success.withValues(alpha: AppOpacity.badgeTint),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: <Widget>[
-            const Icon(Icons.trending_up, color: AppColors.success),
+            Icon(Icons.trending_up, color: p.success),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
@@ -38,16 +40,15 @@ class AdvanceSuggestionBanner extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     l.sesAdvanceReady,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: AppTextStyles.titleMd.copyWith(color: p.textPrimary),
                   ),
                   Text(
                     l.sesAdvanceReadySubtitle(
                       arabicNumber(passedCount),
                       arabicNumber(activeAtOpen),
                     ),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                    style: AppTextStyles.labelSm.copyWith(
+                      color: p.textSecondary,
                     ),
                   ),
                 ],

@@ -6,6 +6,15 @@ import { usePathname } from "next/navigation";
 const NAV = [
   { href: "/", label: "نظرة عامة" },
   { href: "/users", label: "المستخدمون والأدوار" },
+  { href: "/academics", label: "المناهج والحلقات" },
+  { href: "/enrollment", label: "التسجيل" },
+  { href: "/intake", label: "قائمة الانتظار" },
+  { href: "/circles", label: "الحلقات والمتابعة" },
+  { href: "/excuses", label: "أعذار الغياب" },
+  { href: "/evaluations", label: "التقييمات والاعتمادات" },
+  { href: "/certificates", label: "الشهادات" },
+  { href: "/notifications", label: "الإشعارات والبثّ" },
+  { href: "/media", label: "الوسائط والموافقات" },
   { href: "/settings", label: "إعدادات النظام" },
   { href: "/subscriptions", label: "الاشتراكات" },
   { href: "/complaints", label: "الشكاوى" },
@@ -14,6 +23,7 @@ const NAV = [
   { href: "/audit", label: "سجل التدقيق" },
   { href: "/pdpl", label: "الخصوصية" },
   { href: "/impersonation", label: "تقمّص الدور" },
+  { href: "/data", label: "وحدة التحكّم بالبيانات" },
 ];
 
 export function Sidebar() {

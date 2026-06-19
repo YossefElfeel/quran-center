@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../domain/monthly_plan.dart';
 import '../controllers/circle_monthly_plan_controller.dart';
 
@@ -54,14 +55,10 @@ class _MonthlyPlanEditorScreenState
             portionsRef: _portions.text.trim(),
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.monPlanSaved)));
+      AppSnackbar.success(context, l.monPlanSaved);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.monPlanSaveFailed)));
+      AppSnackbar.error(context, l.monPlanSaveFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -100,7 +97,7 @@ class _MonthlyPlanEditorScreenState
           children: <Widget>[
             Text(
               l.monPlanVisibleToParents,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.palette.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
             TextField(
@@ -136,6 +133,7 @@ class _MonthlyPlanEditorScreenState
             AppButton(
               label: _saving ? l.monSaving : l.monSavePlan,
               icon: Icons.save,
+              isLoading: _saving,
               onPressed: _saving ? null : _save,
             ),
           ],

@@ -26,17 +26,17 @@ class ChildConsentSection extends ConsumerWidget {
           children: <Widget>[
             Text(
               l.ppGirlMediaConsent,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               l.ppGirlMediaConsentNote,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),

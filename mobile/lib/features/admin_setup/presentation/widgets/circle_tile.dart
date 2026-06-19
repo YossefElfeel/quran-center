@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
-import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
 import '../../domain/circle.dart';
 
 /// بلاطة حلقة (المعلّم + السعة + الحالة).
@@ -15,44 +16,24 @@ class CircleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: ListTile(
-        onTap: onTap,
-        leading: const Icon(Icons.groups, color: AppColors.primary),
-        title: Text(circle.name),
-        subtitle: Text(
-          l.admCircleSubtitle(
-            circle.teacherName ?? l.admNoTeacher,
-            arabicNumber(circle.maxSize),
-          ),
-        ),
-        trailing: _StatusBadge(status: circle.status),
+    return AppListCard(
+      leadingIcon: Icons.groups,
+      title: circle.name,
+      subtitle: l.admCircleSubtitle(
+        circle.teacherName ?? l.admNoTeacher,
+        arabicNumber(circle.maxSize),
       ),
+      trailing: AppStatusBadge(
+        label: circle.status.labelAr,
+        kind: _kind(circle.status),
+      ),
+      onTap: onTap,
     );
   }
-}
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final CircleStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-      ),
-      child: Text(
-        status.labelAr,
-        style: const TextStyle(fontSize: 12, color: AppColors.primaryDark),
-      ),
-    );
-  }
+  AppStatusKind _kind(CircleStatus status) => switch (status) {
+    CircleStatus.forming => AppStatusKind.info,
+    CircleStatus.active => AppStatusKind.success,
+    CircleStatus.graduated => AppStatusKind.neutral,
+  };
 }

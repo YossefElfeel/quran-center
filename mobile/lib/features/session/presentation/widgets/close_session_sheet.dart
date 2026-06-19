@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
@@ -78,9 +79,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context).sesCloseSessionError)),
-      );
+      AppSnackbar.error(context, AppL10n.of(context).sesCloseSessionError);
     }
   }
 
@@ -118,7 +117,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
               const SizedBox(height: AppSpacing.md),
               Text(
                 l.sesCloseRevisionPrompt,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.palette.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
               TextField(
@@ -146,13 +145,14 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.error),
+                  style: TextStyle(color: context.palette.error),
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),
               AppButton(
                 label: _saving ? l.sesClosing : l.sesCloseSession,
                 icon: Icons.check_circle,
+                isLoading: _saving,
                 onPressed: _saving ? null : () => _close(list),
               ),
             ],

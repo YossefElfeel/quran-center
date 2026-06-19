@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/competition_models.dart';
@@ -31,7 +34,7 @@ class CompetitionResultsScreen extends ConsumerWidget {
     return AppScaffold(
       title: '${l.cmpResultsTitle} $competitionName',
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.cmpResultsLoadError,
           onRetry: () =>
@@ -39,41 +42,36 @@ class CompetitionResultsScreen extends ConsumerWidget {
         ),
         data: (List<CompetitionResultRow> items) => items.isEmpty
             ? EmptyState(message: l.cmpNoResults, icon: Icons.leaderboard)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final CompetitionResultRow r = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(competitionResultsProvider(competitionId)),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final CompetitionResultRow r = items[i];
+                    final AppPalette p = context.palette;
+                    return AppListCard(
                       leading: CircleAvatar(
-                        backgroundColor: i == 0
-                            ? AppColors.accent
-                            : AppColors.primary,
+                        backgroundColor: i == 0 ? p.accent : p.primary,
                         child: Text(
                           arabicNumber(i + 1),
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(color: p.onPrimary),
                         ),
                       ),
-                      title: Text(r.applicantName),
-                      subtitle: Text(
-                        '${l.cmpJudgeCount}: ${arabicNumber(r.judgeCount)}',
-                      ),
+                      title: r.applicantName,
+                      subtitle:
+                          '${l.cmpJudgeCount}: ${arabicNumber(r.judgeCount)}',
                       trailing: Text(
                         arabicNumber(r.average.round()),
-                        style: const TextStyle(
-                          fontSize: 20,
+                        style: AppTextStyles.titleLg.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          color: p.primary,
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );

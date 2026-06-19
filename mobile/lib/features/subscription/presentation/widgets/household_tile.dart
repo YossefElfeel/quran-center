@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
 import '../../domain/household_summary.dart';
 import '../../domain/subscription_status.dart';
 
@@ -22,102 +26,74 @@ class HouseholdTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
     final bool paidThisMonth = household.status == SubscriptionStatus.active;
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
         horizontal: AppSpacing.md,
       ),
-      child: InkWell(
+      child: AppCard(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      household.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    household.name,
+                    style: AppTextStyles.titleMd.copyWith(
+                      color: p.textPrimary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  _StatusBadge(status: household.status),
-                  const SizedBox(width: AppSpacing.xs),
-                  const Icon(
-                    Icons.chevron_left,
-                    color: AppColors.textSecondary,
+                ),
+                AppStatusBadge(
+                  label: household.status.labelAr,
+                  kind: _kind(household.status),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Icon(Icons.chevron_left, color: p.textSecondary),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: <Widget>[
+                Text(
+                  l.subsMonthlyAmount(
+                    arabicNumber(household.monthlyAmount.round()),
                   ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: <Widget>[
+                  style: AppTextStyles.bodyMd.copyWith(color: p.textSecondary),
+                ),
+                const Spacer(),
+                if (paidThisMonth)
                   Text(
-                    l.subsMonthlyAmount(
-                      arabicNumber(household.monthlyAmount.round()),
+                    l.subsPaidThisMonth,
+                    style: AppTextStyles.bodyMd.copyWith(
+                      color: p.success,
+                      fontWeight: FontWeight.bold,
                     ),
-                    style: const TextStyle(color: AppColors.textSecondary),
+                  )
+                else
+                  AppButton(
+                    label: l.subsRecordPayment,
+                    icon: Icons.payments,
+                    onPressed: onRecordPayment,
+                    expanded: false,
                   ),
-                  const Spacer(),
-                  if (paidThisMonth)
-                    Text(
-                      l.subsPaidThisMonth,
-                      style: const TextStyle(
-                        color: AppColors.success,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  else
-                    FilledButton.icon(
-                      onPressed: onRecordPayment,
-                      icon: const Icon(Icons.payments, size: 18),
-                      label: Text(l.subsRecordPayment),
-                    ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final SubscriptionStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color color = switch (status) {
-      SubscriptionStatus.active => AppColors.success,
-      SubscriptionStatus.grace => AppColors.accent,
-      SubscriptionStatus.overdue => AppColors.error,
-      SubscriptionStatus.inactive => AppColors.textSecondary,
-    };
-    return Container(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-      ),
-      child: Text(
-        status.labelAr,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
+  AppStatusKind _kind(SubscriptionStatus status) => switch (status) {
+    SubscriptionStatus.active => AppStatusKind.success,
+    SubscriptionStatus.grace => AppStatusKind.warning,
+    SubscriptionStatus.overdue => AppStatusKind.error,
+    SubscriptionStatus.inactive => AppStatusKind.neutral,
+  };
 }

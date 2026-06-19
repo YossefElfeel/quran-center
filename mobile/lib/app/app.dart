@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../shared/theme/app_theme.dart';
+import '../shared/theme/theme_mode_provider.dart';
 import 'router/app_router.dart';
 
 /// جذر التطبيق — MaterialApp.router بثيم + عربي RTL + go_router.
@@ -13,10 +14,15 @@ class QuranCenterApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final GoRouter router = ref.watch(appRouterProvider);
+    final AppThemeChoice themeChoice = ref.watch(themeChoiceProvider);
     return MaterialApp.router(
       onGenerateTitle: (BuildContext context) => AppL10n.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      darkTheme: themeChoice == AppThemeChoice.amoled
+          ? AppTheme.amoled()
+          : AppTheme.dark(),
+      themeMode: themeModeFor(themeChoice),
       locale: const Locale('ar'),
       supportedLocales: AppL10n.supportedLocales,
       localizationsDelegates: AppL10n.localizationsDelegates,

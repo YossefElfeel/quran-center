@@ -7,6 +7,8 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/teacher_profile.dart';
 import '../controllers/teacher_controllers.dart';
 
@@ -52,14 +54,10 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
             certificates: _lines(_certs.text),
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.tchProfileSaved)));
+      AppSnackbar.success(context, l.tchProfileSaved);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.tchProfileSaveFailed)));
+      AppSnackbar.error(context, l.tchProfileSaveFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -94,40 +92,25 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
         data: (TeacherProfile? _) => ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: <Widget>[
-            TextField(
-              controller: _cv,
-              minLines: 3,
-              maxLines: 6,
-              decoration: InputDecoration(
-                labelText: l.tchCvLabel,
-                border: const OutlineInputBorder(),
-              ),
-            ),
+            AppTextField(controller: _cv, maxLines: 6, label: l.tchCvLabel),
             const SizedBox(height: AppSpacing.md),
-            TextField(
+            AppTextField(
               controller: _quals,
-              minLines: 2,
               maxLines: 5,
-              decoration: InputDecoration(
-                labelText: l.tchQualificationsLabel,
-                border: const OutlineInputBorder(),
-              ),
+              label: l.tchQualificationsLabel,
             ),
             const SizedBox(height: AppSpacing.md),
-            TextField(
+            AppTextField(
               controller: _certs,
-              minLines: 2,
               maxLines: 5,
-              decoration: InputDecoration(
-                labelText: l.tchCertificatesLabel,
-                border: const OutlineInputBorder(),
-              ),
+              label: l.tchCertificatesLabel,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: _saving ? l.tchSaving : l.tchSaveProfile,
               icon: Icons.save,
-              onPressed: _saving ? null : _save,
+              isLoading: _saving,
+              onPressed: _save,
             ),
           ],
         ),

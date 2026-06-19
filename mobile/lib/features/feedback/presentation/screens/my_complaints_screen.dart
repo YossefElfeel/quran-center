@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/complaint.dart';
 import '../controllers/feedback_controllers.dart';
@@ -39,12 +44,11 @@ class MyComplaintsScreen extends ConsumerWidget {
               onChanged: (String? v) => category = v ?? 'other',
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextField(
+            AppTextField(
               controller: body,
               autofocus: true,
-              minLines: 2,
               maxLines: 4,
-              decoration: InputDecoration(labelText: l.fbkComplaintDetails),
+              label: l.fbkComplaintDetails,
             ),
           ],
         ),
@@ -83,7 +87,7 @@ class MyComplaintsScreen extends ConsumerWidget {
         ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.fbkLoadComplaintsError,
           onRetry: () => ref.invalidate(myComplaintsProvider),
@@ -93,11 +97,14 @@ class MyComplaintsScreen extends ConsumerWidget {
                 message: l.fbkNoComplaintsParent,
                 icon: Icons.support_agent,
               )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) =>
-                    _ComplaintCard(complaint: items[i]),
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(myComplaintsProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) =>
+                      _ComplaintCard(complaint: items[i]),
+                ),
               ),
       ),
     );
@@ -112,13 +119,13 @@ class _ComplaintCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    final AppPalette p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
         horizontal: AppSpacing.md,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -128,27 +135,30 @@ class _ComplaintCard extends StatelessWidget {
                   child: Text(
                     complaintCategoriesAr[complaint.category] ??
                         complaint.category,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: AppTextStyles.titleMd.copyWith(
+                      color: p.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                Text(
-                  complaint.statusAr,
-                  style: TextStyle(
-                    color: complaint.isAnswered
-                        ? AppColors.success
-                        : AppColors.accent,
-                    fontWeight: FontWeight.bold,
-                  ),
+                AppStatusBadge(
+                  label: complaint.statusAr,
+                  kind: complaint.isAnswered
+                      ? AppStatusKind.success
+                      : AppStatusKind.warning,
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
-            Text(complaint.body),
+            Text(
+              complaint.body,
+              style: AppTextStyles.bodyMd.copyWith(color: p.textPrimary),
+            ),
             if (complaint.isAnswered) ...<Widget>[
               const Divider(),
               Text(
                 '${l.fbkManagerResponseLabel}: ${complaint.managerResponse}',
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: AppTextStyles.bodyMd.copyWith(color: p.textSecondary),
               ),
             ],
           ],

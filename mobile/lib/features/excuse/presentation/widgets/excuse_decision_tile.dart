@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../domain/pending_excuse.dart';
 
 /// بلاطة طلب عذر — اسم الطالب والحلقة والسبب + موافقة/رفض.
@@ -20,52 +23,50 @@ class ExcuseDecisionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
     final String? reason = excuse.reason;
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
         horizontal: AppSpacing.md,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
               excuse.studentName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: AppTextStyles.titleMd.copyWith(color: p.textPrimary),
             ),
             const SizedBox(height: 2),
             Text(
               excuse.circleName,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
             ),
             if (reason != null && reason.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
-              Text(reason),
+              Text(
+                reason,
+                style: AppTextStyles.bodyMd.copyWith(color: p.textPrimary),
+              ),
             ],
             const SizedBox(height: AppSpacing.md),
             Row(
               children: <Widget>[
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppButton(
+                    label: l.excReject,
+                    icon: Icons.close,
                     onPressed: onReject,
-                    icon: const Icon(Icons.close, color: AppColors.error),
-                    label: Text(
-                      l.excReject,
-                      style: const TextStyle(color: AppColors.error),
-                    ),
+                    variant: AppButtonVariant.outlined,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: FilledButton.icon(
+                  child: AppButton(
+                    label: l.excApprove,
+                    icon: Icons.check,
                     onPressed: onApprove,
-                    icon: const Icon(Icons.check),
-                    label: Text(l.excApprove),
                   ),
                 ),
               ],

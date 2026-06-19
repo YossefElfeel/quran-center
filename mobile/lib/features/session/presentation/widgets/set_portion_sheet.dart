@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
@@ -86,9 +87,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context).sesPortionSaveError)),
-      );
+      AppSnackbar.error(context, AppL10n.of(context).sesPortionSaveError);
     }
   }
 
@@ -151,13 +150,14 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.error),
+                  style: TextStyle(color: context.palette.error),
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),
               AppButton(
                 label: _saving ? l.sesPortionSaving : l.sesPortionSave,
                 icon: Icons.check,
+                isLoading: _saving,
                 onPressed: _saving ? null : () => _save(list),
               ),
             ],

@@ -31,9 +31,9 @@ class ChildMonthlyPlanSection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppMonthlyPlan,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: context.palette.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -68,7 +68,7 @@ class _Line extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 18, color: AppColors.primary),
+          Icon(icon, size: 18, color: context.palette.primary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(text)),
         ],

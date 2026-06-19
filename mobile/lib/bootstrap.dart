@@ -35,7 +35,6 @@ Future<void> bootstrap() async {
   // الكتابة المؤجّلة أول ما النت يرجع. (اختبارات الـ widget بتعمل ProviderScope
   // بتاعها فمش بتفتح Drift.)
   final ProviderContainer container = ProviderContainer();
-  container.read(outboxSyncProvider);
 
   runApp(
     UncontrolledProviderScope(
@@ -43,4 +42,10 @@ Future<void> bootstrap() async {
       child: const QuranCenterApp(),
     ),
   );
+
+  // نأجّل تفعيل المزامن (وفتح Drift) لبعد أول إطار عشان ما نعطّلش بداية التشغيل
+  // (كان بيسبّب تقطيع في أول لقطة — Skipped frames).
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    container.read(outboxSyncProvider);
+  });
 }

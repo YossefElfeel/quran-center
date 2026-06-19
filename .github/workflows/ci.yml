@@ -178,8 +178,9 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -e
-          # auto-commit only on dev (main is protected — a bot push would be rejected)
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref_name }}" = "dev" ]; then
+          # auto-commit on any non-main branch on manual dispatch (main is protected — a
+          # bot push is rejected there; dev + feature branches accept bot pushes).
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref_name }}" != "main" ]; then
             (cd mobile && flutter test --tags golden --update-goldens)
             git add mobile/test
             if git diff --cached --quiet; then

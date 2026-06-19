@@ -6,7 +6,9 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../admin_setup/domain/circle.dart';
@@ -23,29 +25,29 @@ class EvalCirclesScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.navEvalCircles,
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.supCirclesLoadError,
           onRetry: () => ref.invalidate(evalCirclesProvider),
         ),
         data: (List<Circle> items) => items.isEmpty
             ? EmptyState(message: l.supNoCircles, icon: Icons.groups_outlined)
-            : ListView.builder(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) => Card(
-                  margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.fact_check,
-                      color: AppColors.primary,
-                    ),
-                    title: Text(items[i].name),
-                    trailing: const Icon(Icons.chevron_left),
-                    onTap: () => context.go(
-                      Routes.supervisorCircleEval(items[i].id, items[i].name),
-                    ),
-                  ),
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(evalCirclesProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final Circle c = items[i];
+                    return AppListCard(
+                      title: c.name,
+                      subtitle: c.teacherName,
+                      leadingIcon: Icons.fact_check,
+                      onTap: () => context.push(
+                        Routes.supervisorCircleEval(c.id, c.name),
+                      ),
+                    );
+                  },
                 ),
               ),
       ),

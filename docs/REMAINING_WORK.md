@@ -29,7 +29,18 @@
 
 ## 2) الشغل المتبقّي (مرتّب بالأولوية)
 
-### 🔴 P1 — M4: الكرونات الناقصة (٤ وظائف) — أكبر فجوة فعلية
+### ✅ P1 — M4: الكرونات الناقصة (٤ وظائف) — **تمّت (2026-06-19)**
+
+> **خلصت كلها.** الـ `cron.job` بقى فيه **٦ وظائف نشطة**. كل وظيفة = `security definer` + `search_path=''` + `revoke` من أدوار الـ API + manifest في `audit_log` (actor = NULL = system)، واتحقّق منها بـ DB smoke (rollback) على مشروع الـ dev. الميجريشنز:
+> [`..000001_cron_monthly_close.sql`](../supabase/migrations/20260619000001_cron_monthly_close.sql) · [`..000002_cron_purge_public_registrations.sql`](../supabase/migrations/20260619000002_cron_purge_public_registrations.sql) · [`..000003_cron_media_retention.sql`](../supabase/migrations/20260619000003_cron_media_retention.sql) · [`..000004_cron_nominate_certificate_candidates.sql`](../supabase/migrations/20260619000004_cron_nominate_certificate_candidates.sql).
+> - **`monthly-close`** (`0 2 1 * *`): تقييم شهري واحد لكل enrollment نشط (`draft`، أو `missed` + تصعيد لو مفيش تسجيل)؛ متفوّق الحلقة؛ إشعار بطاقة التقدّم؛ idempotent على `(student, month)`.
+> - **`purge-public-registrations`** (`0 3 * * *`): حذف `public_registration` الأقدم من TTL (`system_settings.public_registration_ttl_days`، افتراضي ٩٠) ما لم يكن له `competition_application` مقبول.
+> - **`media-retention`** (`0 4 * * 0`): للطلبة من غير enrollment نشط — احتفظ بأول وآخر فيديو، علّم الباقي `retained=false`؛ استبعاد المشاركين في مسابقة `open/judging`. (أثره يظهر مع M3.2.)
+> - **`nominate-certificate-candidates`** (`0 5 * * 1`): ترشيح المؤهّلين (يعيد استخدام `public.eligible_certificate_students()`) بإشعار للمشرف؛ جدول `certificate_nomination` للـ idempotency؛ مش إصدار تلقائي.
+>
+> **ملاحظة advisor:** `certificate_nomination` بيظهر INFO (`rls_enabled_no_policy`) — ده النمط المقصود لجدول النظام (زي `subscription_overdue_notice`)، مش bug.
+
+<details><summary>التفاصيل الأصلية للمهمة (للمرجع)</summary>
 
 **الموجود فعلاً (متحقّق من `cron.job`):** `escalate-overdue-complaints` (كل ساعة) + `notify-overdue-subscriptions` (يومي ٦ص).
 **النمط المرجعي:** [`supabase/migrations/20260618240002_cron_escalate_overdue_complaints.sql`](../supabase/migrations/20260618240002_cron_escalate_overdue_complaints.sql) و[`..240003_cron_overdue_subscriptions.sql`](../supabase/migrations/20260618240003_cron_overdue_subscriptions.sql) — كل وظيفة = SQL function `security definer, search_path=''` + `select cron.schedule('name', '<cron>', $$ select fn() $$)`.
@@ -52,9 +63,15 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 
 > **مهم:** كل function تتكتب في migration جديدة مؤرّخة، و`cron.schedule` بيعمل upsert بالاسم (إعادة التطبيق آمنة). بعد التطبيق: `select jobname, schedule, active from cron.job;` لازم تبقى **٦ وظائف**.
 
+</details>
+
 ---
 
-### 🟡 P2 — M1.9: تقرير الحلقة الشهري PDF (سريع)
+### ✅ P2 — M1.9: تقرير الحلقة الشهري PDF — **تمّت (2026-06-19)**
+
+> **خلصت.** الدالة النقية [`monthly_circle_report_pdf.dart`](../mobile/lib/features/documents/domain/monthly_circle_report_pdf.dart) (Cairo + RTL + أرقام عربية — رأس الحلقة/الشهر، ملخّص [طلبة نشطين، متوسّط حضور، نسبة نجاح، المتفوّق]، جدول تقدّم المقاطع) + النموذج [`monthly_circle_report.dart`](../mobile/lib/features/documents/domain/monthly_circle_report.dart) + اختبار [`monthly_circle_report_test.dart`](../mobile/test/monthly_circle_report_test.dart) (`%PDF` للحالة العامرة والفاضية). البيانات عبر RPC `monthly_circle_report` (SECURITY INVOKER، RLS؛ ميجريشن [`..000005`](../supabase/migrations/20260619000005_monthly_circle_report_rpc.sql)) → `SupervisorEvalRepository.fetchMonthlyCircleReport` → زر طباعة في [`circle_eval_screen.dart`](../mobile/lib/features/supervisor_eval/presentation/screens/circle_eval_screen.dart) (`Printing.layoutPdf`، الشهر الحالي) + helper `arabicMonthLabel`. `flutter analyze` نضيف · ١١٩ اختبار · advisors ثابتة.
+
+<details><summary>التفاصيل الأصلية للمهمة (للمرجع)</summary>
 
 - **الموجود:** [`attendance_sheet_pdf.dart`](../mobile/lib/features/documents/domain/attendance_sheet_pdf.dart) + [`progress_card_pdf.dart`](../mobile/lib/features/documents/domain/progress_card_pdf.dart) + `certificate_pdf.dart`.
 - **الناقص:** `monthly_circle_report_pdf.dart`.
@@ -62,9 +79,26 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 - **ملفات:** `mobile/lib/features/documents/domain/monthly_circle_report_pdf.dart` + شاشة `*_preview`/إضافة لـ `print_report_screen` + repo method للبيانات.
 - **تحقق:** unit test (`bytes` غير فاضية + تبدأ بـ `%PDF`) — زي `certificate_test.dart`؛ معاينة فعلية على الجهاز.
 
+</details>
+
+> **متبقّي (اختياري):** معاينة فعلية على جهاز + (لو حبيت) منتقي شهر بدل الشهر الحالي + إتاحة الزر للمعلّم على شاشة حلقته.
+
 ---
 
-### 🟡 P3 — M3.2: upload-media (نشر + علامة مائية + ضغط + المعرض)
+### 🟢 P3 — M3.2: upload-media — **مبني على الجهاز (الكود تمّ، النشر مؤجّل) (2026-06-19)**
+
+> **القرار:** معالجة على الجهاز (Flutter). **اللي اتعمل:**
+> - **معالجة الصور على الجهاز** (مُختبَرة): [`image_watermark.dart`](../mobile/lib/features/media/domain/image_watermark.dart) — تصغير + علامة مائية + ضغط JPEG (+ [اختبار](../mobile/test/image_watermark_test.dart)).
+> - **upload-media** (أُعيد تصميمها): تخزين بـ service-role + إدراج صف `media` **بهوية المستخدم** فالـ RLS (`media_write`) بتفرض الدور + الموافقة، وتنظيف الملف لو اترفض. (صلّحت باج: الـ scaffold كان بيندي `media_consent_ok` اللي اتنقلت لـ `private`.) مفيش ffmpeg في الـ Edge لأن المعالجة بقت على الجهاز.
+> - **media-signed-url** (جديدة): قراءة الصف بالـ RLS → `log_media_access` → رابط موقّع ٣٠٠ث بـ service-role.
+> - **المعرض + الرفع** ([`child_media_section.dart`](../mobile/lib/features/media/presentation/widgets/child_media_section.dart) على كارت الطفل): شبكة مفلترة بالموافقة (RLS) + روابط موقّعة لكل عنصر (RepaintBoundary؛ الفيديو يفتح خارجيًا) + رفع صور للأدوار المصرّح لها (`currentRoles`) عبر image_picker → معالجة → رفع. [`MediaRepository`](../mobile/lib/features/media/data/media_repository.dart) + providers + اختبار بوابة الدور. `analyze` نضيف · ١٢٤ اختبار.
+>
+> **المتبقّي (مؤجّل):**
+> 1. **نشر الـ Edge functions** — **محظور لحد ما يتدوّر مفتاح الـ service-role المكشوف** (محذَّر في رأس الدالة) + قرار نشر. بعدها: `supabase functions deploy upload-media` و`media-signed-url`.
+> 2. **رفع/ضغط الفيديو على الجهاز** (محتاج ffmpeg/native) + **علامة عربية محروقة** (خط الحزمة النقطي لاتيني) + **cached_network_image** + **مشغّل فيديو داخلي** — تحسينات لاحقة.
+> 3. **اختبار e2e فعلي بعد النشر**: رفع → معاينة، وتأكيد حجب وسائط البنت بدون موافقة.
+
+<details><summary>التفاصيل الأصلية للمهمة (للمرجع)</summary>
 
 - **الحالة:** [`supabase/functions/upload-media/index.ts`](../supabase/functions/upload-media/index.ts) **مكتوبة بس مش منشورة**، والعلامة المائية/الضغط لسه `TODO` (سطور 6/53/73). (`invite-user` و`submit-public-application` منشورين ACTIVE — متحقّق.)
 - **التحدّي التقني (محتاج قرار):** `ffmpeg` مش متاح مباشرة في Deno Edge runtime. البدائل:
@@ -77,6 +111,8 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
   - **معرض الوسائط (موبايل):** signed URLs من Edge + `log_media_access` + `cached_network_image` + `RepaintBoundary` + thumbnails (مفيش autoplay). جزء الموافقة موجود ([`child_consent_section.dart`](../mobile/lib/features/parent_portal/presentation/widgets/child_consent_section.dart)) — المعرض الكامل + مشغّل الفيديو يتراجعوا.
 - **تحقق:** e2e رفع → معاينة؛ **وسائط البنت محجوبة بدون `consent_record` نشط** (RLS موجود — أكّد بـ smoke).
 
+</details>
+
 ---
 
 ## 3) مؤجّل بقرار/خارجي (مش كود — قرارك أو ترقية)
@@ -88,6 +124,7 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 | **M9** الإطلاق | keystore + AAB + رفع Play | دليل كامل: [`RELEASE_ANDROID.md`](RELEASE_ANDROID.md). جرّب `--release` على جهاز (R8 شال حاجة؟). |
 | **Vercel** | قفل **Deployment Protection** للمشروعين + (لو لزم) redeploy `invite-user` | اللوحة + الويب اتنشروا production؛ الـ 401 = الحماية الافتراضية. |
 | **نشر prod / أول مستخدم حقيقي** | **تأكيدك الصريح** | قيد أمان قائم. |
+| **نشر media Edge** (`upload-media` + `media-signed-url`) | **تدوير مفتاح service-role المكشوف** ثم `supabase functions deploy` للاتنين | الكود اتكتب (معالجة على الجهاز)؛ النشر محظور لحد التدوير (محذَّر في رأس الدالة). بعدها e2e فعلي. |
 
 ---
 
@@ -97,3 +134,5 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 أدمن → معلّم (حصة كاملة + قطع نت) → مشرف (اعتماد + شهادة) → ولي أمر (كارت + وسائط بموافقة + شكوى) → عام (كورس + مسابقة) → سوبر أدمن (لوحة + audit). + أكّد الكرونات الـ ٦ شغّالة، و`get_advisors` نضيف، وعزل RLS بالاختبارات السلبية.
 
 **"خلصت" =** الكرونات الـ ٦ كلها live، تقرير الحلقة الشهري بيتطبع، الوسائط بترفع بعلامة مائية ومحكومة بالموافقة، و`flutter analyze`/الاختبارات/CI كلها خضرا.
+
+**الحالة (2026-06-19):** ✅ الكرونات الـ ٦ live · ✅ تقرير الحلقة الشهري بيتطبع · 🟢 الوسائط: المعالجة على الجهاز + المعرض/الرفع + الـ Edge functions **اتكتبوا** (النشر مؤجّل لتدوير المفتاح) · ✅ `flutter analyze` نضيف + ١٢٤ اختبار + CI أخضر. **الباقي للإقفال الكامل:** تدوير مفتاح service-role → نشر `upload-media`/`media-signed-url` → e2e فعلي + (اختياري) رفع/ضغط فيديو على الجهاز.

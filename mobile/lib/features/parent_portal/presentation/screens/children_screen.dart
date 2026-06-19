@@ -5,11 +5,14 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import '../../../enrollment/domain/gender.dart';
 import '../../../subscription/presentation/controllers/my_subscription_controller.dart';
 import '../../../subscription/presentation/widgets/pay_required_view.dart';
 import '../../domain/child_summary.dart';
@@ -46,7 +49,7 @@ class _ChildrenList extends ConsumerWidget {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<ChildSummary>> state = ref.watch(myChildrenProvider);
     return state.when(
-      loading: () => const AppLoader(),
+      loading: () => const AppListSkeleton(),
       error: (Object e, StackTrace _) => AppErrorView(
         message: l.ppChildrenLoadError,
         onRetry: () => ref.invalidate(myChildrenProvider),
@@ -56,29 +59,22 @@ class _ChildrenList extends ConsumerWidget {
               message: l.ppNoChildrenLinked,
               icon: Icons.family_restroom,
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: items.length,
-              itemBuilder: (BuildContext context, int i) {
-                final ChildSummary c = items[i];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      child: Icon(
-                        c.gender == Gender.female ? Icons.girl : Icons.boy,
-                      ),
-                    ),
-                    title: Text(c.fullName),
-                    trailing: const Icon(Icons.chevron_left),
-                    onTap: () => context.go(
+          : AppRefreshIndicator(
+              onRefresh: () async => ref.invalidate(myChildrenProvider),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                itemCount: items.length,
+                itemBuilder: (BuildContext context, int i) {
+                  final ChildSummary c = items[i];
+                  return AppListCard(
+                    leading: AppAvatar(name: c.fullName, radius: 22),
+                    title: c.fullName,
+                    onTap: () => context.push(
                       Routes.parentChild(c.studentPersonId, c.fullName),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
     );
   }

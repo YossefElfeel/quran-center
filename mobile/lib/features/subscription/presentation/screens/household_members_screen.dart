@@ -4,7 +4,9 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/household_member_row.dart';
@@ -47,7 +49,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
         ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.subsMembersLoadError,
           onRetry: () =>
@@ -55,26 +57,24 @@ class HouseholdMembersScreen extends ConsumerWidget {
         ),
         data: (List<HouseholdMemberRow> items) => items.isEmpty
             ? EmptyState(message: l.subsNoMembers, icon: Icons.group_add)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final HouseholdMemberRow m = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      leading: Icon(
-                        m.role == 'guardian' ? Icons.person : Icons.child_care,
-                        color: AppColors.primary,
-                      ),
-                      title: Text(m.personName),
-                      subtitle: Text(m.roleAr),
-                    ),
-                  );
-                },
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(
+                  householdMembersControllerProvider(householdId),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final HouseholdMemberRow m = items[i];
+                    return AppListCard(
+                      leadingIcon: m.role == 'guardian'
+                          ? Icons.person
+                          : Icons.child_care,
+                      title: m.personName,
+                      subtitle: m.roleAr,
+                    );
+                  },
+                ),
               ),
       ),
     );

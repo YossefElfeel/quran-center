@@ -4,7 +4,9 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/app_notification.dart';
@@ -31,7 +33,7 @@ class NotificationListScreen extends ConsumerWidget {
         ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.notificationsLoadError,
           onRetry: () => ref.invalidate(notificationsControllerProvider),
@@ -41,12 +43,17 @@ class NotificationListScreen extends ConsumerWidget {
                 message: l.noNotifications,
                 icon: Icons.notifications_none,
               )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) => _NotificationTile(
-                  key: ValueKey<String>(items[i].id),
-                  notification: items[i],
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(notificationsControllerProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) =>
+                      _NotificationTile(
+                        key: ValueKey<String>(items[i].id),
+                        notification: items[i],
+                      ),
                 ),
               ),
       ),
@@ -54,7 +61,7 @@ class NotificationListScreen extends ConsumerWidget {
   }
 }
 
-/// بلاطة إشعار: أيقونة حسب النوع + لون/خط حسب مقروء، ونقطة للغير مقروء.
+/// بلاطة إشعار: أيقونة حسب النوع + نقطة للغير مقروء.
 class _NotificationTile extends StatelessWidget {
   const _NotificationTile({required this.notification, super.key});
 
@@ -62,28 +69,23 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppPalette p = context.palette;
     final bool read = notification.isRead;
-    return Card(
-      margin: const EdgeInsets.symmetric(
-        vertical: AppSpacing.xs,
-        horizontal: AppSpacing.md,
-      ),
-      child: ListTile(
-        leading: Icon(
-          _iconForType(notification.type),
-          color: read ? AppColors.textSecondary : AppColors.primary,
-        ),
-        title: Text(
-          notification.title,
-          style: TextStyle(
-            fontWeight: read ? FontWeight.normal : FontWeight.bold,
-          ),
-        ),
-        subtitle: notification.body != null ? Text(notification.body!) : null,
-        trailing: read
-            ? null
-            : const Icon(Icons.circle, size: 10, color: AppColors.primary),
-      ),
+    return AppListCard(
+      leadingIcon: _iconForType(notification.type),
+      iconColor: read ? p.textSecondary : p.primary,
+      title: notification.title,
+      subtitle: notification.body,
+      trailing: read
+          ? null
+          : Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: p.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
     );
   }
 }

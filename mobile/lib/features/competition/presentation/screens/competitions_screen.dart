@@ -6,7 +6,9 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/competition_models.dart';
@@ -61,29 +63,23 @@ class CompetitionsScreen extends ConsumerWidget {
         ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.cmpLoadError,
           onRetry: () => ref.invalidate(competitionsProvider),
         ),
         data: (List<CompetitionRow> items) => items.isEmpty
             ? EmptyState(message: l.cmpEmpty, icon: Icons.emoji_events)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) => Card(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.xs,
-                    horizontal: AppSpacing.md,
-                  ),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.emoji_events,
-                      color: AppColors.accent,
-                    ),
-                    title: Text(items[i].name),
-                    trailing: const Icon(Icons.chevron_left),
-                    onTap: () => context.go(
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(competitionsProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) => AppListCard(
+                    leadingIcon: Icons.emoji_events,
+                    iconColor: context.palette.accent,
+                    title: items[i].name,
+                    onTap: () => context.push(
                       Routes.competitionDetail(items[i].id, items[i].name),
                     ),
                   ),
