@@ -36,10 +36,16 @@ export async function proxy(request: NextRequest) {
 
   const isLoginRoute = request.nextUrl.pathname.startsWith("/login");
 
-  // TODO(Phase D1): امنع الوصول لو الدور مش super_admin (مش بس وجود جلسة).
+  // فحص الدور super_admin بيتعمل في layout الـ (dash) (Server Component عبر
+  // getSuperAdmin) — هنا بس بنتأكد إن فيه جلسة صالحة.
   if (!user && !isLoginRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
+    return NextResponse.redirect(redirectUrl);
+  }
+  if (user && isLoginRoute) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/";
     return NextResponse.redirect(redirectUrl);
   }
 
