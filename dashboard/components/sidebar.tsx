@@ -13,6 +13,7 @@ const NAV = [
   { href: "/content", label: "الكورسات والمسابقات" },
   { href: "/audit", label: "سجل التدقيق" },
   { href: "/pdpl", label: "الخصوصية" },
+  { href: "/impersonation", label: "تقمّص الدور" },
 ];
 
 export function Sidebar() {
