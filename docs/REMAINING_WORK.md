@@ -67,13 +67,21 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 
 ---
 
-### 🟡 P2 — M1.9: تقرير الحلقة الشهري PDF (سريع)
+### ✅ P2 — M1.9: تقرير الحلقة الشهري PDF — **تمّت (2026-06-19)**
+
+> **خلصت.** الدالة النقية [`monthly_circle_report_pdf.dart`](../mobile/lib/features/documents/domain/monthly_circle_report_pdf.dart) (Cairo + RTL + أرقام عربية — رأس الحلقة/الشهر، ملخّص [طلبة نشطين، متوسّط حضور، نسبة نجاح، المتفوّق]، جدول تقدّم المقاطع) + النموذج [`monthly_circle_report.dart`](../mobile/lib/features/documents/domain/monthly_circle_report.dart) + اختبار [`monthly_circle_report_test.dart`](../mobile/test/monthly_circle_report_test.dart) (`%PDF` للحالة العامرة والفاضية). البيانات عبر RPC `monthly_circle_report` (SECURITY INVOKER، RLS؛ ميجريشن [`..000005`](../supabase/migrations/20260619000005_monthly_circle_report_rpc.sql)) → `SupervisorEvalRepository.fetchMonthlyCircleReport` → زر طباعة في [`circle_eval_screen.dart`](../mobile/lib/features/supervisor_eval/presentation/screens/circle_eval_screen.dart) (`Printing.layoutPdf`، الشهر الحالي) + helper `arabicMonthLabel`. `flutter analyze` نضيف · ١١٩ اختبار · advisors ثابتة.
+
+<details><summary>التفاصيل الأصلية للمهمة (للمرجع)</summary>
 
 - **الموجود:** [`attendance_sheet_pdf.dart`](../mobile/lib/features/documents/domain/attendance_sheet_pdf.dart) + [`progress_card_pdf.dart`](../mobile/lib/features/documents/domain/progress_card_pdf.dart) + `certificate_pdf.dart`.
 - **الناقص:** `monthly_circle_report_pdf.dart`.
 - **الأفضل:** دالة نقية `buildMonthlyCircleReportPdf({required data, required ByteData cairoFont, ...}) → Uint8List` بنفس نمط الموجود (Cairo + `pw.Directionality.rtl` + أرقام عربية). البيانات: متوسّط الحضور، نسبة النجاح للحلقة، المتفوّق، ملخّص تقدّم المقاطع للشهر.
 - **ملفات:** `mobile/lib/features/documents/domain/monthly_circle_report_pdf.dart` + شاشة `*_preview`/إضافة لـ `print_report_screen` + repo method للبيانات.
 - **تحقق:** unit test (`bytes` غير فاضية + تبدأ بـ `%PDF`) — زي `certificate_test.dart`؛ معاينة فعلية على الجهاز.
+
+</details>
+
+> **متبقّي (اختياري):** معاينة فعلية على جهاز + (لو حبيت) منتقي شهر بدل الشهر الحالي + إتاحة الزر للمعلّم على شاشة حلقته.
 
 ---
 
