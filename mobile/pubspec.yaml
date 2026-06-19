@@ -50,3 +50,7 @@ flutter:
     - family: Cairo
       fonts:
         - asset: assets/fonts/Cairo.ttf
+    # Amiri: خط قرآني بالتشكيل — يُستخدم لنص القرآن في الـ PDF (آية الشهادة).
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf

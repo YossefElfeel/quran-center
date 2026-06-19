@@ -5,14 +5,21 @@ import 'package:pdf/widgets.dart' as pw;
 
 /// يبني شهادة PDF عربية RTL (دالة نقية — بتاخد بايتس الخط، بترجّع Uint8List).
 /// قابلة للاختبار من غير Flutter (الخط بيتمرّر، مش بيتقري من rootBundle).
+///
+/// [fontData] خط النص العام (Cairo). [quranFontData] خط القرآن بالتشكيل (Amiri)
+/// لآية الترويسة؛ لو null بترجع لخط النص.
 Future<Uint8List> buildCertificatePdf({
   required String studentName,
   required String kindLabel,
   required String dateLabel,
   required ByteData fontData,
+  ByteData? quranFontData,
   String centerName = 'دار تحفيظ القرآن الكريم',
 }) async {
   final pw.Font font = pw.Font.ttf(fontData);
+  final pw.Font quranFont = quranFontData != null
+      ? pw.Font.ttf(quranFontData)
+      : font;
   final pw.Document doc = pw.Document();
   doc.addPage(
     pw.Page(
@@ -28,6 +35,17 @@ Future<Uint8List> buildCertificatePdf({
             mainAxisAlignment: pw.MainAxisAlignment.center,
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: <pw.Widget>[
+              // آية قرآنية بخط Amiri (بالتشكيل) — مناسبة لشهادة الحفظ.
+              pw.Text(
+                '﴿ إِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَإِنَّا لَهُ لَحَافِظُونَ ﴾',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  font: quranFont,
+                  fontSize: 26,
+                  color: PdfColors.teal800,
+                ),
+              ),
+              pw.SizedBox(height: 22),
               pw.Text(
                 centerName,
                 style: pw.TextStyle(

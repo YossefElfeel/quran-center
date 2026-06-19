@@ -35,3 +35,9 @@ mobile/env/prod.json
 # Supabase local
 supabase/.branches/
 supabase/.temp/
+
+# generated sample output (tool/gen_sample_certificate.dart)
+mobile/sample_certificate.pdf
+
+# Flutter golden test failure diffs (transient)
+mobile/test/**/failures/

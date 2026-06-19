@@ -31,11 +31,15 @@ class CertificatePreviewScreen extends StatelessWidget {
           final ByteData fontData = await rootBundle.load(
             'assets/fonts/Cairo.ttf',
           );
+          final ByteData quranFontData = await rootBundle.load(
+            'assets/fonts/Amiri-Regular.ttf',
+          );
           final Uint8List bytes = await buildCertificatePdf(
             studentName: studentName,
             kindLabel: kindLabel,
             dateLabel: dateLabel,
             fontData: fontData,
+            quranFontData: quranFontData,
           );
           return bytes;
         },
