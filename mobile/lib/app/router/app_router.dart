@@ -14,17 +14,22 @@ import '../../features/competition/presentation/screens/competition_results_scre
 import '../../features/competition/presentation/screens/competitions_screen.dart';
 import '../../features/courses/presentation/screens/courses_screen.dart';
 import '../../features/documents/presentation/screens/certificate_preview_screen.dart';
+import '../../features/documents/presentation/screens/issue_certificate_screen.dart';
 import '../../features/enrollment/presentation/screens/circle_roster_screen.dart';
 import '../../features/excuse/presentation/screens/excuse_queue_screen.dart';
 import '../../features/family/presentation/screens/guardian_links_screen.dart';
 import '../../features/feedback/presentation/screens/complaint_inbox_screen.dart';
 import '../../features/feedback/presentation/screens/my_complaints_screen.dart';
+import '../../features/feedback/presentation/screens/teacher_ratings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/intake/presentation/screens/waiting_list_screen.dart';
+import '../../features/monthly/presentation/screens/circle_monthly_eval_screen.dart';
+import '../../features/monthly/presentation/screens/monthly_eval_approval_screen.dart';
 import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
 import '../../features/parent_portal/presentation/screens/children_screen.dart';
+import '../../features/recognition/presentation/screens/honor_board_screen.dart';
 import '../../features/session/presentation/screens/my_circles_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
 import '../../features/subscription/presentation/screens/household_members_screen.dart';
@@ -34,6 +39,8 @@ import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.d
 import '../../features/supervisor_eval/presentation/screens/eval_circles_screen.dart';
 import '../../features/teacher/presentation/screens/development_approval_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_development_screen.dart';
+import '../../features/teacher/presentation/screens/teacher_profile_screen.dart';
+import '../../features/user_invite/presentation/screens/invite_user_screen.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -113,6 +120,11 @@ GoRouter appRouter(Ref ref) {
             const GuardianLinksScreen(),
       ),
       GoRoute(
+        path: Routes.adminInviteUser,
+        builder: (BuildContext context, GoRouterState state) =>
+            const InviteUserScreen(),
+      ),
+      GoRoute(
         path: Routes.householdMembersPattern,
         builder: (BuildContext context, GoRouterState state) =>
             HouseholdMembersScreen(
@@ -142,6 +154,29 @@ GoRouter appRouter(Ref ref) {
             ),
       ),
       GoRoute(
+        path: Routes.monthlyEvalPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CircleMonthlyEvalScreen(
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
+      ),
+      GoRoute(
+        path: Routes.supervisorMonthlyEval,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MonthlyEvalApprovalScreen(),
+      ),
+      GoRoute(
+        path: Routes.issueCertificate,
+        builder: (BuildContext context, GoRouterState state) =>
+            const IssueCertificateScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherRatings,
+        builder: (BuildContext context, GoRouterState state) =>
+            const TeacherRatingsScreen(),
+      ),
+      GoRoute(
         path: Routes.supervisorEval,
         builder: (BuildContext context, GoRouterState state) =>
             const EvalCirclesScreen(),
@@ -160,6 +195,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.teacherDevelopment,
         builder: (BuildContext context, GoRouterState state) =>
             const TeacherDevelopmentScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherProfile,
+        builder: (BuildContext context, GoRouterState state) =>
+            const TeacherProfileScreen(),
       ),
       GoRoute(
         path: Routes.supervisorDevApproval,
@@ -185,6 +225,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.courses,
         builder: (BuildContext context, GoRouterState state) =>
             const CoursesScreen(),
+      ),
+      GoRoute(
+        path: Routes.honorBoard,
+        builder: (BuildContext context, GoRouterState state) =>
+            const HonorBoardScreen(),
       ),
       GoRoute(
         path: Routes.competitions,

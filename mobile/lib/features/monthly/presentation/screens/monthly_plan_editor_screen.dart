@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -42,6 +43,7 @@ class _MonthlyPlanEditorScreenState
   }
 
   Future<void> _save() async {
+    final AppL10n l = AppL10n.of(context);
     setState(() => _saving = true);
     try {
       await ref
@@ -54,12 +56,12 @@ class _MonthlyPlanEditorScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('اتسجّلت خطة الشهر')));
+      ).showSnackBar(SnackBar(content: Text(l.monPlanSaved)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نحفظ — جرّب تاني')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.monPlanSaveFailed)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -67,6 +69,7 @@ class _MonthlyPlanEditorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     ref.listen<AsyncValue<MonthlyPlan?>>(
       circleMonthlyPlanControllerProvider(widget.circleId),
       (AsyncValue<MonthlyPlan?>? prev, AsyncValue<MonthlyPlan?> next) {
@@ -83,11 +86,11 @@ class _MonthlyPlanEditorScreenState
       circleMonthlyPlanControllerProvider(widget.circleId),
     );
     return AppScaffold(
-      title: 'خطة الشهر — ${widget.circleName}',
+      title: l.monPlanEditorTitle(widget.circleName),
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الخطة',
+          message: l.monLoadPlanFailed,
           onRetry: () => ref.invalidate(
             circleMonthlyPlanControllerProvider(widget.circleId),
           ),
@@ -95,18 +98,18 @@ class _MonthlyPlanEditorScreenState
         data: (MonthlyPlan? _) => ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: <Widget>[
-            const Text(
-              'الخطة بتظهر لأولياء أمور طلبة الحلقة',
-              style: TextStyle(color: AppColors.textSecondary),
+            Text(
+              l.monPlanVisibleToParents,
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
             TextField(
               controller: _curriculum,
               minLines: 2,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'منهج الشهر',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.monCurriculumLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -114,9 +117,9 @@ class _MonthlyPlanEditorScreenState
               controller: _method,
               minLines: 1,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'نظام التدريس',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.monTeachingMethodLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -124,14 +127,14 @@ class _MonthlyPlanEditorScreenState
               controller: _portions,
               minLines: 1,
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'المقاطع المطلوبة',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.monPortionsLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: _saving ? 'بنحفظ…' : 'حفظ الخطة',
+              label: _saving ? l.monSaving : l.monSavePlan,
               icon: Icons.save,
               onPressed: _saving ? null : _save,
             ),

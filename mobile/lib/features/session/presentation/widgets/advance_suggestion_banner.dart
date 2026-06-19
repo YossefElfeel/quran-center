@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -18,6 +19,7 @@ class AdvanceSuggestionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -34,13 +36,15 @@ class AdvanceSuggestionBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const Text(
-                    'المجموعة جاهزة تنتقل',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l.sesAdvanceReady,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    'عدّى ${arabicNumber(passedCount)} من '
-                    '${arabicNumber(activeAtOpen)} — أكتر من النص',
+                    l.sesAdvanceReadySubtitle(
+                      arabicNumber(passedCount),
+                      arabicNumber(activeAtOpen),
+                    ),
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -49,10 +53,7 @@ class AdvanceSuggestionBanner extends StatelessWidget {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: onAdvance,
-              child: const Text('انقل المجموعة'),
-            ),
+            TextButton(onPressed: onAdvance, child: Text(l.sesAdvanceGroup)),
           ],
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:quran_center/features/admin_setup/data/curriculum_repository.dart';
 import 'package:quran_center/features/admin_setup/domain/curriculum.dart';
 import 'package:quran_center/features/admin_setup/presentation/screens/curricula_screen.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 class _MockCurriculumRepository extends Mock implements CurriculumRepository {}
 
@@ -25,7 +26,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [curriculumRepositoryProvider.overrideWithValue(repo)],
-        child: const MaterialApp(home: CurriculaScreen()),
+        child: const MaterialApp(
+          locale: Locale('ar'),
+          localizationsDelegates: AppL10n.localizationsDelegates,
+          supportedLocales: AppL10n.supportedLocales,
+          home: CurriculaScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

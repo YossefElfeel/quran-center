@@ -31,14 +31,34 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const authHeader = req.headers.get('Authorization') ?? '';
   if (!authHeader.startsWith('Bearer ')) return new Response('Unauthorized', { status: 401 });
 
-  // 1) لازم النده يكون أدمن (الـ RLS/RPC بتتطبّق بهويته).
+  // 1) لازم النده يكون أدمن أو سوبر أدمن. بنفحص أدواره مباشرةً عبر RLS (قراءة
+  //    أدواره هو) بدل rpc('is_admin') — لأن دوال is_* اتنقلت لـ schema private
+  //    (M2.3) فمابقتش متاحة كـ RPC عبر PostgREST، وكمان عشان نشمل super_admin.
   const caller = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } },
   );
-  const { data: isAdmin, error: adminErr } = await caller.rpc('is_admin');
-  if (adminErr || isAdmin !== true) return new Response('Forbidden', { status: 403 });
+  const { data: callerAuth } = await caller.auth.getUser();
+  const callerUserId = callerAuth?.user?.id;
+  if (!callerUserId) return new Response('Unauthorized', { status: 401 });
+
+  const { data: callerAppUser } = await caller
+    .from('app_user')
+    .select('person_id')
+    .eq('auth_user_id', callerUserId)
+    .maybeSingle();
+  const callerPersonId = callerAppUser?.person_id as string | undefined;
+  if (!callerPersonId) return new Response('Forbidden', { status: 403 });
+
+  const { data: callerRoles } = await caller
+    .from('role_assignment')
+    .select('role')
+    .eq('person_id', callerPersonId);
+  const allowed = (callerRoles ?? []).some(
+    (r: { role: string }) => r.role === 'admin' || r.role === 'super_admin',
+  );
+  if (!allowed) return new Response('Forbidden', { status: 403 });
 
   const body = (await req.json()) as InviteBody;
   if (!body.email || !body.full_name || !body.role) {

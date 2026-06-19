@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../documents/domain/progress_card_pdf.dart';
 import '../../../feedback/presentation/widgets/rate_teacher_sheet.dart';
 import '../../domain/child_card.dart';
 import '../controllers/child_card_controller.dart';
@@ -26,8 +31,31 @@ class ChildCardScreen extends ConsumerWidget {
   final String studentPersonId;
   final String childName;
 
+  Future<void> _printProgressCard(BuildContext context, WidgetRef ref) async {
+    final ChildCard? card = ref
+        .read(childCardProvider(studentPersonId))
+        .asData
+        ?.value;
+    if (card == null) return;
+    final ByteData fontData = await rootBundle.load('assets/fonts/Cairo.ttf');
+    final LatestTasmee? lt = card.latestTasmee;
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat _) => buildProgressCardPdf(
+        studentName: childName,
+        circleName: card.circleName ?? 'الحلقة',
+        present: card.present,
+        absent: card.absent,
+        excused: card.excused,
+        late: card.late,
+        latestScore: lt != null ? '${arabicNumber(lt.score)}/١٠' : null,
+        fontData: fontData,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<ChildCard> state = ref.watch(
       childCardProvider(studentPersonId),
     );
@@ -35,7 +63,12 @@ class ChildCardScreen extends ConsumerWidget {
       title: childName,
       actions: <Widget>[
         IconButton(
-          tooltip: 'قيّم المحفّظ',
+          tooltip: l.ppPrintProgressCard,
+          icon: const Icon(Icons.print),
+          onPressed: () => _printProgressCard(context, ref),
+        ),
+        IconButton(
+          tooltip: l.ppRateTeacher,
           icon: const Icon(Icons.star_rate),
           onPressed: () => showModalBottomSheet<void>(
             context: context,
@@ -48,7 +81,7 @@ class ChildCardScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الكارت',
+          message: l.ppCardLoadError,
           onRetry: () => ref.invalidate(childCardProvider(studentPersonId)),
         ),
         data: (ChildCard card) {
@@ -58,16 +91,18 @@ class ChildCardScreen extends ConsumerWidget {
             children: <Widget>[
               _InfoCard(
                 icon: Icons.groups,
-                title: 'الحلقة',
-                value: card.circleName ?? 'مش في حلقة دلوقتي',
+                title: l.ppCircle,
+                value: card.circleName ?? l.ppNotInCircle,
               ),
               if (lt != null)
                 _InfoCard(
                   icon: Icons.record_voice_over,
-                  title: 'آخر تسميع',
-                  value:
-                      '${lt.portionName} — ${arabicNumber(lt.score)}/١٠ '
-                      '(${lt.passed ? 'ناجح' : 'محتاج إعادة'})',
+                  title: l.ppLastTasmee,
+                  value: l.ppLastTasmeeValue(
+                    lt.portionName,
+                    arabicNumber(lt.score),
+                    lt.passed ? l.ppPassed : l.ppNeedsRetry,
+                  ),
                   valueColor: lt.passed ? AppColors.success : AppColors.error,
                 ),
               _AttendanceCard(card: card),
@@ -131,6 +166,7 @@ class _AttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Padding(
@@ -138,9 +174,12 @@ class _AttendanceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
-              'الحضور',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            Text(
+              l.ppAttendance,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Wrap(
@@ -148,22 +187,22 @@ class _AttendanceCard extends StatelessWidget {
               runSpacing: AppSpacing.sm,
               children: <Widget>[
                 _Pill(
-                  label: 'حاضر',
+                  label: l.ppPresent,
                   count: card.present,
                   color: AppColors.success,
                 ),
                 _Pill(
-                  label: 'غايب',
+                  label: l.ppAbsent,
                   count: card.absent,
                   color: AppColors.error,
                 ),
                 _Pill(
-                  label: 'بعذر',
+                  label: l.ppExcused,
                   count: card.excused,
                   color: AppColors.accent,
                 ),
                 _Pill(
-                  label: 'متأخّر',
+                  label: l.ppLate,
                   count: card.late,
                   color: AppColors.textSecondary,
                 ),
@@ -185,6 +224,7 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Container(
       padding: const EdgeInsetsDirectional.symmetric(
         horizontal: AppSpacing.sm,
@@ -195,7 +235,7 @@ class _Pill extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
       child: Text(
-        '$label: ${arabicNumber(count)}',
+        l.ppPillLabel(label, arabicNumber(count)),
         style: TextStyle(color: color, fontWeight: FontWeight.bold),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -20,6 +21,7 @@ class HouseholdTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final bool paidThisMonth = household.status == SubscriptionStatus.active;
     return Card(
       margin: const EdgeInsets.symmetric(
@@ -56,15 +58,16 @@ class HouseholdTile extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Text(
-                    'الاشتراك الشهري: '
-                    '${arabicNumber(household.monthlyAmount.round())} ج',
+                    l.subsMonthlyAmount(
+                      arabicNumber(household.monthlyAmount.round()),
+                    ),
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   const Spacer(),
                   if (paidThisMonth)
-                    const Text(
-                      'مدفوع الشهر ده ✓',
-                      style: TextStyle(
+                    Text(
+                      l.subsPaidThisMonth,
+                      style: const TextStyle(
                         color: AppColors.success,
                         fontWeight: FontWeight.bold,
                       ),
@@ -73,7 +76,7 @@ class HouseholdTile extends StatelessWidget {
                     FilledButton.icon(
                       onPressed: onRecordPayment,
                       icon: const Icon(Icons.payments, size: 18),
-                      label: const Text('سجّل دفعة'),
+                      label: Text(l.subsRecordPayment),
                     ),
                 ],
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
@@ -21,6 +22,7 @@ class ChildCertificatesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<CertificateRow>> state = ref.watch(
       childCertificatesProvider(studentPersonId),
     );
@@ -35,9 +37,9 @@ class ChildCertificatesSection extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
-                  'الشهادات',
-                  style: TextStyle(
+                Text(
+                  l.ppCertificates,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -54,7 +56,7 @@ class ChildCertificatesSection extends ConsumerWidget {
                     subtitle: Text(_date(c.issuedAt)),
                     trailing: TextButton.icon(
                       icon: const Icon(Icons.picture_as_pdf),
-                      label: const Text('اعرض'),
+                      label: Text(l.ppView),
                       onPressed: () => context.go(
                         Routes.certificatePreview(
                           childName,

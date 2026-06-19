@@ -1,0 +1,10 @@
+{
+  "name": "quran-center",
+  "private": true,
+  "//": "Shim for Vercel only. The quran-web project has no Root Directory set, so Vercel's git integration runs Next.js framework detection against the repo root. This declares next/react so that detection passes; the real install + build happen in web/ via vercel.json. Proper long-term fix: set the quran-web project's Root Directory to 'web' (then this file and vercel.json become unnecessary). npm never installs these at root — the install command runs inside web/.",
+  "dependencies": {
+    "next": "16.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  }
+}

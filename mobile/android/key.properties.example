@@ -1,0 +1,7 @@
+# قالب توقيع الإصدار. انسخه لـ android/key.properties (git-ignored) واملا قيمك.
+# مفيش أي سر بيتكوميت.
+storePassword=CHANGEME
+keyPassword=CHANGEME
+keyAlias=upload
+# مسار الـ keystore (مطلق أو نسبي لمجلد android/app):
+storeFile=upload-keystore.jks

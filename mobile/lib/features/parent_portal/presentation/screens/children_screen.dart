@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -20,13 +21,14 @@ class ChildrenScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<bool> sub = ref.watch(mySubscriptionActiveProvider);
     return AppScaffold(
-      title: 'أولادي',
+      title: l.ppMyChildren,
       body: sub.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نتأكّد من الاشتراك',
+          message: l.ppSubscriptionCheckError,
           onRetry: () => ref.invalidate(mySubscriptionActiveProvider),
         ),
         data: (bool active) =>
@@ -41,16 +43,17 @@ class _ChildrenList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<ChildSummary>> state = ref.watch(myChildrenProvider);
     return state.when(
       loading: () => const AppLoader(),
       error: (Object e, StackTrace _) => AppErrorView(
-        message: 'مش قادرين نحمّل البيانات',
+        message: l.ppChildrenLoadError,
         onRetry: () => ref.invalidate(myChildrenProvider),
       ),
       data: (List<ChildSummary> items) => items.isEmpty
-          ? const EmptyState(
-              message: 'لسه مفيش أولاد مربوطين بحسابك',
+          ? EmptyState(
+              message: l.ppNoChildrenLinked,
               icon: Icons.family_restroom,
             )
           : ListView.builder(

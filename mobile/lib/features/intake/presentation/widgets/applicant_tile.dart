@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../enrollment/domain/gender.dart';
@@ -19,6 +20,7 @@ class ApplicantTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Padding(
@@ -36,7 +38,7 @@ class ApplicantTile extends StatelessWidget {
                 ),
               ),
               title: Text(applicant.name),
-              subtitle: Text('المستوى المستهدف: ${applicant.levelName}'),
+              subtitle: Text(l.itkTargetLevelLabel(applicant.levelName)),
             ),
             Row(
               children: <Widget>[
@@ -44,7 +46,7 @@ class ApplicantTile extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onPlacement,
                     icon: const Icon(Icons.assignment_turned_in),
-                    label: const Text('تحديد المستوى'),
+                    label: Text(l.itkSetLevel),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -52,7 +54,7 @@ class ApplicantTile extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onEnroll,
                     icon: const Icon(Icons.how_to_reg),
-                    label: const Text('إسناد لحلقة'),
+                    label: Text(l.itkAssignToCircle),
                   ),
                 ),
               ],

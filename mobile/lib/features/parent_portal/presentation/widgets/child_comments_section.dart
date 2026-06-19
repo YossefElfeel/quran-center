@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -14,6 +15,7 @@ class ChildCommentsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<ParentComment>> state = ref.watch(
       childCommentsControllerProvider(studentPersonId),
     );
@@ -24,21 +26,23 @@ class ChildCommentsSection extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            const Text(
-              'تعليقاتك للمعلّم',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            Text(
+              l.ppYourCommentsToTeacher,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             _CommentComposer(studentPersonId: studentPersonId),
             const SizedBox(height: AppSpacing.sm),
             state.when(
               loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace _) =>
-                  const Text('مش قادرين نحمّل التعليقات'),
+              error: (Object e, StackTrace _) => Text(l.ppCommentsLoadError),
               data: (List<ParentComment> items) => items.isEmpty
-                  ? const Text(
-                      'لسه مفيش تعليقات',
-                      style: TextStyle(color: AppColors.textSecondary),
+                  ? Text(
+                      l.ppNoComments,
+                      style: const TextStyle(color: AppColors.textSecondary),
                     )
                   : Column(
                       children: <Widget>[
@@ -87,7 +91,7 @@ class _CommentComposerState extends ConsumerState<_CommentComposer> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('مش قادرين نضيف التعليق — جرّب تاني')),
+          SnackBar(content: Text(AppL10n.of(context).ppCommentAddError)),
         );
       }
     } finally {
@@ -97,6 +101,7 @@ class _CommentComposerState extends ConsumerState<_CommentComposer> {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
@@ -105,9 +110,9 @@ class _CommentComposerState extends ConsumerState<_CommentComposer> {
             controller: _controller,
             minLines: 1,
             maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'اكتب تعليق للمعلّم…',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: l.ppCommentComposerHint,
+              border: const OutlineInputBorder(),
               isDense: true,
             ),
           ),
@@ -116,7 +121,7 @@ class _CommentComposerState extends ConsumerState<_CommentComposer> {
         IconButton.filled(
           onPressed: _sending ? null : _send,
           icon: const Icon(Icons.send),
-          tooltip: 'إرسال',
+          tooltip: l.ppSend,
         ),
       ],
     );

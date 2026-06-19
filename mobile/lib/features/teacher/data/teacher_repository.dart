@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/teacher_dev_entry.dart';
+import '../domain/teacher_profile.dart';
 
 part 'teacher_repository.g.dart';
 
@@ -11,6 +12,30 @@ class TeacherRepository {
   TeacherRepository(this._client);
 
   final SupabaseClient _client;
+
+  /// ملفّي أنا (RLS بيرجّع بتاعي بس).
+  Future<TeacherProfile?> fetchMyProfile() async {
+    final Map<String, dynamic>? row = await _client
+        .from('teacher_profile')
+        .select('cv, qualifications, certificates')
+        .limit(1)
+        .maybeSingle();
+    return row == null ? null : TeacherProfile.fromMap(row);
+  }
+
+  Future<void> saveMyProfile({
+    required String teacherPersonId,
+    String? cv,
+    required List<String> qualifications,
+    required List<String> certificates,
+  }) async {
+    await _client.from('teacher_profile').upsert(<String, dynamic>{
+      'teacher_person_id': teacherPersonId,
+      'cv': cv,
+      'qualifications': qualifications,
+      'certificates': certificates,
+    }, onConflict: 'teacher_person_id');
+  }
 
   /// تطوّري أنا (RLS بيرجّع بتاعي بس).
   Future<List<TeacherDevEntry>> fetchMyDevelopment() async {

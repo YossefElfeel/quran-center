@@ -9,6 +9,7 @@ abstract final class Routes {
   static const String adminWaiting = '/admin/waiting';
   static const String adminSubscriptions = '/admin/subscriptions';
   static const String adminGuardians = '/admin/guardians';
+  static const String adminInviteUser = '/admin/invite';
   static const String householdMembersPattern =
       '/admin/household/:householdId/members';
   static String householdMembers(String householdId, String name) =>
@@ -43,7 +44,21 @@ abstract final class Routes {
 
   // المعلّم: ملفّه وتطوّره — والمشرف: اعتماد التطوّر
   static const String teacherDevelopment = '/teacher/development';
+  static const String teacherProfile = '/teacher/profile';
   static const String supervisorDevApproval = '/supervisor/development';
+
+  // التقييم الشهري للطالب: المعلّم يؤلّف، المشرف يعتمد
+  static const String monthlyEvalPattern =
+      '/teacher/circle/:circleId/monthly-eval';
+  static String monthlyEval(String circleId, String name) =>
+      '/teacher/circle/$circleId/monthly-eval?name=${Uri.encodeComponent(name)}';
+  static const String supervisorMonthlyEval = '/supervisor/monthly-eval';
+
+  // إصدار الشهادات (المشرف/الأدمن)
+  static const String issueCertificate = '/issue-certificate';
+
+  // تقييمات المحفّظين (المدير/المشرف)
+  static const String teacherRatings = '/teacher-ratings';
 
   // المشرف: تقييم الحلقات (٣×١٠)
   static const String supervisorEval = '/supervisor/eval';
@@ -67,6 +82,9 @@ abstract final class Routes {
   // الشكاوى: المستخدم + صندوق المدير
   static const String complaintsMine = '/complaints';
   static const String complaintsInbox = '/admin/complaints';
+
+  // لوحة الشرف (متفوّقو الشهر)
+  static const String honorBoard = '/honor-board';
 
   // الكورسات المجانية
   static const String courses = '/courses';

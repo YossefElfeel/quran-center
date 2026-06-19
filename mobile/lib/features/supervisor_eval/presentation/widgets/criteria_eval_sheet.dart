@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -45,13 +46,14 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نحفظ التقييم — جرّب تاني')),
+        SnackBar(content: Text(AppL10n.of(context).supSaveEvalError)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -65,7 +67,7 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Text(
-              'تقييم: ${widget.studentName}',
+              l.supEvalStudentTitle(widget.studentName),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
@@ -85,7 +87,7 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
             ],
             const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: _saving ? 'بنحفظ…' : 'حفظ التقييم',
+              label: _saving ? l.supSaving : l.supSaveEval,
               icon: Icons.check,
               onPressed: (_complete && !_saving) ? _save : null,
             ),

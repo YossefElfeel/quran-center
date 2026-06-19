@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -37,6 +38,7 @@ class CircleEvalScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<EvalStudent>> state = ref.watch(
       circleEvalControllerProvider(circleId),
     );
@@ -45,13 +47,13 @@ class CircleEvalScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الطلبة',
+          message: l.supStudentsLoadError,
           onRetry: () => ref.invalidate(circleEvalControllerProvider(circleId)),
         ),
         data: (List<EvalStudent> students) {
           if (students.isEmpty) {
-            return const EmptyState(
-              message: 'مفيش طلبة في الحلقة',
+            return EmptyState(
+              message: l.supNoStudentsInCircle,
               icon: Icons.groups_outlined,
             );
           }
@@ -63,7 +65,7 @@ class CircleEvalScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: AppButton(
-                  label: 'اختيار عشوائي (٣)',
+                  label: l.supRandomPick,
                   icon: Icons.shuffle,
                   onPressed: () => notifier.randomPick(3),
                 ),

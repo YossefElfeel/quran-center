@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -18,28 +19,29 @@ class ComplaintInboxScreen extends ConsumerWidget {
     WidgetRef ref,
     Complaint c,
   ) async {
+    final AppL10n l = AppL10n.of(context);
     final TextEditingController resp = TextEditingController(
       text: c.managerResponse ?? '',
     );
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('الرد على الشكوى'),
+        title: Text(l.fbkRespondDialogTitle),
         content: TextField(
           controller: resp,
           autofocus: true,
           minLines: 2,
           maxLines: 5,
-          decoration: const InputDecoration(labelText: 'ردّك'),
+          decoration: InputDecoration(labelText: l.fbkResponseLabel),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('إرسال الرد'),
+            child: Text(l.fbkSendResponse),
           ),
         ],
       ),
@@ -53,17 +55,18 @@ class ComplaintInboxScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<Complaint>> state = ref.watch(complaintInboxProvider);
     return AppScaffold(
-      title: 'صندوق الشكاوى',
+      title: l.fbkInboxTitle,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الشكاوى',
+          message: l.fbkLoadComplaintsError,
           onRetry: () => ref.invalidate(complaintInboxProvider),
         ),
         data: (List<Complaint> items) => items.isEmpty
-            ? const EmptyState(message: 'مفيش شكاوى', icon: Icons.inbox)
+            ? EmptyState(message: l.fbkNoComplaints, icon: Icons.inbox)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
@@ -75,14 +78,16 @@ class ComplaintInboxScreen extends ConsumerWidget {
                       horizontal: AppSpacing.md,
                     ),
                     child: ListTile(
-                      title: Text(c.authorName ?? 'مستخدم'),
+                      title: Text(c.authorName ?? l.fbkUnknownUser),
                       subtitle: Text(
                         '${complaintCategoriesAr[c.category] ?? c.category}: '
                         '${c.body}',
                       ),
                       trailing: TextButton(
                         onPressed: () => _respond(context, ref, c),
-                        child: Text(c.isAnswered ? 'تعديل الرد' : 'رد'),
+                        child: Text(
+                          c.isAnswered ? l.fbkEditResponse : l.fbkRespond,
+                        ),
                       ),
                     ),
                   );

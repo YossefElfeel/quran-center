@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -16,22 +17,20 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<TeacherDevEntry>> state = ref.watch(
       pendingDevelopmentProvider,
     );
     return AppScaffold(
-      title: 'تطوّر المعلّمين',
+      title: l.navTeacherDev,
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الطابور',
+          message: l.tchQueueLoadFailed,
           onRetry: () => ref.invalidate(pendingDevelopmentProvider),
         ),
         data: (List<TeacherDevEntry> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش طلبات اعتماد دلوقتي',
-                icon: Icons.done_all,
-              )
+            ? EmptyState(message: l.tchNoPendingApprovals, icon: Icons.done_all)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
@@ -47,7 +46,7 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
                         Icons.person,
                         color: AppColors.primary,
                       ),
-                      title: Text(e.teacherName ?? 'معلّم'),
+                      title: Text(e.teacherName ?? l.tchTeacherFallback),
                       subtitle: Text(
                         '${e.progress ?? '—'}\n'
                         '${arabicNumber(e.month.month)}/'
@@ -58,7 +57,7 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
                         onPressed: () => ref
                             .read(pendingDevelopmentProvider.notifier)
                             .approve(e.id),
-                        child: const Text('اعتمد'),
+                        child: Text(l.tchApprove),
                       ),
                     ),
                   );

@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../data/teacher_repository.dart';
 import '../../domain/teacher_dev_entry.dart';
+import '../../domain/teacher_profile.dart';
 
 part 'teacher_controllers.g.dart';
 
@@ -30,6 +31,33 @@ class MyDevelopment extends _$MyDevelopment {
           teacherPersonId: pid,
           month: _thisMonth(),
           progress: trimmed,
+        );
+    ref.invalidateSelf();
+    await future;
+  }
+}
+
+/// ملفّي (سيرة/مؤهّلات/شهادات) — تحميل + حفظ.
+@riverpod
+class MyTeacherProfile extends _$MyTeacherProfile {
+  @override
+  Future<TeacherProfile?> build() =>
+      ref.watch(teacherRepositoryProvider).fetchMyProfile();
+
+  Future<void> save({
+    String? cv,
+    required List<String> qualifications,
+    required List<String> certificates,
+  }) async {
+    final String? pid = await ref.read(currentPersonIdProvider.future);
+    if (pid == null) return;
+    await ref
+        .read(teacherRepositoryProvider)
+        .saveMyProfile(
+          teacherPersonId: pid,
+          cv: cv,
+          qualifications: qualifications,
+          certificates: certificates,
         );
     ref.invalidateSelf();
     await future;

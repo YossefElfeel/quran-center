@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -40,14 +41,16 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نضيف المتقدّم — جرّب تاني')),
-      );
+      final AppL10n l = AppL10n.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.itkAddApplicantError)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<LevelOption>> levels = ref.watch(
       levelOptionsProvider,
     );
@@ -63,38 +66,40 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'متقدّم جديد',
+            l.itkNewApplicant,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: 'اسم المتقدّم'),
+            decoration: InputDecoration(labelText: l.itkApplicantNameLabel),
           ),
           const SizedBox(height: AppSpacing.lg),
           SegmentedButton<Gender>(
-            segments: const <ButtonSegment<Gender>>[
-              ButtonSegment<Gender>(value: Gender.male, label: Text('ولد')),
-              ButtonSegment<Gender>(value: Gender.female, label: Text('بنت')),
+            segments: <ButtonSegment<Gender>>[
+              ButtonSegment<Gender>(value: Gender.male, label: Text(l.itkBoy)),
+              ButtonSegment<Gender>(
+                value: Gender.female,
+                label: Text(l.itkGirl),
+              ),
             ],
             selected: <Gender>{_gender},
             onSelectionChanged: (Set<Gender> s) =>
                 setState(() => _gender = s.first),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Text('المستوى المستهدف'),
+            child: Text(l.itkTargetLevel),
           ),
           levels.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) =>
-                const Text('مش قادرين نحمّل المستويات'),
+            error: (Object e, StackTrace _) => Text(l.itkLevelsLoadError),
             data: (List<LevelOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _levelId,
-              hint: const Text('اختر المستوى'),
+              hint: Text(l.itkChooseLevel),
               items: list
                   .map(
                     (LevelOption l) => DropdownMenuItem<String>(
@@ -108,7 +113,7 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنحفظ…' : 'حفظ',
+            label: _saving ? l.itkSaving : l.itkSave,
             onPressed: _saving ? null : _save,
           ),
         ],

@@ -14,7 +14,7 @@ class QuranCenterApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final GoRouter router = ref.watch(appRouterProvider);
     return MaterialApp.router(
-      title: 'مركز تحفيظ القرآن',
+      onGenerateTitle: (BuildContext context) => AppL10n.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       locale: const Locale('ar'),

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/complaint.dart';
+import '../domain/teacher_rating_row.dart';
 
 part 'feedback_repository.g.dart';
 
@@ -57,6 +58,27 @@ class FeedbackRepository {
           'status': 'answered',
           'responded_at': DateTime.now().toUtc().toIso8601String(),
         })
+        .eq('id', id);
+  }
+
+  /// تقييمات المحفّظين (المدير/المشرف يقروا — المعلّم مستبعد عبر RLS).
+  Future<List<TeacherRatingRow>> fetchTeacherRatings() async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('teacher_rating')
+        .select(
+          'id, stars, comment, hidden_by_manager, '
+          'teacher:teacher_person_id(full_name)',
+        )
+        .order('teacher_person_id', ascending: true)
+        .order('created_at', ascending: false);
+    return rows.map(TeacherRatingRow.fromMap).toList();
+  }
+
+  /// المدير يخفي/يظهر تقييم (RLS = أدمن).
+  Future<void> setRatingHidden(String id, bool hidden) async {
+    await _client
+        .from('teacher_rating')
+        .update(<String, dynamic>{'hidden_by_manager': hidden})
         .eq('id', id);
   }
 

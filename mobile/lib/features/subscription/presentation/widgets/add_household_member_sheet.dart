@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/error/app_exception.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -37,15 +38,15 @@ class _AddHouseholdMemberSheetState
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      final String msg = e is AppException
-          ? e.message
-          : 'مش قادرين نضيف الفرد — جرّب تاني';
+      final AppL10n l = AppL10n.of(context);
+      final String msg = e is AppException ? e.message : l.subsAddMemberError;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<PersonOption>> persons = ref.watch(
       allPersonsProvider,
     );
@@ -60,24 +61,23 @@ class _AddHouseholdMemberSheetState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const Text(
-            'ضيف فرد للأسرة',
+          Text(
+            l.subsAddMemberTitle,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Text('الشخص'),
+            child: Text(l.subsPersonLabel),
           ),
           persons.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) =>
-                const Text('مش قادرين نحمّل الأشخاص'),
+            error: (Object e, StackTrace _) => Text(l.subsPersonsLoadError),
             data: (List<PersonOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _personId,
-              hint: const Text('اختار الشخص'),
+              hint: Text(l.subsPickPerson),
               items: list
                   .map(
                     (PersonOption p) => DropdownMenuItem<String>(
@@ -90,25 +90,28 @@ class _AddHouseholdMemberSheetState
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Text('الدور'),
+            child: Text(l.subsRoleLabel),
           ),
           DropdownButton<String>(
             isExpanded: true,
             value: _role,
-            items: const <DropdownMenuItem<String>>[
+            items: <DropdownMenuItem<String>>[
               DropdownMenuItem<String>(
                 value: 'guardian',
-                child: Text('ولي أمر'),
+                child: Text(l.subsRoleGuardian),
               ),
-              DropdownMenuItem<String>(value: 'student', child: Text('طالب')),
+              DropdownMenuItem<String>(
+                value: 'student',
+                child: Text(l.subsRoleStudent),
+              ),
             ],
             onChanged: (String? v) => setState(() => _role = v ?? 'guardian'),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنضيف…' : 'ضيف',
+            label: _saving ? l.subsAdding : l.subsAddMemberButton,
             icon: Icons.person_add,
             onPressed: _saving ? null : _save,
           ),

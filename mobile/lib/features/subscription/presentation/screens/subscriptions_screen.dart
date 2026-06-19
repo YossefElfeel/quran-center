@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -17,24 +18,25 @@ class SubscriptionsScreen extends ConsumerWidget {
   const SubscriptionsScreen({super.key});
 
   Future<void> _addHousehold(BuildContext context, WidgetRef ref) async {
+    final AppL10n l = AppL10n.of(context);
     final TextEditingController name = TextEditingController();
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('أسرة جديدة'),
+        title: Text(l.subsNewHousehold),
         content: TextField(
           controller: name,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'اسم الأسرة'),
+          decoration: InputDecoration(labelText: l.subsHouseholdNameLabel),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('إضافة'),
+            child: Text(l.add),
           ),
         ],
       ),
@@ -50,14 +52,15 @@ class SubscriptionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<HouseholdSummary>> state = ref.watch(
       householdsControllerProvider,
     );
     return AppScaffold(
-      title: 'الاشتراكات',
+      title: l.navSubscriptions,
       actions: <Widget>[
         IconButton(
-          tooltip: 'أسرة جديدة',
+          tooltip: l.subsNewHousehold,
           icon: const Icon(Icons.add),
           onPressed: () => _addHousehold(context, ref),
         ),
@@ -65,12 +68,12 @@ class SubscriptionsScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الاشتراكات',
+          message: l.subsLoadError,
           onRetry: () => ref.invalidate(householdsControllerProvider),
         ),
         data: (List<HouseholdSummary> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش أسر مسجّلة — ضيف أسرة بالزرّ فوق',
+            ? EmptyState(
+                message: l.subsNoHouseholds,
                 icon: Icons.family_restroom,
               )
             : ListView.builder(

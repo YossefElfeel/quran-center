@@ -39,4 +39,20 @@ void main() {
     expect(pdf.length, greaterThan(1000));
     expect(String.fromCharCodes(pdf.sublist(0, 4)), '%PDF');
   });
+
+  test('buildCertificatePdf بيضمّن آية القرآن بخط Amiri', () async {
+    final Uint8List cairo = File('assets/fonts/Cairo.ttf').readAsBytesSync();
+    final Uint8List amiri = File(
+      'assets/fonts/Amiri-Regular.ttf',
+    ).readAsBytesSync();
+    final Uint8List pdf = await buildCertificatePdf(
+      studentName: 'محمد أحمد',
+      kindLabel: 'إتمام جزء عمّ',
+      dateLabel: '١ يونيو ٢٠٢٦',
+      fontData: ByteData.view(cairo.buffer),
+      quranFontData: ByteData.view(amiri.buffer),
+    );
+    expect(String.fromCharCodes(pdf.sublist(0, 4)), '%PDF');
+    expect(pdf.length, greaterThan(1000));
+  });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -23,23 +24,21 @@ class CompetitionResultsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<CompetitionResultRow>> state = ref.watch(
       competitionResultsProvider(competitionId),
     );
     return AppScaffold(
-      title: 'نتائج $competitionName',
+      title: '${l.cmpResultsTitle} $competitionName',
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل النتائج',
+          message: l.cmpResultsLoadError,
           onRetry: () =>
               ref.invalidate(competitionResultsProvider(competitionId)),
         ),
         data: (List<CompetitionResultRow> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش نتائج لسه (محتاج متقدّمين مقبولين + درجات)',
-                icon: Icons.leaderboard,
-              )
+            ? EmptyState(message: l.cmpNoResults, icon: Icons.leaderboard)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
@@ -62,7 +61,7 @@ class CompetitionResultsScreen extends ConsumerWidget {
                       ),
                       title: Text(r.applicantName),
                       subtitle: Text(
-                        'عدد المحكّمين: ${arabicNumber(r.judgeCount)}',
+                        '${l.cmpJudgeCount}: ${arabicNumber(r.judgeCount)}',
                       ),
                       trailing: Text(
                         arabicNumber(r.average.round()),

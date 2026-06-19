@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -26,6 +27,7 @@ class CirclesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<Circle>> state = ref.watch(
       circlesControllerProvider(levelId),
     );
@@ -38,16 +40,16 @@ class CirclesScreen extends ConsumerWidget {
           builder: (BuildContext _) => AddCircleSheet(levelId: levelId),
         ),
         icon: const Icon(Icons.add),
-        label: const Text('حلقة جديدة'),
+        label: Text(l.admNewCircle),
       ),
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الحلقات',
+          message: l.admCirclesLoadError,
           onRetry: () => ref.invalidate(circlesControllerProvider(levelId)),
         ),
         data: (List<Circle> items) => items.isEmpty
-            ? const EmptyState(message: 'مفيش حلقات لسه — ضيف أول حلقة')
+            ? EmptyState(message: l.admCirclesEmpty)
             : ListView.builder(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: items.length,

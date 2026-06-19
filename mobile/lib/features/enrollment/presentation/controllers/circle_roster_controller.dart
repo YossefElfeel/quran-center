@@ -17,10 +17,16 @@ class CircleRosterController extends _$CircleRosterController {
   Future<void> addStudent({
     required String name,
     required Gender gender,
+    String? nationalId,
   }) async {
     await ref
         .read(enrollmentRepositoryProvider)
-        .addStudent(circleId: circleId, name: name, gender: gender);
+        .addStudent(
+          circleId: circleId,
+          name: name,
+          gender: gender,
+          nationalId: nationalId,
+        );
     ref.invalidateSelf();
     await future;
   }

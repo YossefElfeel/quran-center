@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/enrolled_student.dart';
 import '../domain/gender.dart';
@@ -23,27 +24,38 @@ class EnrollmentRepository {
     return rows.map(EnrolledStudent.fromMap).toList();
   }
 
-  /// بينشئ طالب جديد (person) ويسجّله في الحلقة (enrollment نشط).
-  /// ملاحظة: insertين متتاليين؛ الأتمية الكاملة ممكن تتعمل RPC لاحقًا.
+  /// بينشئ طالب جديد ويسجّله في الحلقة + يضبط الرقم القومي (اختياري) في معاملة
+  /// واحدة ذرّية عبر RPC `enroll_student` — لو الرقم مكرّر/غلط كله بيترجع (مفيش
+  /// طالب يتيم).
   Future<void> addStudent({
     required String circleId,
     required String name,
     required Gender gender,
+    String? nationalId,
   }) async {
-    final Map<String, dynamic> person = await _client
-        .from('person')
-        .insert(<String, dynamic>{
-          'full_name': name,
-          'gender': gender.dbValue,
-          'is_minor': true,
-        })
-        .select('id')
-        .single();
-    await _client.from('enrollment').insert(<String, dynamic>{
-      'student_person_id': person['id'] as String,
-      'circle_id': circleId,
-      'status': 'active',
-    });
+    try {
+      await _client.rpc<void>(
+        'enroll_student',
+        params: <String, dynamic>{
+          'p_circle': circleId,
+          'p_name': name,
+          'p_gender': gender.dbValue,
+          'p_national_id': (nationalId == null || nationalId.isEmpty)
+              ? null
+              : nationalId,
+        },
+      );
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw const ValidationException(
+          'الرقم القومي ده مسجّل قبل كده لشخص تاني',
+        );
+      }
+      if (e.code == '22023') {
+        throw const ValidationException('الرقم القومي لازم يكون ١٤ رقم');
+      }
+      rethrow;
+    }
   }
 }
 

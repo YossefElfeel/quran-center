@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../domain/pending_excuse.dart';
@@ -18,6 +19,7 @@ class ExcuseDecisionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final String? reason = excuse.reason;
     return Card(
       margin: const EdgeInsets.symmetric(
@@ -52,9 +54,9 @@ class ExcuseDecisionTile extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onReject,
                     icon: const Icon(Icons.close, color: AppColors.error),
-                    label: const Text(
-                      'رفض',
-                      style: TextStyle(color: AppColors.error),
+                    label: Text(
+                      l.excReject,
+                      style: const TextStyle(color: AppColors.error),
                     ),
                   ),
                 ),
@@ -63,7 +65,7 @@ class ExcuseDecisionTile extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onApprove,
                     icon: const Icon(Icons.check),
-                    label: const Text('موافقة'),
+                    label: Text(l.excApprove),
                   ),
                 ),
               ],

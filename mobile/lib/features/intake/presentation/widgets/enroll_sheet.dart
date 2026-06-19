@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -43,14 +44,16 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('مش قادرين نسند المتقدّم — جرّب تاني')),
-      );
+      final AppL10n l = AppL10n.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.itkEnrollError)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<CircleOption>> circles = ref.watch(
       circlesOfLevelProvider(widget.levelId),
     );
@@ -66,21 +69,20 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            'إسناد لحلقة',
+            l.itkAssignToCircle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
           circles.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) =>
-                const Text('مش قادرين نحمّل الحلقات'),
+            error: (Object e, StackTrace _) => Text(l.itkCirclesLoadError),
             data: (List<CircleOption> list) => list.isEmpty
-                ? const Text('مفيش حلقات في المستوى ده لسه')
+                ? Text(l.itkNoCirclesInLevel)
                 : DropdownButton<String>(
                     isExpanded: true,
                     value: _circleId,
-                    hint: const Text('اختر الحلقة'),
+                    hint: Text(l.itkChooseCircle),
                     items: list
                         .map(
                           (CircleOption c) => DropdownMenuItem<String>(
@@ -94,7 +96,7 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنسند…' : 'تأكيد الإسناد',
+            label: _saving ? l.itkAssigning : l.itkConfirmAssignment,
             onPressed: _saving ? null : _save,
           ),
         ],

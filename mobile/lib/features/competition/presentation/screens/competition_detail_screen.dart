@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
@@ -27,25 +29,26 @@ class CompetitionDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     CompetitionApplicationRow app,
   ) async {
+    final AppL10n l = AppL10n.of(context);
     final TextEditingController c = TextEditingController();
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: Text('درجة ${app.applicantName}'),
+        title: Text('${l.cmpScore} ${app.applicantName}'),
         content: TextField(
           controller: c,
           autofocus: true,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'الدرجة (من ١٠٠)'),
+          decoration: InputDecoration(labelText: l.cmpScoreOutOf100),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('حفظ'),
+            child: Text(l.cmpSave),
           ),
         ],
       ),
@@ -59,9 +62,9 @@ class CompetitionDetailScreen extends ConsumerWidget {
             .score(app.id, value);
       } catch (_) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('مينفعش تدرّج — لازم تكون محكّم')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.cmpScoreForbidden)));
         }
       }
     }
@@ -69,14 +72,19 @@ class CompetitionDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<CompetitionApplicationRow>> state = ref.watch(
       competitionApplicationsProvider(competitionId),
     );
+    final List<String> roles =
+        ref.watch(currentRolesProvider).asData?.value ?? const <String>[];
+    final bool isAdmin =
+        roles.contains('admin') || roles.contains('super_admin');
     return AppScaffold(
       title: competitionName,
       actions: <Widget>[
         IconButton(
-          tooltip: 'النتائج',
+          tooltip: l.cmpResults,
           icon: const Icon(Icons.leaderboard),
           onPressed: () => context.go(
             Routes.competitionResults(competitionId, competitionName),
@@ -86,15 +94,12 @@ class CompetitionDetailScreen extends ConsumerWidget {
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل المتقدّمين',
+          message: l.cmpApplicantsLoadError,
           onRetry: () =>
               ref.invalidate(competitionApplicationsProvider(competitionId)),
         ),
         data: (List<CompetitionApplicationRow> items) => items.isEmpty
-            ? const EmptyState(
-                message: 'مفيش متقدّمين لسه',
-                icon: Icons.how_to_reg,
-              )
+            ? EmptyState(message: l.cmpNoApplicants, icon: Icons.how_to_reg)
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
@@ -112,10 +117,45 @@ class CompetitionDetailScreen extends ConsumerWidget {
                       ),
                       title: Text(a.applicantName),
                       subtitle: Text(a.status),
-                      trailing: TextButton.icon(
-                        icon: const Icon(Icons.grade),
-                        label: const Text('درجة'),
-                        onPressed: () => _score(context, ref, a),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          if (isAdmin && a.status == 'pending') ...<Widget>[
+                            IconButton(
+                              tooltip: l.cmpAccept,
+                              icon: const Icon(
+                                Icons.check_circle,
+                                color: AppColors.success,
+                              ),
+                              onPressed: () => ref
+                                  .read(
+                                    competitionApplicationsProvider(
+                                      competitionId,
+                                    ).notifier,
+                                  )
+                                  .setStatus(a.id, 'accepted'),
+                            ),
+                            IconButton(
+                              tooltip: l.cmpReject,
+                              icon: const Icon(
+                                Icons.cancel,
+                                color: AppColors.error,
+                              ),
+                              onPressed: () => ref
+                                  .read(
+                                    competitionApplicationsProvider(
+                                      competitionId,
+                                    ).notifier,
+                                  )
+                                  .setStatus(a.id, 'rejected'),
+                            ),
+                          ],
+                          TextButton.icon(
+                            icon: const Icon(Icons.grade),
+                            label: Text(l.cmpScore),
+                            onPressed: () => _score(context, ref, a),
+                          ),
+                        ],
                       ),
                     ),
                   );

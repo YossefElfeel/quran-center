@@ -1,11 +1,17 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/db/local_db.dart';
+import '../../../../core/network/network_status.dart';
+import '../../../../core/settings/settings_repository.dart';
+import '../../../../core/sync/outbox_op.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../../excuse/data/excuse_repository.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../../progress_engine/domain/progress_engine.dart';
 import '../../data/current_cycle.dart';
+import '../../data/session_cache.dart';
 import '../../data/session_repository.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/portion.dart';
@@ -20,6 +26,24 @@ part 'today_session_controller.g.dart';
 class TodaySessionController extends _$TodaySessionController {
   @override
   Future<TodaySession> build(String circleId) async {
+    final LocalDb db = ref.read(localDbProvider);
+    try {
+      final TodaySession session = await _loadOnline(circleId);
+      // كاش أفضل-جهد: مينفعش يكسر تحميل ناجح لو الكتابة المحلية فشلت.
+      try {
+        await db.cacheSession(circleId, encodeTodaySession(session));
+      } catch (_) {}
+      return session;
+    } catch (e) {
+      if (!isOfflineError(e)) rethrow;
+      // أوفلاين → افتح من آخر كاش (لو موجود) عشان المعلّم يكمّل تسجيل في الطابور.
+      final String? cached = await db.readCachedSession(circleId);
+      if (cached == null) rethrow;
+      return decodeTodaySession(cached);
+    }
+  }
+
+  Future<TodaySession> _loadOnline(String circleId) async {
     final SessionRepository repo = ref.watch(sessionRepositoryProvider);
     final String? sessionId = await repo.openSessionId(circleId);
     final List<Map<String, dynamic>> rosterRows = await repo.fetchRoster(
@@ -79,13 +103,31 @@ class TodaySessionController extends _$TodaySessionController {
     final TodaySession? current = state.asData?.value;
     final String? sessionId = current?.sessionId;
     if (current == null || sessionId == null) return;
-    await ref
-        .read(sessionRepositoryProvider)
-        .setAttendance(
-          sessionId: sessionId,
-          enrollmentId: enrollmentId,
-          status: status.dbValue,
-        );
+    try {
+      await ref
+          .read(sessionRepositoryProvider)
+          .setAttendance(
+            sessionId: sessionId,
+            enrollmentId: enrollmentId,
+            status: status.dbValue,
+          );
+    } catch (e) {
+      // النت مقطوع → سجّل في الطابور وكمّل (التحديث المتفائل تحت يظهر الحالة).
+      if (!isOfflineError(e)) rethrow;
+      await ref
+          .read(localDbProvider)
+          .enqueue(
+            OutboxOp(
+              id: const Uuid().v4(),
+              type: OutboxOpType.attendanceMark,
+              payload: <String, dynamic>{
+                'session_id': sessionId,
+                'enrollment_id': enrollmentId,
+                'status': status.dbValue,
+              },
+            ),
+          );
+    }
     final List<RosterEntry> roster = current.roster
         .map(
           (RosterEntry e) => e.enrollmentId == enrollmentId
@@ -162,24 +204,69 @@ class TodaySessionController extends _$TodaySessionController {
         ? current.requiredRevision
         : current.currentPortion;
     if (portion == null) return;
+    // عتبة النجاح من الإعدادات، مع fallback للـ default لو الإعدادات ما تحمّلتش —
+    // تسجيل التسميع فعل أساسي ومينفعش يفشل عشان الإعدادات.
+    int threshold;
+    try {
+      threshold = (await ref.read(appSettingsProvider.future)).passThreshold;
+    } catch (_) {
+      threshold = ProgressEngine.defaultPassThreshold;
+    }
     final bool passed = ProgressEngine.isPassing(
       score: score,
-      threshold: ProgressEngine.defaultPassThreshold,
+      threshold: threshold,
     );
     final String? teacherId = await ref.read(currentPersonIdProvider.future);
-    final LedgerState next = await ref
-        .read(sessionRepositoryProvider)
-        .recordTasmee(
-          enrollmentId: enrollmentId,
-          studentPersonId: studentPersonId,
-          portionId: portion.id,
-          score: score,
-          passed: passed,
-          idempotencyKey: idempotencyKey,
-          kind: kind,
-          teacherId: teacherId,
-          sessionId: current.sessionId,
-        );
+    LedgerState next;
+    try {
+      next = await ref
+          .read(sessionRepositoryProvider)
+          .recordTasmee(
+            enrollmentId: enrollmentId,
+            studentPersonId: studentPersonId,
+            portionId: portion.id,
+            score: score,
+            passed: passed,
+            idempotencyKey: idempotencyKey,
+            kind: kind,
+            teacherId: teacherId,
+            sessionId: current.sessionId,
+          );
+    } catch (e) {
+      // النت مقطوع → سجّل في الطابور (id = idempotencyKey فإعادة الإرسال آمنة)
+      // واحسب حالة الدفتر محليًا مؤقتًا (السيرفر هو المصدر النهائي عند المزامنة).
+      if (!isOfflineError(e)) rethrow;
+      await ref
+          .read(localDbProvider)
+          .enqueue(
+            OutboxOp(
+              id: idempotencyKey,
+              type: OutboxOpType.tasmeeRecord,
+              payload: <String, dynamic>{
+                'enrollment_id': enrollmentId,
+                'student_person_id': studentPersonId,
+                'portion_id': portion.id,
+                'score': score,
+                'passed': passed,
+                'kind': kind.dbValue,
+                'teacher_id': teacherId,
+                'session_id': current.sessionId,
+              },
+            ),
+          );
+      // المحرّك على السيرفر مابيرجّعش طالب عدّى لـ failed_retry (passed يفضل
+      // passed). نطبّق نفس القاعدة محليًا عشان التحديث المتفائل ما يخالفش السيرفر.
+      LedgerState? currentLedger;
+      for (final RosterEntry e in current.roster) {
+        if (e.studentPersonId == studentPersonId) {
+          currentLedger = e.ledgerState;
+          break;
+        }
+      }
+      next = (passed || currentLedger == LedgerState.passed)
+          ? LedgerState.passed
+          : LedgerState.failedRetry;
+    }
     // المراجعة مابتغيّرش الدَيْن → مفيش تحديث متفائل للروستر.
     if (kind == TasmeeKind.memorization) {
       final List<RosterEntry> roster = current.roster
@@ -220,6 +307,24 @@ class TodaySessionController extends _$TodaySessionController {
         );
     ref.invalidateSelf();
     await future;
+  }
+
+  /// المعلّم يسجّل ملاحظة سلوك لطالب. parent-visible بتبعت إشعار لولي الأمر
+  /// (عبر الموصّل سيرفر-سايد)؛ مفيش تغيير على الروستر.
+  Future<void> addBehavioralNote({
+    required String studentPersonId,
+    required String text,
+    required String visibility,
+  }) async {
+    final String? teacherId = await ref.read(currentPersonIdProvider.future);
+    await ref
+        .read(sessionRepositoryProvider)
+        .addBehavioralNote(
+          studentPersonId: studentPersonId,
+          text: text,
+          visibility: visibility,
+          teacherId: teacherId,
+        );
   }
 
   /// المعلّم يطلب عذر لطالب غايب → يدخل طابور المشرف.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -37,14 +38,16 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
         );
     if (!mounted) return;
     setState(() => _saving = false);
+    final AppL10n l = AppL10n.of(context);
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(err ?? 'تم تقييم المحفّظ — شكراً')));
+    ).showSnackBar(SnackBar(content: Text(err ?? l.fbkRateThanks)));
     if (err == null) Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
@@ -56,16 +59,19 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const Text(
-            'قيّم المحفّظ',
+          Text(
+            l.fbkRateTeacherTitle,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSpacing.xs),
-          const Text(
-            'تقييمك خاص للإدارة — المحفّظ مش هيشوفه',
+          Text(
+            l.fbkRatePrivateNote,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
@@ -87,14 +93,14 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
             controller: _comment,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'تعليق (اختياري)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l.fbkRateCommentLabel,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: _saving ? 'بنبعت…' : 'إرسال التقييم',
+            label: _saving ? l.fbkSending : l.fbkSubmitRating,
             icon: Icons.send,
             onPressed: _saving ? null : _submit,
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -13,6 +14,7 @@ class CircleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: ListTile(
@@ -20,8 +22,10 @@ class CircleTile extends StatelessWidget {
         leading: const Icon(Icons.groups, color: AppColors.primary),
         title: Text(circle.name),
         subtitle: Text(
-          '${circle.teacherName ?? 'من غير معلّم'} • سعة '
-          '${arabicNumber(circle.maxSize)}',
+          l.admCircleSubtitle(
+            circle.teacherName ?? l.admNoTeacher,
+            arabicNumber(circle.maxSize),
+          ),
         ),
         trailing: _StatusBadge(status: circle.status),
       ),

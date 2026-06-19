@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../controllers/login_controller.dart';
 
-/// شاشة الدخول — رقم موبايل + باسورد. مُركِّب رفيع بيحط فورم صغير.
+/// شاشة الدخول — إيميل + باسورد. النصوص من l10n (AppL10n) — أول شاشة متعرّبة بمفاتيح.
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const AppScaffold(title: 'تسجيل الدخول', body: _LoginForm());
+    return AppScaffold(
+      title: AppL10n.of(context).loginTitle,
+      body: const _LoginForm(),
+    );
   }
 }
 
@@ -44,17 +48,16 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<void> state = ref.watch(loginControllerProvider);
     ref.listen<AsyncValue<void>>(loginControllerProvider, (
       AsyncValue<void>? prev,
       AsyncValue<void> next,
     ) {
       if (next.hasError && !next.isLoading) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فشل الدخول — اتأكد من الإيميل والباسورد'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l.loginFailed)));
       }
     });
 
@@ -71,24 +74,24 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
               controller: _email,
               keyboardType: TextInputType.emailAddress,
               textDirection: TextDirection.ltr,
-              decoration: const InputDecoration(
-                labelText: 'الإيميل',
+              decoration: InputDecoration(
+                labelText: l.emailLabel,
                 hintText: 'name@example.com',
               ),
               validator: (String? v) =>
-                  (v == null || v.trim().isEmpty) ? 'اكتب الإيميل' : null,
+                  (v == null || v.trim().isEmpty) ? l.emailRequired : null,
             ),
             const SizedBox(height: AppSpacing.md),
             TextFormField(
               controller: _password,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'الباسورد'),
+              decoration: InputDecoration(labelText: l.passwordLabel),
               validator: (String? v) =>
-                  (v == null || v.isEmpty) ? 'اكتب الباسورد' : null,
+                  (v == null || v.isEmpty) ? l.passwordRequired : null,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: loading ? 'بنحاول…' : 'دخول',
+              label: loading ? l.signingIn : l.signIn,
               onPressed: loading ? null : _submit,
             ),
           ],

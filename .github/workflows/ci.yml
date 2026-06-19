@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
+  workflow_dispatch: # manual trigger — used to (re)generate RTL goldens on Linux
 
 jobs:
   mobile:
@@ -33,7 +34,7 @@ jobs:
         run: flutter analyze
 
       - name: Test
-        run: flutter test
+        run: flutter test --exclude-tags golden
 
       - name: Guard — no infinite/looping animations
         working-directory: ${{ github.workspace }}
@@ -70,3 +71,131 @@ jobs:
 
       - name: Type-check + build
         run: pnpm build
+
+  web:
+    name: Public Web (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check + build
+        run: pnpm build
+
+  supabase:
+    name: Supabase (RLS isolation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase (applies migrations + seed)
+        run: supabase start
+
+      - name: RLS isolation suite (rolls back; must print "RLS OK")
+        run: |
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          OUT=$(psql "$DB_URL" -f supabase/tests/rls_isolation.sql 2>&1 || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "RLS FAIL"; then
+            echo "::error::RLS isolation violated"
+            exit 1
+          fi
+          if echo "$OUT" | grep -q "RLS OK"; then
+            echo "RLS OK — isolation invariants held."
+            exit 0
+          fi
+          echo "::error::RLS suite did not report a result (setup error?)"
+          exit 1
+
+      - name: Engine flow integration (rolls back; must print "ENGINE OK")
+        run: |
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          OUT=$(psql "$DB_URL" -f supabase/tests/engine_flow.sql 2>&1 || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "ENGINE FAIL"; then
+            echo "::error::Engine flow assertion failed"
+            exit 1
+          fi
+          if echo "$OUT" | grep -q "ENGINE OK"; then
+            echo "ENGINE OK — tasmee/ledger/idempotency invariants held."
+            exit 0
+          fi
+          echo "::error::Engine flow did not report a result (setup error?)"
+          exit 1
+
+  goldens:
+    name: Goldens (RTL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # On pull_request, github.ref_name is "<PR#>/merge" (a ref that isn't a
+          # real branch), so checkout's branch fetch fails. Use the PR source
+          # branch (head_ref) on PRs; fall back to ref_name on push/dispatch.
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.0
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Codegen (riverpod / freezed / l10n)
+        run: dart run build_runner build
+
+      # On manual dispatch: (re)generate the goldens on Linux and commit them, so
+      # the committed references match the comparison platform. On push: compare
+      # against the committed references (skipped until they've been generated).
+      - name: Goldens — generate+commit on dispatch, compare on push
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -e
+          # auto-commit only on dev (main is protected — a bot push would be rejected)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref_name }}" = "dev" ]; then
+            (cd mobile && flutter test --tags golden --update-goldens)
+            git add mobile/test
+            if git diff --cached --quiet; then
+              echo "Goldens unchanged."
+            else
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git commit -m "ci: (re)generate RTL goldens on Linux [skip ci]"
+              git push
+              echo "Committed regenerated goldens."
+            fi
+          else
+            if find mobile/test -path '*goldens*' -name '*.png' | grep -q .; then
+              (cd mobile && flutter test --tags golden)
+            else
+              echo "No golden references committed yet — run the CI workflow manually"
+              echo "(Actions > CI > Run workflow) to generate them on Linux. Skipping."
+            fi
+          fi

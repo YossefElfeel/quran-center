@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../documents/domain/attendance_sheet_pdf.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
 import '../controllers/today_session_controller.dart';
 import '../widgets/advance_confirmation_dialog.dart';
 import '../widgets/advance_suggestion_banner.dart';
+import '../widgets/behavioral_note_sheet.dart';
 import '../widgets/close_session_sheet.dart';
 import '../widgets/current_portion_card.dart';
 import '../widgets/debt_strip.dart';
@@ -31,17 +38,49 @@ class TodaySessionScreen extends ConsumerWidget {
   final String circleId;
   final String circleName;
 
+  Future<void> _printAttendance(BuildContext context, WidgetRef ref) async {
+    final TodaySession? s = ref
+        .read(todaySessionControllerProvider(circleId))
+        .asData
+        ?.value;
+    if (s == null || s.roster.isEmpty) return;
+    final ByteData fontData = await rootBundle.load('assets/fonts/Cairo.ttf');
+    final DateTime now = DateTime.now();
+    final String date =
+        '${arabicNumber(now.day)}/${arabicNumber(now.month)}/'
+        '${arabicNumber(now.year)}';
+    final List<String> names = s.roster
+        .map((RosterEntry e) => e.studentName)
+        .toList();
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat _) => buildAttendanceSheetPdf(
+        circleName: circleName,
+        dateLabel: date,
+        studentNames: names,
+        fontData: fontData,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<TodaySession> state = ref.watch(
       todaySessionControllerProvider(circleId),
     );
     return AppScaffold(
       title: circleName,
+      actions: <Widget>[
+        IconButton(
+          tooltip: l.sesAttendanceSheetPdf,
+          icon: const Icon(Icons.print),
+          onPressed: () => _printAttendance(context, ref),
+        ),
+      ],
       body: state.when(
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
-          message: 'مش قادرين نحمّل الحصة',
+          message: l.sesSessionLoadError,
           onRetry: () =>
               ref.invalidate(todaySessionControllerProvider(circleId)),
         ),
@@ -79,6 +118,18 @@ class _SessionBody extends ConsumerWidget {
     );
   }
 
+  void _openNote(BuildContext context, RosterEntry entry) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext _) => BehavioralNoteSheet(
+        circleId: circleId,
+        studentPersonId: entry.studentPersonId,
+        studentName: entry.studentName,
+      ),
+    );
+  }
+
   void _openClose(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -105,17 +156,19 @@ class _SessionBody extends ConsumerWidget {
   ) async {
     await notifier.requestExcuse(enrollmentId);
     if (context.mounted) {
+      final AppL10n l = AppL10n.of(context);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('اتبعت طلب العذر للمشرف')));
+      ).showSnackBar(SnackBar(content: Text(l.sesExcuseRequestSent)));
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
     if (session.roster.isEmpty) {
-      return const EmptyState(
-        message: 'مفيش طلبة في الحلقة',
+      return EmptyState(
+        message: l.sesNoStudentsInCircle,
         icon: Icons.groups_outlined,
       );
     }
@@ -161,6 +214,7 @@ class _SessionBody extends ConsumerWidget {
                 onAttendanceChanged: (AttendanceStatus s) =>
                     notifier.setAttendance(e.enrollmentId, s),
                 onTasmee: () => _openTasmee(context, e, hasRevision),
+                onNote: () => _openNote(context, e),
                 onRequestExcuse: e.attendance == AttendanceStatus.absent
                     ? () => _requestExcuse(context, notifier, e.enrollmentId)
                     : null,
@@ -171,7 +225,7 @@ class _SessionBody extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: AppButton(
-            label: 'اقفل الحصة',
+            label: l.sesCloseSession,
             icon: Icons.check_circle,
             onPressed: () => _openClose(context),
           ),
@@ -188,6 +242,7 @@ class _ClosedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -195,14 +250,14 @@ class _ClosedView extends StatelessWidget {
         children: <Widget>[
           const Icon(Icons.event_available, size: 64, color: AppColors.primary),
           const SizedBox(height: AppSpacing.md),
-          const Text(
-            'الحصة لسه مقفولة',
+          Text(
+            l.sesSessionStillClosed,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18),
+            style: const TextStyle(fontSize: 18),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: 'افتح حصة النهارده',
+            label: l.sesOpenTodaySession,
             icon: Icons.play_arrow,
             onPressed: onOpen,
           ),
