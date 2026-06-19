@@ -41,3 +41,8 @@ mobile/sample_certificate.pdf
 
 # Flutter golden test failure diffs (transient)
 mobile/test/**/failures/
+
+# Android release signing — NEVER commit
+mobile/android/key.properties
+*.jks
+*.keystore
