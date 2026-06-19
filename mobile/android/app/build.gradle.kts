@@ -18,7 +18,9 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.qurancenter.quran_center"
-    compileSdk = flutter.compileSdkVersion
+    // بعض الإضافات (package_info_plus) بتطلب compileSdk 36+، فبنثبّته صراحةً بدل
+    // الافتراضي من Flutter (٣٥). minSdk/targetSdk بيفضلوا على افتراضيات Flutter.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
