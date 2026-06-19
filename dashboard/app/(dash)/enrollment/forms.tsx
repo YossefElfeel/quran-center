@@ -2,7 +2,13 @@
 
 import { useActionState, useEffect, useRef } from "react";
 
-import { enrollStudent, updateEnrollment, type FormResult } from "./actions";
+import {
+  bulkEnroll,
+  type BulkResult,
+  enrollStudent,
+  updateEnrollment,
+  type FormResult,
+} from "./actions";
 
 export type CircleOption = { id: string; label: string };
 
@@ -116,6 +122,54 @@ export function EnrollmentControls({
       </button>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
+      ) : null}
+    </form>
+  );
+}
+
+export function BulkEnrollForm({ circles }: { circles: CircleOption[] }) {
+  const [state, action, pending] = useActionState<BulkResult | null, FormData>(
+    bulkEnroll,
+    null,
+  );
+  return (
+    <form
+      action={action}
+      className="flex flex-col gap-3 rounded-xl border border-border bg-white p-4"
+    >
+      <label className="flex flex-col gap-1 text-sm">
+        الحلقة
+        <select name="circle_id" required defaultValue="" className={input}>
+          <option value="" disabled>
+            — اختر حلقة —
+          </option>
+          {circles.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        الأسماء (كل سطر: الاسم[,ذكر/أنثى]) — حتى ١٠٠
+        <textarea
+          name="rows"
+          rows={5}
+          placeholder={"محمد علي\nسارة أحمد,أنثى"}
+          className={input}
+        />
+      </label>
+      <button className={`${btn} self-start`} disabled={pending}>
+        {pending ? "بنسجّل…" : "سجّل الكل"}
+      </button>
+      {state?.ok === false ? (
+        <span className="text-sm text-red-600">{state.error}</span>
+      ) : null}
+      {state?.ok === true ? (
+        <span className="text-sm text-primary">
+          اتسجّل {state.enrolled} • فشل {state.failed}
+          {state.sample.length ? ` (${state.sample.join("، ")})` : ""}
+        </span>
       ) : null}
     </form>
   );

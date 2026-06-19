@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { TrendChart } from "@/components/trend-chart";
 import { formatNumber } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -36,6 +37,7 @@ export default async function DashHome() {
     attPresent,
     paidThisMonth,
     payments,
+    enrolledRows,
   ] = await Promise.all([
     supabase.from("enrollment").select("*", HEAD).eq("status", "active"),
     supabase.from("circle").select("*", HEAD).eq("status", "active"),
@@ -68,6 +70,11 @@ export default async function DashHome() {
       .from("subscription_payment")
       .select("period_month, amount")
       .eq("voided", false),
+    supabase
+      .from("enrollment")
+      .select("enrolled_at")
+      .order("enrolled_at", { ascending: false })
+      .limit(3000),
   ]);
 
   const n = (r: { count: number | null }) => r.count ?? 0;
@@ -97,6 +104,16 @@ export default async function DashHome() {
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-12)
     .map(([m, total]) => ({ month: m, total }));
+
+  const enrollByMonth = new Map<string, number>();
+  for (const e of (enrolledRows.data ?? []) as { enrolled_at: string }[]) {
+    const m = String(e.enrolled_at).slice(0, 7);
+    enrollByMonth.set(m, (enrollByMonth.get(m) ?? 0) + 1);
+  }
+  const enrollChart = [...enrollByMonth.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-12)
+    .map(([m, count]) => ({ month: m, count }));
 
   const kpis = [
     { label: "الطلاب النشطين", value: n(activeStudents) },
@@ -177,9 +194,15 @@ export default async function DashHome() {
         </div>
       </section>
 
-      <div className="rounded-xl border border-border bg-white p-5">
-        <h2 className="mb-4 font-bold">إيراد الاشتراكات بالشهر (ج.م)</h2>
-        <RevenueChart data={chart} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-border bg-white p-5">
+          <h2 className="mb-4 font-bold">إيراد الاشتراكات بالشهر (ج.م)</h2>
+          <RevenueChart data={chart} />
+        </div>
+        <div className="rounded-xl border border-border bg-white p-5">
+          <h2 className="mb-4 font-bold">الالتحاق الجديد بالشهر</h2>
+          <TrendChart data={enrollChart} />
+        </div>
       </div>
     </div>
   );

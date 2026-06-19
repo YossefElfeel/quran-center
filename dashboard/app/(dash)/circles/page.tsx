@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SearchForm } from "@/components/list-controls";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -16,12 +17,19 @@ type CircleRow = {
   level: { name: string } | null;
 };
 
-export default async function CirclesPage() {
+export default async function CirclesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   const supabase = await createSupabaseServerClient();
-  const { data: circleData } = await supabase
+  let circleQuery = supabase
     .from("circle")
     .select("id, name, status, teacher:teacher_id(full_name), level:level_id(name)")
     .order("created_at");
+  if (q) circleQuery = circleQuery.ilike("name", `%${q}%`);
+  const { data: circleData } = await circleQuery;
   const circles = (circleData ?? []) as unknown as CircleRow[];
 
   const { data: enr } = await supabase
@@ -41,6 +49,8 @@ export default async function CirclesPage() {
           اضغط على حلقة لمتابعة دفتر الطلاب (الدَيْن)، تصحيحه، وملاحظات السلوك.
         </p>
       </div>
+
+      <SearchForm q={q} placeholder="ابحث باسم الحلقة…" />
 
       <div className="overflow-x-auto rounded-xl border border-border bg-white">
         <table className="w-full min-w-[640px] text-right text-sm">

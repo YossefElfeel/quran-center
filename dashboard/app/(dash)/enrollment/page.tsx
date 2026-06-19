@@ -3,7 +3,12 @@ import { Pager, SearchForm } from "@/components/list-controls";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { deleteEnrollment } from "./actions";
-import { type CircleOption, EnrollForm, EnrollmentControls } from "./forms";
+import {
+  BulkEnrollForm,
+  type CircleOption,
+  EnrollForm,
+  EnrollmentControls,
+} from "./forms";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "نشط",
@@ -81,6 +86,17 @@ export default async function EnrollmentPage({
       ) : (
         <EnrollForm circles={circles} />
       )}
+
+      {circles.length > 0 ? (
+        <details className="rounded-xl border border-border bg-white">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-bold">
+            التحاق جماعي (لصق أسماء — سطر لكل طالب)
+          </summary>
+          <div className="border-t border-border p-4">
+            <BulkEnrollForm circles={circles} />
+          </div>
+        </details>
+      ) : null}
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">
