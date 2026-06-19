@@ -85,7 +85,20 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 
 ---
 
-### 🟡 P3 — M3.2: upload-media (نشر + علامة مائية + ضغط + المعرض)
+### 🟢 P3 — M3.2: upload-media — **مبني على الجهاز (الكود تمّ، النشر مؤجّل) (2026-06-19)**
+
+> **القرار:** معالجة على الجهاز (Flutter). **اللي اتعمل:**
+> - **معالجة الصور على الجهاز** (مُختبَرة): [`image_watermark.dart`](../mobile/lib/features/media/domain/image_watermark.dart) — تصغير + علامة مائية + ضغط JPEG (+ [اختبار](../mobile/test/image_watermark_test.dart)).
+> - **upload-media** (أُعيد تصميمها): تخزين بـ service-role + إدراج صف `media` **بهوية المستخدم** فالـ RLS (`media_write`) بتفرض الدور + الموافقة، وتنظيف الملف لو اترفض. (صلّحت باج: الـ scaffold كان بيندي `media_consent_ok` اللي اتنقلت لـ `private`.) مفيش ffmpeg في الـ Edge لأن المعالجة بقت على الجهاز.
+> - **media-signed-url** (جديدة): قراءة الصف بالـ RLS → `log_media_access` → رابط موقّع ٣٠٠ث بـ service-role.
+> - **المعرض + الرفع** ([`child_media_section.dart`](../mobile/lib/features/media/presentation/widgets/child_media_section.dart) على كارت الطفل): شبكة مفلترة بالموافقة (RLS) + روابط موقّعة لكل عنصر (RepaintBoundary؛ الفيديو يفتح خارجيًا) + رفع صور للأدوار المصرّح لها (`currentRoles`) عبر image_picker → معالجة → رفع. [`MediaRepository`](../mobile/lib/features/media/data/media_repository.dart) + providers + اختبار بوابة الدور. `analyze` نضيف · ١٢٤ اختبار.
+>
+> **المتبقّي (مؤجّل):**
+> 1. **نشر الـ Edge functions** — **محظور لحد ما يتدوّر مفتاح الـ service-role المكشوف** (محذَّر في رأس الدالة) + قرار نشر. بعدها: `supabase functions deploy upload-media` و`media-signed-url`.
+> 2. **رفع/ضغط الفيديو على الجهاز** (محتاج ffmpeg/native) + **علامة عربية محروقة** (خط الحزمة النقطي لاتيني) + **cached_network_image** + **مشغّل فيديو داخلي** — تحسينات لاحقة.
+> 3. **اختبار e2e فعلي بعد النشر**: رفع → معاينة، وتأكيد حجب وسائط البنت بدون موافقة.
+
+<details><summary>التفاصيل الأصلية للمهمة (للمرجع)</summary>
 
 - **الحالة:** [`supabase/functions/upload-media/index.ts`](../supabase/functions/upload-media/index.ts) **مكتوبة بس مش منشورة**، والعلامة المائية/الضغط لسه `TODO` (سطور 6/53/73). (`invite-user` و`submit-public-application` منشورين ACTIVE — متحقّق.)
 - **التحدّي التقني (محتاج قرار):** `ffmpeg` مش متاح مباشرة في Deno Edge runtime. البدائل:
@@ -98,6 +111,8 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
   - **معرض الوسائط (موبايل):** signed URLs من Edge + `log_media_access` + `cached_network_image` + `RepaintBoundary` + thumbnails (مفيش autoplay). جزء الموافقة موجود ([`child_consent_section.dart`](../mobile/lib/features/parent_portal/presentation/widgets/child_consent_section.dart)) — المعرض الكامل + مشغّل الفيديو يتراجعوا.
 - **تحقق:** e2e رفع → معاينة؛ **وسائط البنت محجوبة بدون `consent_record` نشط** (RLS موجود — أكّد بـ smoke).
 
+</details>
+
 ---
 
 ## 3) مؤجّل بقرار/خارجي (مش كود — قرارك أو ترقية)
@@ -109,6 +124,7 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 | **M9** الإطلاق | keystore + AAB + رفع Play | دليل كامل: [`RELEASE_ANDROID.md`](RELEASE_ANDROID.md). جرّب `--release` على جهاز (R8 شال حاجة؟). |
 | **Vercel** | قفل **Deployment Protection** للمشروعين + (لو لزم) redeploy `invite-user` | اللوحة + الويب اتنشروا production؛ الـ 401 = الحماية الافتراضية. |
 | **نشر prod / أول مستخدم حقيقي** | **تأكيدك الصريح** | قيد أمان قائم. |
+| **نشر media Edge** (`upload-media` + `media-signed-url`) | **تدوير مفتاح service-role المكشوف** ثم `supabase functions deploy` للاتنين | الكود اتكتب (معالجة على الجهاز)؛ النشر محظور لحد التدوير (محذَّر في رأس الدالة). بعدها e2e فعلي. |
 
 ---
 
@@ -118,3 +134,5 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 أدمن → معلّم (حصة كاملة + قطع نت) → مشرف (اعتماد + شهادة) → ولي أمر (كارت + وسائط بموافقة + شكوى) → عام (كورس + مسابقة) → سوبر أدمن (لوحة + audit). + أكّد الكرونات الـ ٦ شغّالة، و`get_advisors` نضيف، وعزل RLS بالاختبارات السلبية.
 
 **"خلصت" =** الكرونات الـ ٦ كلها live، تقرير الحلقة الشهري بيتطبع، الوسائط بترفع بعلامة مائية ومحكومة بالموافقة، و`flutter analyze`/الاختبارات/CI كلها خضرا.
+
+**الحالة (2026-06-19):** ✅ الكرونات الـ ٦ live · ✅ تقرير الحلقة الشهري بيتطبع · 🟢 الوسائط: المعالجة على الجهاز + المعرض/الرفع + الـ Edge functions **اتكتبوا** (النشر مؤجّل لتدوير المفتاح) · ✅ `flutter analyze` نضيف + ١٢٤ اختبار + CI أخضر. **الباقي للإقفال الكامل:** تدوير مفتاح service-role → نشر `upload-media`/`media-signed-url` → e2e فعلي + (اختياري) رفع/ضغط فيديو على الجهاز.
