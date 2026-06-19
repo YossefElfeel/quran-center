@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -108,8 +110,17 @@ class ChildCardScreen extends ConsumerWidget {
                   valueColor: lt.passed
                       ? context.palette.success
                       : context.palette.error,
+                  hint: l.ppViewFullHistory,
+                  onTap: () => context.push(
+                    Routes.parentChildHistory(studentPersonId, childName),
+                  ),
                 ),
-              _AttendanceCard(card: card),
+              _AttendanceCard(
+                card: card,
+                onTap: () => context.push(
+                  Routes.parentChildHistory(studentPersonId, childName, tab: 1),
+                ),
+              ),
               ChildCertificatesSection(
                 studentPersonId: studentPersonId,
                 childName: childName,
@@ -134,19 +145,25 @@ class _InfoCard extends StatelessWidget {
     required this.title,
     required this.value,
     this.valueColor,
+    this.hint,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String value;
   final Color? valueColor;
+  final String? hint;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final AppPalette p = context.palette;
+    final String? hint = this.hint;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: ListTile(
+        onTap: onTap,
         leading: Icon(icon, color: p.primary),
         title: Text(
           title,
@@ -158,15 +175,29 @@ class _InfoCard extends StatelessWidget {
             color: valueColor ?? p.textPrimary,
           ),
         ),
+        trailing: onTap == null
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (hint != null)
+                    Text(
+                      hint,
+                      style: AppTextStyles.labelSm.copyWith(color: p.primary),
+                    ),
+                  Icon(Icons.chevron_left, color: p.textSecondary),
+                ],
+              ),
       ),
     );
   }
 }
 
 class _AttendanceCard extends StatelessWidget {
-  const _AttendanceCard({required this.card});
+  const _AttendanceCard({required this.card, this.onTap});
 
   final ChildCard card;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -174,35 +205,58 @@ class _AttendanceCard extends StatelessWidget {
     final AppPalette p = context.palette;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              l.ppAttendance,
-              style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: <Widget>[
-                _Pill(
-                  label: l.ppPresent,
-                  count: card.present,
-                  color: p.success,
-                ),
-                _Pill(label: l.ppAbsent, count: card.absent, color: p.error),
-                _Pill(label: l.ppExcused, count: card.excused, color: p.accent),
-                _Pill(
-                  label: l.ppLate,
-                  count: card.late,
-                  color: p.textSecondary,
-                ),
-              ],
-            ),
-          ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      l.ppAttendance,
+                      style: AppTextStyles.labelSm.copyWith(
+                        color: p.textSecondary,
+                      ),
+                    ),
+                  ),
+                  if (onTap != null) ...<Widget>[
+                    Text(
+                      l.ppViewAttendanceLog,
+                      style: AppTextStyles.labelSm.copyWith(color: p.primary),
+                    ),
+                    Icon(Icons.chevron_left, size: 18, color: p.textSecondary),
+                  ],
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: <Widget>[
+                  _Pill(
+                    label: l.ppPresent,
+                    count: card.present,
+                    color: p.success,
+                  ),
+                  _Pill(label: l.ppAbsent, count: card.absent, color: p.error),
+                  _Pill(
+                    label: l.ppExcused,
+                    count: card.excused,
+                    color: p.accent,
+                  ),
+                  _Pill(
+                    label: l.ppLate,
+                    count: card.late,
+                    color: p.textSecondary,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

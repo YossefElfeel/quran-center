@@ -30,6 +30,17 @@ class NotificationRepository {
         .isFilter('read_at', null);
   }
 
+  /// يعلّم إشعارًا واحدًا مقروءًا (عند فتحه/التنقّل لمصدره).
+  Future<void> markRead(String id) async {
+    await _client
+        .from('notification')
+        .update(<String, dynamic>{
+          'read_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .isFilter('read_at', null);
+  }
+
   /// يوصّل إشعار لشخص (الطاقم بيبعت).
   Future<void> notify({
     required String recipientPersonId,

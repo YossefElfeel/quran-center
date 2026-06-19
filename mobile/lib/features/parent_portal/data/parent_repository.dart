@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../../enrollment/domain/gender.dart';
 import '../domain/child_card.dart';
+import '../domain/child_history.dart';
 import '../domain/child_summary.dart';
 import '../domain/journey_stop.dart';
 import '../domain/monthly_plan_view.dart';
@@ -108,6 +109,48 @@ class ParentRepository {
       late: late,
       isGirl: isGirl,
     );
+  }
+
+  /// معرّف التسجيل النشط للطفل (أو null) — أساس سجلّات التسميع/الحضور.
+  Future<String?> _activeEnrollmentId(String studentPersonId) async {
+    final Map<String, dynamic>? enr = await _client
+        .from('enrollment')
+        .select('id')
+        .eq('student_person_id', studentPersonId)
+        .eq('status', 'active')
+        .maybeSingle();
+    return enr?['id'] as String?;
+  }
+
+  /// سجلّ تسميع الطفل (حفظ + مراجعة) — الأحدث أولًا (RLS بتقصره على وليّه).
+  Future<List<TasmeeHistoryEntry>> fetchTasmeeHistory(
+    String studentPersonId,
+  ) async {
+    final String? enrollmentId = await _activeEnrollmentId(studentPersonId);
+    if (enrollmentId == null) return const <TasmeeHistoryEntry>[];
+    final List<Map<String, dynamic>> rows = await _client
+        .from('daily_tasmee')
+        .select('attempt_date, score, passed, kind, portion:portion_id(name)')
+        .eq('enrollment_id', enrollmentId)
+        .order('attempt_date', ascending: false)
+        .order('created_at', ascending: false)
+        .limit(50);
+    return rows.map(TasmeeHistoryEntry.fromMap).toList();
+  }
+
+  /// سجلّ حضور الطفل — الأحدث أولًا.
+  Future<List<AttendanceHistoryEntry>> fetchAttendanceHistory(
+    String studentPersonId,
+  ) async {
+    final String? enrollmentId = await _activeEnrollmentId(studentPersonId);
+    if (enrollmentId == null) return const <AttendanceHistoryEntry>[];
+    final List<Map<String, dynamic>> rows = await _client
+        .from('attendance')
+        .select('status, session:session_id(session_date)')
+        .eq('enrollment_id', enrollmentId)
+        .order('created_at', ascending: false)
+        .limit(50);
+    return rows.map(AttendanceHistoryEntry.fromMap).toList();
   }
 
   /// أنواع موافقة الوسائط النشطة للطفل (photo/video).

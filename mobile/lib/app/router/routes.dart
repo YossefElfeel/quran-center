@@ -50,6 +50,7 @@ abstract final class Routes {
   // المعلّم: ملفّه وتطوّره — والمشرف: اعتماد التطوّر
   static const String teacherDevelopment = '/teacher/development';
   static const String teacherProfile = '/teacher/profile';
+  static const String teacherPassRate = '/teacher/pass-rate';
   static const String supervisorDevApproval = '/supervisor/development';
 
   // التقييم الشهري للطالب: المعلّم يؤلّف، المشرف يعتمد
@@ -83,6 +84,17 @@ abstract final class Routes {
   static const String parentChildPattern = '/parent/child/:studentId';
   static String parentChild(String studentId, String name) =>
       '/parent/child/$studentId?name=${Uri.encodeComponent(name)}';
+
+  // سجلّ الطفل (تسميع/حضور) — tab=0 تسميع، tab=1 حضور
+  static const String parentChildHistoryPattern =
+      '/parent/child/:studentId/history';
+  static String parentChildHistory(
+    String studentId,
+    String name, {
+    int tab = 0,
+  }) =>
+      '/parent/child/$studentId/history'
+      '?name=${Uri.encodeComponent(name)}&tab=$tab';
 
   // الشكاوى: المستخدم + صندوق المدير
   static const String complaintsMine = '/complaints';
