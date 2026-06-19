@@ -5,6 +5,7 @@ import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/household_member_row.dart';
 import '../domain/household_summary.dart';
+import '../domain/payment_row.dart';
 import '../domain/person_option.dart';
 import '../domain/subscription_logic.dart';
 
@@ -55,6 +56,17 @@ class SubscriptionRepository {
       'period_month': periodMonth,
       'recorded_by': ?recordedBy,
     });
+  }
+
+  /// سجلّ دفعات أسرة (الأحدث أولًا) — لتفصيل بلاطة الاشتراك.
+  Future<List<PaymentRow>> fetchPaymentHistory(String householdId) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('subscription_payment')
+        .select('period_month, amount, paid_at, voided')
+        .eq('household_id', householdId)
+        .order('period_month', ascending: false)
+        .limit(24);
+    return rows.map(PaymentRow.fromMap).toList();
   }
 
   /// هل اشتراك المستخدم الحالي (ولي الأمر) نشط؟ (لبوابة الوصول).
