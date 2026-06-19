@@ -25,6 +25,7 @@ class PendingMonthlyEval {
     required this.studentName,
     required this.month,
     this.summary,
+    this.behavior,
   });
 
   factory PendingMonthlyEval.fromMap(Map<String, dynamic> map) {
@@ -34,6 +35,7 @@ class PendingMonthlyEval {
       studentName: (s?['full_name'] as String?) ?? 'طالب',
       month: DateTime.parse(map['month'] as String),
       summary: map['summary'] as String?,
+      behavior: map['behavior'] as String?,
     );
   }
 
@@ -41,4 +43,5 @@ class PendingMonthlyEval {
   final String studentName;
   final DateTime month;
   final String? summary;
+  final String? behavior;
 }

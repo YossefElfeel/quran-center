@@ -76,8 +76,22 @@ abstract final class Routes {
   // المشرف: طابور أعذار الغياب
   static const String supervisorExcuses = '/supervisor/excuses';
 
-  // المشرف: محتاج انتباه (الطلبة المتعثّرين)
+  // المشرف: محتاج انتباه (الطلبة المتعثّرين) + تفاصيل طالب/حلقة
   static const String supervisorAttention = '/supervisor/attention';
+  static const String supervisorStudentDetailPattern =
+      '/supervisor/student/:studentId';
+  static String supervisorStudentDetail(
+    String studentId,
+    String name,
+    String portion,
+    int attempts,
+  ) =>
+      '/supervisor/student/$studentId?name=${Uri.encodeComponent(name)}'
+      '&portion=${Uri.encodeComponent(portion)}&attempts=$attempts';
+  static const String supervisorCircleScoresPattern =
+      '/supervisor/circle/:circleId/scores';
+  static String supervisorCircleScores(String circleId, String name) =>
+      '/supervisor/circle/$circleId/scores?name=${Uri.encodeComponent(name)}';
 
   // ولي الأمر: أولاده + كارت الطفل
   static const String parentChildren = '/parent/children';
