@@ -50,6 +50,8 @@ class OutboxSync extends _$OutboxSync {
     _processor = OutboxProcessor(
       ref.watch(localDbProvider),
       (OutboxOp op) => dispatchSessionOp(ref, op),
+      // عابر = النت مقطوع → يقف ويعيد؛ غير كده (رفض السيرفر) → dead-letter ويكمّل.
+      isTransient: isOfflineError,
     );
     // افرّغ أول ما الاتصال يرجع.
     ref.listen<AsyncValue<bool>>(connectivityOnlineProvider, (

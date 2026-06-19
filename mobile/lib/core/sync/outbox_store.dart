@@ -13,7 +13,12 @@ abstract interface class OutboxStore {
   Future<void> markSynced(String id);
 
   /// يزوّد عدّاد المحاولات ويسجّل آخر خطأ (العملية تفضل معلّقة لإعادة المحاولة).
+  /// بيتنده على فشل عابر (النت مقطوع) — العملية هتتجرّب تاني.
   Future<void> markFailed(String id, String error);
+
+  /// يحوّل العملية لـ "ميتة" (dead-letter): فشل نهائي (رفض السيرفر/تجاوز الحد) —
+  /// بتتشال من الطابور المعلّق عشان ما تسدّش اللي وراها، ويتسجّل سببها.
+  Future<void> markDeadLetter(String id, String error);
 
   /// عدد العمليات المعلّقة (لمؤشّر "في انتظار المزامنة").
   Future<int> pendingCount();

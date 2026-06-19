@@ -102,9 +102,10 @@ class LocalDb extends _$LocalDb implements OutboxStore {
 
   @override
   Future<void> markSynced(String id) async {
-    await (update(outboxEntries)
-          ..where(($OutboxEntriesTable t) => t.id.equals(id)))
-        .write(const OutboxEntriesCompanion(status: Value<String>('synced')));
+    // نجاح → اشطب الصف (مفيش تراكم لا نهائي لعمليات متزامنة).
+    await (delete(
+      outboxEntries,
+    )..where(($OutboxEntriesTable t) => t.id.equals(id))).go();
   }
 
   @override
@@ -112,6 +113,20 @@ class LocalDb extends _$LocalDb implements OutboxStore {
     await customUpdate(
       'UPDATE outbox_entries SET attempts = attempts + 1, last_error = ? '
       'WHERE id = ?',
+      variables: <Variable<Object>>[
+        Variable<String>(error),
+        Variable<String>(id),
+      ],
+      updates: <TableInfo<Table, dynamic>>{outboxEntries},
+    );
+  }
+
+  @override
+  Future<void> markDeadLetter(String id, String error) async {
+    // فشل نهائي → status='dead' (بتتشال من pending) + سجّل السبب + زوّد العدّاد.
+    await customUpdate(
+      "UPDATE outbox_entries SET status = 'dead', attempts = attempts + 1, "
+      'last_error = ? WHERE id = ?',
       variables: <Variable<Object>>[
         Variable<String>(error),
         Variable<String>(id),

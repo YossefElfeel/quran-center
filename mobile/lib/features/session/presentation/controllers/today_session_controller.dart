@@ -254,7 +254,18 @@ class TodaySessionController extends _$TodaySessionController {
               },
             ),
           );
-      next = passed ? LedgerState.passed : LedgerState.failedRetry;
+      // المحرّك على السيرفر مابيرجّعش طالب عدّى لـ failed_retry (passed يفضل
+      // passed). نطبّق نفس القاعدة محليًا عشان التحديث المتفائل ما يخالفش السيرفر.
+      LedgerState? currentLedger;
+      for (final RosterEntry e in current.roster) {
+        if (e.studentPersonId == studentPersonId) {
+          currentLedger = e.ledgerState;
+          break;
+        }
+      }
+      next = (passed || currentLedger == LedgerState.passed)
+          ? LedgerState.passed
+          : LedgerState.failedRetry;
     }
     // المراجعة مابتغيّرش الدَيْن → مفيش تحديث متفائل للروستر.
     if (kind == TasmeeKind.memorization) {
