@@ -29,7 +29,18 @@
 
 ## 2) الشغل المتبقّي (مرتّب بالأولوية)
 
-### 🔴 P1 — M4: الكرونات الناقصة (٤ وظائف) — أكبر فجوة فعلية
+### ✅ P1 — M4: الكرونات الناقصة (٤ وظائف) — **تمّت (2026-06-19)**
+
+> **خلصت كلها.** الـ `cron.job` بقى فيه **٦ وظائف نشطة**. كل وظيفة = `security definer` + `search_path=''` + `revoke` من أدوار الـ API + manifest في `audit_log` (actor = NULL = system)، واتحقّق منها بـ DB smoke (rollback) على مشروع الـ dev. الميجريشنز:
+> [`..000001_cron_monthly_close.sql`](../supabase/migrations/20260619000001_cron_monthly_close.sql) · [`..000002_cron_purge_public_registrations.sql`](../supabase/migrations/20260619000002_cron_purge_public_registrations.sql) · [`..000003_cron_media_retention.sql`](../supabase/migrations/20260619000003_cron_media_retention.sql) · [`..000004_cron_nominate_certificate_candidates.sql`](../supabase/migrations/20260619000004_cron_nominate_certificate_candidates.sql).
+> - **`monthly-close`** (`0 2 1 * *`): تقييم شهري واحد لكل enrollment نشط (`draft`، أو `missed` + تصعيد لو مفيش تسجيل)؛ متفوّق الحلقة؛ إشعار بطاقة التقدّم؛ idempotent على `(student, month)`.
+> - **`purge-public-registrations`** (`0 3 * * *`): حذف `public_registration` الأقدم من TTL (`system_settings.public_registration_ttl_days`، افتراضي ٩٠) ما لم يكن له `competition_application` مقبول.
+> - **`media-retention`** (`0 4 * * 0`): للطلبة من غير enrollment نشط — احتفظ بأول وآخر فيديو، علّم الباقي `retained=false`؛ استبعاد المشاركين في مسابقة `open/judging`. (أثره يظهر مع M3.2.)
+> - **`nominate-certificate-candidates`** (`0 5 * * 1`): ترشيح المؤهّلين (يعيد استخدام `public.eligible_certificate_students()`) بإشعار للمشرف؛ جدول `certificate_nomination` للـ idempotency؛ مش إصدار تلقائي.
+>
+> **ملاحظة advisor:** `certificate_nomination` بيظهر INFO (`rls_enabled_no_policy`) — ده النمط المقصود لجدول النظام (زي `subscription_overdue_notice`)، مش bug.
+
+<details><summary>التفاصيل الأصلية للمهمة (للمرجع)</summary>
 
 **الموجود فعلاً (متحقّق من `cron.job`):** `escalate-overdue-complaints` (كل ساعة) + `notify-overdue-subscriptions` (يومي ٦ص).
 **النمط المرجعي:** [`supabase/migrations/20260618240002_cron_escalate_overdue_complaints.sql`](../supabase/migrations/20260618240002_cron_escalate_overdue_complaints.sql) و[`..240003_cron_overdue_subscriptions.sql`](../supabase/migrations/20260618240003_cron_overdue_subscriptions.sql) — كل وظيفة = SQL function `security definer, search_path=''` + `select cron.schedule('name', '<cron>', $$ select fn() $$)`.
@@ -51,6 +62,8 @@ end $$;   -- الـ exception بيعمل rollback تلقائي
 | **4.4** | **`nominate-certificate-candidates`** | function تستخدم `is_certificate_eligible` (موجودة) لترشيح المؤهّلين (zero-debt + كل المقاطع `passed`) → إشعار/طابور للمشرف (مش إصدار تلقائي — المشرف يعتمد الامتحان النهائي). | `0 5 * * 1` (أسبوعي إثنين) | seed طالب مؤهّل + طالب عليه دين → run → الأول بس اترشّح. |
 
 > **مهم:** كل function تتكتب في migration جديدة مؤرّخة، و`cron.schedule` بيعمل upsert بالاسم (إعادة التطبيق آمنة). بعد التطبيق: `select jobname, schedule, active from cron.job;` لازم تبقى **٦ وظائف**.
+
+</details>
 
 ---
 
