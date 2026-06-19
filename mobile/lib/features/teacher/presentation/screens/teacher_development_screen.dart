@@ -5,10 +5,15 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/teacher_dev_entry.dart';
 import '../controllers/teacher_controllers.dart';
@@ -24,12 +29,11 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text(l.tchNewDevEntryTitle),
-        content: TextField(
+        content: AppTextField(
           controller: c,
           autofocus: true,
-          minLines: 2,
           maxLines: 4,
-          decoration: InputDecoration(labelText: l.tchDevEntryHint),
+          label: l.tchDevEntryHint,
         ),
         actions: <Widget>[
           TextButton(
@@ -62,7 +66,7 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
         IconButton(
           tooltip: l.tchProfileTitle,
           icon: const Icon(Icons.badge),
-          onPressed: () => context.go(Routes.teacherProfile),
+          onPressed: () => context.push(Routes.teacherProfile),
         ),
         IconButton(
           tooltip: l.tchNewEntryTooltip,
@@ -75,7 +79,7 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
           const _PassRateCard(),
           Expanded(
             child: state.when(
-              loading: () => const AppLoader(),
+              loading: () => const AppListSkeleton(),
               error: (Object e, StackTrace _) => AppErrorView(
                 message: l.tchDevLoadFailed,
                 onRetry: () => ref.invalidate(myDevelopmentProvider),
@@ -85,13 +89,17 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
                       message: l.tchNoDevEntries,
                       icon: Icons.trending_up,
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.sm,
+                  : AppRefreshIndicator(
+                      onRefresh: () async =>
+                          ref.invalidate(myDevelopmentProvider),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (BuildContext context, int i) =>
+                            _DevTile(entry: items[i]),
                       ),
-                      itemCount: items.length,
-                      itemBuilder: (BuildContext context, int i) =>
-                          _DevTile(entry: items[i]),
                     ),
             ),
           ),
@@ -107,25 +115,23 @@ class _PassRateCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
     final AsyncValue<double> rate = ref.watch(myPassRateProvider);
-    return Card(
+    return AppListCard(
       margin: const EdgeInsets.all(AppSpacing.md),
-      child: ListTile(
-        leading: const Icon(Icons.insights, color: AppColors.primary),
-        title: Text(l.tchPassRateTitle),
-        trailing: rate.maybeWhen(
-          orElse: () => const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          data: (double r) => Text(
-            l.tchPassRatePercent(arabicNumber((r * 100).round())),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+      leadingIcon: Icons.insights,
+      title: l.tchPassRateTitle,
+      trailing: rate.maybeWhen(
+        orElse: () => const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        data: (double r) => Text(
+          l.tchPassRatePercent(arabicNumber((r * 100).round())),
+          style: AppTextStyles.titleLg.copyWith(
+            fontWeight: FontWeight.bold,
+            color: p.primary,
           ),
         ),
       ),
@@ -141,21 +147,16 @@ class _DevTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(
-        vertical: AppSpacing.xs,
-        horizontal: AppSpacing.md,
-      ),
-      child: ListTile(
-        leading: Icon(
-          entry.isApproved ? Icons.verified : Icons.hourglass_top,
-          color: entry.isApproved ? AppColors.success : AppColors.accent,
-        ),
-        title: Text(entry.progress ?? '—'),
-        subtitle: Text(
-          '${arabicNumber(entry.month.month)}/${arabicNumber(entry.month.year)}'
-          ' — ${entry.isApproved ? l.tchApproved : l.tchPendingApproval}',
-        ),
+    final AppPalette p = context.palette;
+    return AppListCard(
+      leadingIcon: entry.isApproved ? Icons.verified : Icons.hourglass_top,
+      iconColor: entry.isApproved ? p.success : p.accent,
+      title: entry.progress ?? '—',
+      subtitle:
+          '${arabicNumber(entry.month.month)}/${arabicNumber(entry.month.year)}',
+      trailing: AppStatusBadge(
+        label: entry.isApproved ? l.tchApproved : l.tchPendingApproval,
+        kind: entry.isApproved ? AppStatusKind.success : AppStatusKind.warning,
       ),
     );
   }

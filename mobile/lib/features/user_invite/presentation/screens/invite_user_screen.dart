@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/error/app_exception.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/invite_repository.dart';
 
 const List<String> _roleKeys = <String>[
@@ -96,20 +99,19 @@ class _InviteUserScreenState extends ConsumerState<InviteUserScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: <Widget>[
-          TextField(
-            controller: _name,
-            decoration: InputDecoration(labelText: l.invNameLabel),
-          ),
+          AppTextField(controller: _name, label: l.invNameLabel),
           const SizedBox(height: AppSpacing.lg),
-          TextField(
+          AppTextField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(labelText: l.invEmailLabel),
+            label: l.invEmailLabel,
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
             l.invRoleLabel,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMd.copyWith(
+              color: context.palette.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
@@ -130,14 +132,17 @@ class _InviteUserScreenState extends ConsumerState<InviteUserScreen> {
           AppButton(
             label: _busy ? l.invSendingButton : l.invSendButton,
             icon: Icons.person_add,
-            onPressed: _busy ? null : _invite,
+            onPressed: _invite,
+            isLoading: _busy,
           ),
           if (_error != null) ...<Widget>[
             const SizedBox(height: AppSpacing.lg),
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.error),
+              style: AppTextStyles.bodyMd.copyWith(
+                color: context.palette.error,
+              ),
             ),
           ],
           if (_link != null) ...<Widget>[
@@ -158,27 +163,31 @@ class _InviteLinkCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Card(
-      color: AppColors.success.withValues(alpha: 0.08),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              l.invLinkReady,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+    final AppPalette p = context.palette;
+    return AppCard(
+      color: p.success.withValues(alpha: AppOpacity.surfaceTint),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            l.invLinkReady,
+            style: AppTextStyles.labelLg.copyWith(
+              color: p.textPrimary,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: AppSpacing.sm),
-            SelectableText(link, style: const TextStyle(fontSize: 12)),
-            const SizedBox(height: AppSpacing.sm),
-            AppButton(
-              label: l.invCopyLink,
-              icon: Icons.copy,
-              onPressed: () => Clipboard.setData(ClipboardData(text: link)),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SelectableText(
+            link,
+            style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppButton(
+            label: l.invCopyLink,
+            icon: Icons.copy,
+            onPressed: () => Clipboard.setData(ClipboardData(text: link)),
+          ),
+        ],
       ),
     );
   }

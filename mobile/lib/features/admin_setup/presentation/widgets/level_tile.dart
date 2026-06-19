@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_list_card.dart';
 import '../../domain/level.dart';
 
 /// بلاطة مستوى (بترقم الترتيب) قابلة للضغط للدخول على حلقاته.
@@ -13,18 +14,14 @@ class LevelTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          child: Text(arabicNumber(level.ord)),
-        ),
-        title: Text(level.name),
-        trailing: const Icon(Icons.chevron_left),
-        onTap: onTap,
+    return AppListCard(
+      title: level.name,
+      leading: CircleAvatar(
+        backgroundColor: context.palette.primary,
+        foregroundColor: context.palette.onPrimary,
+        child: Text(arabicNumber(level.ord)),
       ),
+      onTap: onTap,
     );
   }
 }

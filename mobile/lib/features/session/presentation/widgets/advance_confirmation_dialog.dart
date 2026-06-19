@@ -28,7 +28,7 @@ Future<bool?> showAdvanceConfirmationDialog(
           const SizedBox(height: AppSpacing.sm),
           Text(
             l.sesAdvanceConfirmWarning,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.palette.textSecondary),
           ),
         ],
       ),

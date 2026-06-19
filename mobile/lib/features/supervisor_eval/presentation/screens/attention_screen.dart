@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_section_header.dart';
 import '../../domain/circle_pass_rate.dart';
 import '../../domain/struggling_student.dart';
 import '../controllers/circle_pass_rates_controller.dart';
@@ -22,31 +25,14 @@ class AttentionScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.navAttention,
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         children: <Widget>[
-          _SectionTitle(l.supAttentionCirclesSection),
+          AppSectionHeader(title: l.supAttentionCirclesSection),
           const _CirclesSection(),
-          const SizedBox(height: AppSpacing.lg),
-          _SectionTitle(l.supAttentionStrugglingSection),
+          const SizedBox(height: AppSpacing.sm),
+          AppSectionHeader(title: l.supAttentionStrugglingSection),
           const _StrugglingSection(),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title);
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -62,10 +48,8 @@ class _CirclesSection extends ConsumerWidget {
       circlePassRatesProvider,
     );
     return state.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(AppSpacing.md),
-        child: AppLoader(),
-      ),
+      loading: () =>
+          const SizedBox(height: 240, child: AppListSkeleton(itemCount: 3)),
       error: (Object e, StackTrace _) => AppErrorView(
         message: l.supCirclesLoadError,
         onRetry: () => ref.invalidate(circlePassRatesProvider),
@@ -96,24 +80,20 @@ class _CircleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: ListTile(
-        leading: const Icon(Icons.trending_down, color: AppColors.error),
-        title: Text(circle.circleName),
-        subtitle: Text(
-          l.supCirclePassedOf(
-            arabicNumber(circle.passedCount),
-            arabicNumber(circle.activeAtOpen),
-          ),
-        ),
-        trailing: Text(
-          l.supPercent(arabicNumber(circle.percent)),
-          style: const TextStyle(
-            color: AppColors.error,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+    final AppPalette p = context.palette;
+    return AppListCard(
+      leadingIcon: Icons.trending_down,
+      iconColor: p.error,
+      title: circle.circleName,
+      subtitle: l.supCirclePassedOf(
+        arabicNumber(circle.passedCount),
+        arabicNumber(circle.activeAtOpen),
+      ),
+      trailing: Text(
+        l.supPercent(arabicNumber(circle.percent)),
+        style: AppTextStyles.titleMd.copyWith(
+          color: p.error,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
@@ -130,10 +110,8 @@ class _StrugglingSection extends ConsumerWidget {
       strugglingStudentsProvider,
     );
     return state.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(AppSpacing.md),
-        child: AppLoader(),
-      ),
+      loading: () =>
+          const SizedBox(height: 240, child: AppListSkeleton(itemCount: 3)),
       error: (Object e, StackTrace _) => AppErrorView(
         message: l.supListLoadError,
         onRetry: () => ref.invalidate(strugglingStudentsProvider),
@@ -161,14 +139,14 @@ class _StrugglingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: ListTile(
-        leading: const Icon(Icons.warning_amber, color: AppColors.error),
-        title: Text(student.studentName),
-        subtitle: Text(
-          l.supStudentDebt(student.portionName, arabicNumber(student.attempts)),
-        ),
+    final AppPalette p = context.palette;
+    return AppListCard(
+      leadingIcon: Icons.warning_amber,
+      iconColor: p.error,
+      title: student.studentName,
+      subtitle: l.supStudentDebt(
+        student.portionName,
+        arabicNumber(student.attempts),
       ),
     );
   }
@@ -181,9 +159,13 @@ class _EmptyNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppPalette p = context.palette;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Text(text, style: const TextStyle(color: AppColors.textSecondary)),
+      child: Text(
+        text,
+        style: AppTextStyles.bodyMd.copyWith(color: p.textSecondary),
+      ),
     );
   }
 }

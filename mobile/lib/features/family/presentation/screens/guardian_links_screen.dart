@@ -4,7 +4,9 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/guardian_link_row.dart';
@@ -39,32 +41,31 @@ class GuardianLinksScreen extends ConsumerWidget {
         ),
       ],
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.famLinksLoadError,
           onRetry: () => ref.invalidate(guardianLinksControllerProvider),
         ),
         data: (List<GuardianLinkRow> items) => items.isEmpty
             ? EmptyState(message: l.famNoLinks, icon: Icons.link_off)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final GuardianLinkRow r = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      leading: const Icon(Icons.link, color: AppColors.primary),
-                      title: Text(r.guardianName),
-                      subtitle: Text(
-                        l.famLinkRelationSubtitle(r.relationAr, r.childName),
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(guardianLinksControllerProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final GuardianLinkRow r = items[i];
+                    return AppListCard(
+                      leadingIcon: Icons.link,
+                      title: r.guardianName,
+                      subtitle: l.famLinkRelationSubtitle(
+                        r.relationAr,
+                        r.childName,
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );

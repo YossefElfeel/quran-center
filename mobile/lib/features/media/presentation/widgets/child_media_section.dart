@@ -118,9 +118,9 @@ class ChildMediaSection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppMediaSection,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: context.palette.textSecondary,
                   ),
                 ),
                 if (canUpload)
@@ -140,7 +140,7 @@ class ChildMediaSection extends ConsumerWidget {
                 if (items.isEmpty) {
                   return Text(
                     l.ppMediaEmpty,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: context.palette.textSecondary),
                   );
                 }
                 return GridView.builder(

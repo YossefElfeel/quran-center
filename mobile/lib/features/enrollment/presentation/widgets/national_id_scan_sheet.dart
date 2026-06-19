@@ -112,7 +112,7 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
                 child: Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.error),
+                  style: TextStyle(color: context.palette.error),
                 ),
               ),
             AppButton(

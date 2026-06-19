@@ -4,8 +4,11 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/teacher_dev_entry.dart';
@@ -24,44 +27,39 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.navTeacherDev,
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.tchQueueLoadFailed,
           onRetry: () => ref.invalidate(pendingDevelopmentProvider),
         ),
         data: (List<TeacherDevEntry> items) => items.isEmpty
             ? EmptyState(message: l.tchNoPendingApprovals, icon: Icons.done_all)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final TeacherDevEntry e = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.person,
-                        color: AppColors.primary,
-                      ),
-                      title: Text(e.teacherName ?? l.tchTeacherFallback),
-                      subtitle: Text(
-                        '${e.progress ?? '—'}\n'
-                        '${arabicNumber(e.month.month)}/'
-                        '${arabicNumber(e.month.year)}',
-                      ),
-                      isThreeLine: true,
-                      trailing: FilledButton(
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(pendingDevelopmentProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final TeacherDevEntry e = items[i];
+                    return AppListCard(
+                      leadingIcon: Icons.person,
+                      title: e.teacherName ?? l.tchTeacherFallback,
+                      subtitle:
+                          '${e.progress ?? '—'}\n'
+                          '${arabicNumber(e.month.month)}/'
+                          '${arabicNumber(e.month.year)}',
+                      trailing: AppButton(
+                        label: l.tchApprove,
                         onPressed: () => ref
                             .read(pendingDevelopmentProvider.notifier)
                             .approve(e.id),
-                        child: Text(l.tchApprove),
+                        variant: AppButtonVariant.tonal,
+                        expanded: false,
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );

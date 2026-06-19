@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/settings/settings_repository.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../progress_engine/domain/progress_engine.dart';
 import '../../domain/roster_entry.dart';
 import '../../domain/tasmee_kind.dart';
@@ -55,9 +56,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context).sesTasmeeSaveError)),
-      );
+      AppSnackbar.error(context, AppL10n.of(context).sesTasmeeSaveError);
     }
   }
 
@@ -119,13 +118,14 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: passed ? AppColors.success : AppColors.error,
+                color: passed ? context.palette.success : context.palette.error,
               ),
             ),
           const SizedBox(height: AppSpacing.md),
           AppButton(
             label: _saving ? l.sesTasmeeSaving : l.sesTasmeeSave,
             icon: Icons.check,
+            isLoading: _saving,
             onPressed: (score == null || _saving) ? null : _submit,
           ),
         ],

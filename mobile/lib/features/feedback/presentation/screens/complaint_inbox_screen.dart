@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/complaint.dart';
 import '../controllers/feedback_controllers.dart';
@@ -27,12 +31,11 @@ class ComplaintInboxScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text(l.fbkRespondDialogTitle),
-        content: TextField(
+        content: AppTextField(
           controller: resp,
           autofocus: true,
-          minLines: 2,
           maxLines: 5,
-          decoration: InputDecoration(labelText: l.fbkResponseLabel),
+          label: l.fbkResponseLabel,
         ),
         actions: <Widget>[
           TextButton(
@@ -60,38 +63,35 @@ class ComplaintInboxScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.fbkInboxTitle,
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.fbkLoadComplaintsError,
           onRetry: () => ref.invalidate(complaintInboxProvider),
         ),
         data: (List<Complaint> items) => items.isEmpty
             ? EmptyState(message: l.fbkNoComplaints, icon: Icons.inbox)
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) {
-                  final Complaint c = items[i];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: ListTile(
-                      title: Text(c.authorName ?? l.fbkUnknownUser),
-                      subtitle: Text(
-                        '${complaintCategoriesAr[c.category] ?? c.category}: '
-                        '${c.body}',
-                      ),
-                      trailing: TextButton(
+            : AppRefreshIndicator(
+                onRefresh: () async => ref.invalidate(complaintInboxProvider),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final Complaint c = items[i];
+                    return AppListCard(
+                      leadingIcon: Icons.support_agent,
+                      title: c.authorName ?? l.fbkUnknownUser,
+                      subtitle:
+                          '${complaintCategoriesAr[c.category] ?? c.category}: '
+                          '${c.body}',
+                      trailing: AppButton(
+                        label: c.isAnswered ? l.fbkEditResponse : l.fbkRespond,
                         onPressed: () => _respond(context, ref, c),
-                        child: Text(
-                          c.isAnswered ? l.fbkEditResponse : l.fbkRespond,
-                        ),
+                        variant: AppButtonVariant.text,
+                        expanded: false,
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );

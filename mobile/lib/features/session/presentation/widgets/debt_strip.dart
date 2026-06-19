@@ -30,13 +30,13 @@ class DebtStrip extends StatelessWidget {
           _Pill(
             label: l.sesDebtPassed,
             value: '${arabicNumber(passedCount)}/${arabicNumber(total)}',
-            color: AppColors.success,
+            color: context.palette.success,
           ),
           const SizedBox(width: AppSpacing.sm),
           _Pill(
             label: l.sesDebtOwed,
             value: arabicNumber(debtCount),
-            color: AppColors.error,
+            color: context.palette.error,
           ),
         ],
       ),

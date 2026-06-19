@@ -4,7 +4,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/enrolled_student.dart';
@@ -41,7 +42,7 @@ class CircleRosterScreen extends ConsumerWidget {
         label: Text(l.enrEnrollStudent),
       ),
       body: state.when(
-        loading: () => const AppLoader(),
+        loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.enrRosterLoadError,
           onRetry: () =>
@@ -49,11 +50,15 @@ class CircleRosterScreen extends ConsumerWidget {
         ),
         data: (List<EnrolledStudent> items) => items.isEmpty
             ? EmptyState(message: l.enrRosterEmpty, icon: Icons.groups_outlined)
-            : ListView.builder(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount: items.length,
-                itemBuilder: (BuildContext context, int i) =>
-                    StudentTile(student: items[i]),
+            : AppRefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(circleRosterControllerProvider(circleId)),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int i) =>
+                      StudentTile(student: items[i]),
+                ),
               ),
       ),
     );

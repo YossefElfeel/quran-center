@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../domain/portion.dart';
@@ -42,7 +43,9 @@ class _Empty extends StatelessWidget {
         Text(
           l.sesNoPortionYet,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: AppTextStyles.bodyMd.copyWith(
+            color: context.palette.textSecondary,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         AppButton(
@@ -63,9 +66,10 @@ class _Current extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
     return Row(
       children: <Widget>[
-        const Icon(Icons.menu_book, color: AppColors.primary),
+        Icon(Icons.menu_book, color: p.primary),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
@@ -73,17 +77,11 @@ class _Current extends StatelessWidget {
             children: <Widget>[
               Text(
                 l.sesCurrentPortion,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
               ),
               Text(
                 portion.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.titleMd.copyWith(color: p.textPrimary),
               ),
             ],
           ),

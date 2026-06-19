@@ -106,9 +106,9 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
             ),
             for (final MonthlyEvalStudent s in students)
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.emoji_events,
-                  color: AppColors.accent,
+                  color: context.palette.accent,
                 ),
                 title: Text(s.studentName),
                 onTap: () async {
@@ -167,10 +167,10 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                 itemBuilder: (BuildContext context, int i) {
                   final MonthlyEvalStudent s = items[i];
                   final (String label, Color color) = s.isApproved
-                      ? (l.monStatusApproved, AppColors.success)
+                      ? (l.monStatusApproved, context.palette.success)
                       : s.isSubmitted
-                      ? (l.monStatusSubmitted, AppColors.accent)
-                      : (l.monStatusPending, AppColors.textSecondary);
+                      ? (l.monStatusSubmitted, context.palette.accent)
+                      : (l.monStatusPending, context.palette.textSecondary);
                   return Card(
                     margin: const EdgeInsets.symmetric(
                       vertical: AppSpacing.xs,

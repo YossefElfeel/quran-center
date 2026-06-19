@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../domain/waiting_applicant.dart';
 
@@ -21,40 +24,67 @@ class ApplicantTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
+    final AppPalette p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                child: Icon(
-                  applicant.gender == Gender.female ? Icons.girl : Icons.boy,
+            Row(
+              children: <Widget>[
+                CircleAvatar(
+                  backgroundColor: p.primary,
+                  foregroundColor: p.onPrimary,
+                  child: Icon(
+                    applicant.gender == Gender.female ? Icons.girl : Icons.boy,
+                  ),
                 ),
-              ),
-              title: Text(applicant.name),
-              subtitle: Text(l.itkTargetLevelLabel(applicant.levelName)),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        applicant.name,
+                        style: AppTextStyles.titleMd.copyWith(
+                          color: p.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l.itkTargetLevelLabel(applicant.levelName),
+                        style: AppTextStyles.bodyMd.copyWith(
+                          color: p.textSecondary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               children: <Widget>[
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppButton(
+                    label: l.itkSetLevel,
+                    icon: Icons.assignment_turned_in,
                     onPressed: onPlacement,
-                    icon: const Icon(Icons.assignment_turned_in),
-                    label: Text(l.itkSetLevel),
+                    variant: AppButtonVariant.outlined,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: FilledButton.icon(
+                  child: AppButton(
+                    label: l.itkAssignToCircle,
+                    icon: Icons.how_to_reg,
                     onPressed: onEnroll,
-                    icon: const Icon(Icons.how_to_reg),
-                    label: Text(l.itkAssignToCircle),
                   ),
                 ),
               ],
