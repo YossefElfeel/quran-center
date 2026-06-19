@@ -155,7 +155,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          # On pull_request, github.ref_name is "<PR#>/merge" (a ref that isn't a
+          # real branch), so checkout's branch fetch fails. Use the PR source
+          # branch (head_ref) on PRs; fall back to ref_name on push/dispatch.
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - uses: subosito/flutter-action@v2
         with:
