@@ -1,10 +1,14 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type InviteResult =
   | { ok: true; actionLink: string | null }
   | { ok: false; error: string };
+
+export type ActionResult = { ok: true } | { ok: false; error: string };
 
 // يدعو مستخدم عبر Edge Function invite-user (بتشتغل بهوية الـ super_admin/admin
 // الحالي + service-role داخليًا). بترجّع رابط الدعوة عشان يتبعت للمستخدم.
@@ -36,4 +40,109 @@ export async function inviteUser(
   const actionLink =
     (data as { action_link?: string } | null)?.action_link ?? null;
   return { ok: true, actionLink };
+}
+
+// ترجمة أكواد الأخطاء القادمة من Edge functions لرسائل عربية.
+function mapError(raw: string): string {
+  const map: Record<string, string> = {
+    "cannot block yourself": "مينفعش تحظر نفسك.",
+    "cannot delete yourself": "مينفعش تحذف نفسك.",
+    "cannot block the last super_admin": "مينفعش تحظر آخر سوبر أدمن.",
+    "cannot delete the last super_admin": "مينفعش تحذف آخر سوبر أدمن.",
+    "cannot remove the last super_admin": "مينفعش تشيل آخر سوبر أدمن.",
+    "cannot revoke your own super_admin":
+      "مينفعش تسحب صلاحية السوبر أدمن من نفسك.",
+    "reason required": "السبب مطلوب.",
+    "confirm must equal full_name": "اكتب الاسم الكامل بالظبط للتأكيد.",
+    forbidden: "غير مصرّح — لازم تكون سوبر أدمن نشط.",
+    unauthorized: "محتاج تسجّل دخول.",
+    "target not found": "المستخدم مش موجود.",
+    "valid role required": "اختر دور صحيح.",
+  };
+  if (map[raw]) return map[raw];
+  if (raw.startsWith("cannot hard-delete")) {
+    return "فيه سجلّات مرتبطة بالمستخدم — استخدم الإيقاف (حذف ناعم) بدل الحذف النهائي.";
+  }
+  return "فشل تنفيذ العملية — جرّب تاني.";
+}
+
+// استدعاء Edge function ومعالجة الخطأ (الوظيفة بترجّع JSON: {error} عند الفشل).
+async function invokeAdmin(
+  fn: string,
+  body: Record<string, unknown>,
+): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.functions.invoke(fn, { body });
+
+  if (error) {
+    let detail = "";
+    try {
+      const ctx = (error as { context?: Response }).context;
+      if (ctx && typeof ctx.json === "function") {
+        const j = (await ctx.json()) as { error?: string };
+        detail = j?.error ?? "";
+      }
+    } catch {
+      // تجاهل — هنرجّع رسالة عامة.
+    }
+    return { ok: false, error: detail ? mapError(detail) : mapError("") };
+  }
+  if (data && (data as { error?: string }).error) {
+    return { ok: false, error: mapError((data as { error: string }).error) };
+  }
+
+  revalidatePath("/users");
+  return { ok: true };
+}
+
+// حظر/فك حظر مستخدم.
+export async function blockUser(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const targetPersonId = String(formData.get("target_person_id") ?? "");
+  const block = String(formData.get("block") ?? "true") === "true";
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
+  if (block && !reason) return { ok: false, error: "السبب مطلوب." };
+  return invokeAdmin("block-user", {
+    target_person_id: targetPersonId,
+    block,
+    reason: reason || null,
+  });
+}
+
+// إيقاف ناعم / استرجاع / حذف نهائي.
+export async function deleteUser(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const targetPersonId = String(formData.get("target_person_id") ?? "");
+  const mode = String(formData.get("mode") ?? "soft");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const confirm = String(formData.get("confirm") ?? "").trim();
+  if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
+  if (mode !== "restore" && !reason) return { ok: false, error: "السبب مطلوب." };
+  return invokeAdmin("delete-user", {
+    target_person_id: targetPersonId,
+    mode,
+    reason: reason || null,
+    confirm: confirm || null,
+  });
+}
+
+// منح/سحب دور.
+export async function manageRole(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const targetPersonId = String(formData.get("target_person_id") ?? "");
+  const role = String(formData.get("role") ?? "");
+  const op = String(formData.get("op") ?? "grant");
+  if (!targetPersonId || !role) return { ok: false, error: "بيانات ناقصة." };
+  return invokeAdmin("manage-role", {
+    target_person_id: targetPersonId,
+    role,
+    op,
+  });
 }

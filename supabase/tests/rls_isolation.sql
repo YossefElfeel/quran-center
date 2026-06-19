@@ -20,6 +20,7 @@ declare
   v_curr uuid; v_level uuid; v_c1 uuid; v_c2 uuid;
   v_t1 uuid; v_t2 uuid; v_s1 uuid; v_s2 uuid; v_s3 uuid;
   v_g1 uuid; v_g2 uuid; v_g3 uuid; v_a1 uuid;
+  v_enr1 uuid; v_portion uuid;
   v_uid_t1 uuid := gen_random_uuid();
   v_uid_g1 uuid := gen_random_uuid();
   v_uid_g3 uuid := gen_random_uuid();
@@ -40,6 +41,11 @@ begin
   insert into public.circle (level_id, name, teacher_id) values (v_level, 'RLS C1', v_t1) returning id into v_c1;
   insert into public.circle (level_id, name, teacher_id) values (v_level, 'RLS C2', v_t2) returning id into v_c2;
   insert into public.enrollment (student_person_id, circle_id) values (v_s1, v_c1), (v_s2, v_c2);
+  select id into v_enr1 from public.enrollment where student_person_id = v_s1;
+  insert into public.portion (name, surah_start, ayah_start, surah_end, ayah_end)
+    values ('RLS Portion', 1, 1, 1, 7) returning id into v_portion;
+  insert into public.daily_tasmee (enrollment_id, portion_id, score, passed, idempotency_key, teacher_id)
+    values (v_enr1, v_portion, 8, true, gen_random_uuid(), v_t1);
   insert into public.guardian_link (guardian_person_id, student_person_id) values (v_g1, v_s1), (v_g2, v_s2), (v_g3, v_s3);
   insert into public.role_assignment (person_id, role) values
     (v_t1, 'teacher'), (v_t2, 'teacher'), (v_g1, 'parent'), (v_g2, 'parent'), (v_g3, 'parent'), (v_a1, 'admin');
@@ -58,6 +64,7 @@ begin
   if (select count(*) from public.enrollment where circle_id = v_c2) <> 0 then raise exception 'RLS FAIL: teacher reads another circle'; end if;
   if (select count(*) from public.complaint where body = 'RLS complaint') <> 0 then raise exception 'RLS FAIL: non-manager reads complaints'; end if;
   if (select count(*) from public.teacher_rating where teacher_person_id = v_t1) <> 0 then raise exception 'RLS FAIL: teacher reads own rating'; end if;
+  if (select count(*) from public.daily_tasmee where enrollment_id = v_enr1) <> 1 then raise exception 'RLS FAIL: teacher cannot read own tasmee'; end if;
   reset role;
 
   -- ---- guardian G1: own child only ----
@@ -87,5 +94,29 @@ begin
   if (select count(*) from public.teacher_rating where teacher_person_id = v_t1) <> 1 then raise exception 'RLS FAIL: admin cannot read teacher rating'; end if;
   reset role;
 
-  raise exception 'RLS OK — teacher/guardian/admin + rating-blindness + girl-media-consent invariants held (rolled back)';
+  -- ---- block kill-switch (M6): محظور/موقوف يفقد كل صلاحيات RLS ----
+  -- teacher محظور: teaches_circle() بترجع false → مايقدرش يقرا حلقته.
+  update public.person set blocked_at = now(), blocked_reason = 'test' where id = v_t1;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_uid_t1::text)::text, true);
+  set local role authenticated;
+  if (select count(*) from public.enrollment where circle_id = v_c1) <> 0 then raise exception 'RLS FAIL: blocked teacher still reads own circle'; end if;
+  if (select count(*) from public.daily_tasmee where enrollment_id = v_enr1) <> 0 then raise exception 'RLS FAIL: blocked teacher still reads own tasmee (teaches_enrollment)'; end if;
+  reset role;
+
+  -- admin محظور: has_role('admin') بترجع false → مايقدرش يقرا الشكاوى/التقييمات.
+  update public.person set blocked_at = now(), blocked_reason = 'test' where id = v_a1;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_uid_a1::text)::text, true);
+  set local role authenticated;
+  if (select count(*) from public.complaint where body = 'RLS complaint') <> 0 then raise exception 'RLS FAIL: blocked admin still reads complaints'; end if;
+  if (select count(*) from public.teacher_rating where teacher_person_id = v_t1) <> 0 then raise exception 'RLS FAIL: blocked admin still reads teacher rating'; end if;
+  reset role;
+
+  -- guardian موقوف (deactivated): current_person_id()/is_guardian_of() → null/false.
+  update public.person set deactivated_at = now() where id = v_g1;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_uid_g1::text)::text, true);
+  set local role authenticated;
+  if (select count(*) from public.enrollment where student_person_id = v_s1) <> 0 then raise exception 'RLS FAIL: deactivated guardian still reads own child'; end if;
+  reset role;
+
+  raise exception 'RLS OK — teacher/guardian/admin + rating-blindness + girl-media-consent + block/deactivate kill-switch invariants held (rolled back)';
 end $$;
