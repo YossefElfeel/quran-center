@@ -1,4 +1,5 @@
 import { DeleteButton } from "@/components/admin-controls";
+import { Pager, SearchForm } from "@/components/list-controls";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { deleteEnrollment } from "./actions";
@@ -25,7 +26,16 @@ type EnrollRow = {
   circle: { id: string; name: string } | null;
 };
 
-export default async function EnrollmentPage() {
+const PAGE_SIZE = 25;
+
+export default async function EnrollmentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const { q, page: pageRaw } = await searchParams;
+  const page = Math.max(1, Number(pageRaw) || 1);
+  const offset = (page - 1) * PAGE_SIZE;
   const supabase = await createSupabaseServerClient();
 
   const { data: circleData } = await supabase
@@ -41,14 +51,19 @@ export default async function EnrollmentPage() {
     })
     .sort((a, b) => a.label.localeCompare(b.label, "ar"));
 
-  const { data: enrollData } = await supabase
+  let enrollQuery = supabase
     .from("enrollment")
     .select(
-      "id, status, student:student_person_id(full_name), circle:circle_id(id, name)",
+      "id, status, student:student_person_id!inner(full_name), circle:circle_id(id, name)",
+      { count: "exact" },
     )
     .in("status", ["active", "paused"])
-    .order("enrolled_at", { ascending: false });
+    .order("enrolled_at", { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1);
+  if (q) enrollQuery = enrollQuery.ilike("student.full_name", `%${q}%`);
+  const { data: enrollData, count: enrollCount } = await enrollQuery;
   const enrollments = (enrollData ?? []) as unknown as EnrollRow[];
+  const totalPages = Math.ceil((enrollCount ?? 0) / PAGE_SIZE);
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,8 +84,9 @@ export default async function EnrollmentPage() {
 
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">
-          التسجيلات النشطة ({enrollments.length})
+          التسجيلات النشطة ({enrollCount ?? 0})
         </h2>
+        <SearchForm q={q} placeholder="ابحث باسم الطالب…" />
         {enrollments.length === 0 ? (
           <p className="rounded-xl border border-border bg-white px-4 py-6 text-center text-foreground/50">
             مفيش تسجيلات لسه.
@@ -107,6 +123,7 @@ export default async function EnrollmentPage() {
             </div>
           ))
         )}
+        <Pager page={page} totalPages={totalPages} params={q ? { q } : {}} />
       </div>
     </div>
   );
