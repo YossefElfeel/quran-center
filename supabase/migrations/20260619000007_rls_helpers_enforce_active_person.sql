@@ -167,3 +167,7 @@ drop trigger if exists role_assignment_protect_last_super on public.role_assignm
 create trigger role_assignment_protect_last_super
   before delete or update on public.role_assignment
   for each row execute function public.enforce_last_super_admin();
+
+-- دالة الـ trigger مش محتاجة EXECUTE كـ RPC (الـ trigger بيشتغل بغضّ النظر عن صلاحية النده).
+-- بنسحب التنفيذ عشان متبانش في سطح PostgREST RPC (يقفل advisor 0028/0029).
+revoke execute on function public.enforce_last_super_admin() from public, anon, authenticated;
