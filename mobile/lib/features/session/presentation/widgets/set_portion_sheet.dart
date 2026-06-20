@@ -9,6 +9,7 @@ import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
 import 'portion_range_row.dart';
+import 'surah_load_error.dart';
 
 /// شيت تحديد مقطع الحفظ — أول مقطع (setPortion) أو مقطع الانتقال (advance).
 class SetPortionSheet extends ConsumerStatefulWidget {
@@ -107,8 +108,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
           height: 140,
           child: Center(child: CircularProgressIndicator()),
         ),
-        error: (Object e, StackTrace _) =>
-            Text(l.sesSurahsLoadError, textAlign: TextAlign.center),
+        error: (Object e, StackTrace _) => const SurahLoadError(),
         data: (List<SurahOption> list) => SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

@@ -9,6 +9,7 @@ import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
 import 'portion_range_row.dart';
+import 'surah_load_error.dart';
 
 /// شيت قفل الحصة بخطة: تحديد مراجعة الحصة الجاية (اختياري) + قفل الحصة.
 class CloseSessionSheet extends ConsumerStatefulWidget {
@@ -99,8 +100,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
           height: 140,
           child: Center(child: CircularProgressIndicator()),
         ),
-        error: (Object e, StackTrace _) =>
-            Text(l.sesSurahsLoadError, textAlign: TextAlign.center),
+        error: (Object e, StackTrace _) => const SurahLoadError(),
         data: (List<SurahOption> list) => SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

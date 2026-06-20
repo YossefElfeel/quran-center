@@ -103,12 +103,21 @@ class SessionRepository {
   }
 
   /// السور المرجعية (لاختيار نطاق المقطع).
+  ///
+  /// فيه timeout عشان لو النت مقطوع/بطيء ميفضلش الشيت يلفّ لأنهاية —
+  /// يرمي خطأ بسرعة فيظهر زر إعادة المحاولة بدل تعليق دائم.
   Future<List<SurahOption>> fetchSurahs() async {
-    final List<Map<String, dynamic>> rows = await _client
-        .from('surah')
-        .select('number, name, ayah_count')
-        .order('number', ascending: true);
+    final List<Map<String, dynamic>> rows = await _fetchSurahRows().timeout(
+      const Duration(seconds: 12),
+    );
     return rows.map(SurahOption.fromMap).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchSurahRows() async {
+    return await _client
+        .from('surah')
+        .select('number, name_ar, ayah_count')
+        .order('number', ascending: true);
   }
 
   /// ينشئ مقطعًا ويرجّع معرّفه.
