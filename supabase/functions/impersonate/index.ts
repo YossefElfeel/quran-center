@@ -82,6 +82,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response('Forbidden', { status: 403 });
   }
 
+  // كِل سويتش: التقمّص بالكتابة لازم يكون مفعّل صراحةً (مفتاح write_impersonation).
+  const { data: flagRow } = await admin
+    .from('feature_flag').select('enabled').eq('key', 'write_impersonation').maybeSingle();
+  if (!flagRow?.enabled) {
+    return new Response('write impersonation disabled', { status: 403 });
+  }
+
   // 2) subject must not be a super_admin; resolve their auth user.
   const { data: subjectRoles } = await admin
     .from('role_assignment').select('role').eq('person_id', subjectPersonId);
@@ -102,6 +109,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .insert({ super_admin_person_id: callerPersonId, subject_person_id: subjectPersonId, reason })
     .select('id').single();
   if (sessErr || !session) return new Response('Failed to open session', { status: 500 });
+
+  // تدقيق => بيشغّل تنبيه السوبر أدمن الفوري (trigger على audit_log).
+  await admin.from('audit_log').insert({
+    actor_person_id: callerPersonId,
+    action: 'impersonation_started',
+    target_table: 'impersonation_session',
+    target_id: session.id,
+    meta: { subject_person_id: subjectPersonId, reason },
+  });
 
   // 4) mint a short-lived subject JWT carrying an `act` (actor) claim for accountability.
   const secret = Deno.env.get('SUPABASE_JWT_SECRET');

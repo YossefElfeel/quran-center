@@ -8,6 +8,10 @@ export type InviteResult =
   | { ok: true; actionLink: string | null }
   | { ok: false; error: string };
 
+export type ResetResult =
+  | { ok: true; actionLink: string | null }
+  | { ok: false; error: string };
+
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 // يدعو مستخدم عبر Edge Function invite-user (بتشتغل بهوية الـ super_admin/admin
@@ -58,12 +62,29 @@ function mapError(raw: string): string {
     unauthorized: "محتاج تسجّل دخول.",
     "target not found": "المستخدم مش موجود.",
     "valid role required": "اختر دور صحيح.",
+    "subject has no login account": "المستخدم ده ماعندوش حساب دخول.",
+    "subject has no email": "المستخدم ده ماعندوش إيميل.",
+    "failed to generate link": "فشل توليد الرابط — جرّب تاني.",
   };
   if (map[raw]) return map[raw];
   if (raw.startsWith("cannot hard-delete")) {
     return "فيه سجلّات مرتبطة بالمستخدم — استخدم الإيقاف (حذف ناعم) بدل الحذف النهائي.";
   }
   return "فشل تنفيذ العملية — جرّب تاني.";
+}
+
+// بيستخرج رسالة الخطأ التفصيلية من رد Edge function (body JSON: {error}).
+async function edgeDetail(error: unknown): Promise<string> {
+  try {
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === "function") {
+      const j = (await ctx.json()) as { error?: string };
+      return j?.error ?? "";
+    }
+  } catch {
+    // تجاهل.
+  }
+  return "";
 }
 
 // استدعاء Edge function ومعالجة الخطأ (الوظيفة بترجّع JSON: {error} عند الفشل).
@@ -75,16 +96,7 @@ async function invokeAdmin(
   const { data, error } = await supabase.functions.invoke(fn, { body });
 
   if (error) {
-    let detail = "";
-    try {
-      const ctx = (error as { context?: Response }).context;
-      if (ctx && typeof ctx.json === "function") {
-        const j = (await ctx.json()) as { error?: string };
-        detail = j?.error ?? "";
-      }
-    } catch {
-      // تجاهل — هنرجّع رسالة عامة.
-    }
+    const detail = await edgeDetail(error);
     return { ok: false, error: detail ? mapError(detail) : mapError("") };
   }
   if (data && (data as { error?: string }).error) {
@@ -145,4 +157,49 @@ export async function manageRole(
     role,
     op,
   });
+}
+
+// تسجيل خروج إجباري — عبر RPC admin_force_logout (بيمسح جلسات المستخدم). الدالة
+// بتسجّل التدقيق بنفسها (action = force_logout)، فمابنستخدمش guardedAction.
+export async function forceLogout(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const targetPersonId = String(formData.get("target_person_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
+  if (!reason) return { ok: false, error: "السبب مطلوب." };
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_force_logout", {
+    p_person: targetPersonId,
+    p_reason: reason,
+  });
+  if (error) return { ok: false, error: mapError(error.message) };
+  revalidatePath("/users");
+  return { ok: true };
+}
+
+// إعادة كلمة السر — عبر Edge Function reset-password (بترجّع رابط استرجاع للأدمن).
+export async function resetPassword(
+  _prev: ResetResult | null,
+  formData: FormData,
+): Promise<ResetResult> {
+  const targetPersonId = String(formData.get("target_person_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
+  if (!reason) return { ok: false, error: "السبب مطلوب." };
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.functions.invoke("reset-password", {
+    body: { target_person_id: targetPersonId, reason },
+  });
+  if (error) {
+    const detail = await edgeDetail(error);
+    return { ok: false, error: detail ? mapError(detail) : mapError("") };
+  }
+  if (data && (data as { error?: string }).error) {
+    return { ok: false, error: mapError((data as { error: string }).error) };
+  }
+  const actionLink =
+    (data as { action_link?: string } | null)?.action_link ?? null;
+  return { ok: true, actionLink };
 }

@@ -61,6 +61,12 @@ supabase functions list
 
 ## 2) M6 D4 — التقمّص الكامل المدقّق (full impersonation)
 
+> ✅ **اتنفّذ في session الـ god-mode (2026-06-20):** الكود اللي تحت اتطبّق فعلًا في
+> [`impersonated.ts`](../dashboard/lib/supabase/impersonated.ts)،
+> [`impersonation/actions.ts`](../dashboard/app/(dash)/impersonation/actions.ts)،
+> و[`impersonate/index.ts`](../supabase/functions/impersonate/index.ts) (مع كِل سويتش
+> `write_impersonation`). الخطوات دي بقت **للنشر + المراجعة الأمنية** مش للكتابة. راجع البند ٧.
+
 الحالي: **معاينة قراءة-فقط مدقّقة** في اللوحة (بتسجّل `impersonation_session`، مفيش تبديل
 هوية فعلي). الكود الجديد بيضيف التبديل الفعلي عبر JWT بـ claim `act` للمساءلة.
 
@@ -163,3 +169,48 @@ cookieStore.set("imp_token", data.access_token, {
 - الكرونات الـ ٦ شغّالة (`select jobname, schedule, active from cron.job;`).
 - `get_advisors` نضيف (بس الـ INFO المقصودة لجداول النظام + تحذيرات Free المتوقّعة).
 - `rls_isolation.sql` = "RLS OK" و`engine_flow.sql` = "ENGINE OK".
+
+---
+
+## 7) God-Mode — لوحة التحكّم الكاملة (اتعملت 2026-06-20)
+
+كود اللوحة + المايجريشن جاهز ومتحقّق (`next build` أخضر). الخطوات دي **[يدوي]** للنشر والتطبيق.
+
+### 7-أ) أسرار
+- ⚠️ امسح سطر `SUPABASE_SERVICE_ROLE_KEY=` من `dashboard/.env.local` — **اللوحة مابتستخدمهوش
+  في الكود** (anon + RLS + Edge functions بس). وعمره ما يتحط في Vercel.
+- مفتاح `sb_secret_…` اللي كان في `.env.local` يتعتبر **مكشوف** → دوّره (البند ١-أ).
+
+### 7-ب) مايجريشن جديدة (تتطبّق بالترتيب، كلها idempotent)
+| الملف | بيضيف |
+|---|---|
+| `20260620000001_feature_flags.sql` | جدول `feature_flag` + `private.flag_enabled()` + سياسات تجميد restrictive (تسميع/حضور/جلسة/مدفوعات) |
+| `20260620000002_dashboard_metrics_rpc.sql` | `public.dashboard_metrics()` + بثّ `audit_log` |
+| `20260620000003_admin_force_logout_rpc.sql` | `public.admin_force_logout()` |
+| `20260620000004_super_admin_alerts.sql` | جدول `super_admin_alert` + تريجر `raise_sensitive_alert()` على audit_log + بثّ |
+| `20260620000005_cron_admin_rpcs.sql` | `cron_jobs()` / `cron_set_active()` / `cron_run_now()` |
+
+> الهوست بيختلف عن الريبو — أكّد الـ helpers موجودة قبل التطبيق (اتأكّد منها 2026-06-20):
+> `select proname from pg_proc where proname in ('set_updated_at','is_super_admin','current_person_id');`
+> طبّق بـ `supabase db push` أو SQL editor أو MCP `apply_migration` (ملف ورا ملف بالترتيب).
+> سياسات التجميد بتفتح افتراضيًا (المفاتيح seed=false) فاختبارات RLS/engine تفضل خضراء.
+
+### 7-ج) Edge functions
+- جديدة: **`reset-password`** (توليد رابط استرجاع). انشرها مع باقي الـ functions.
+- `impersonate` **اتعدّلت**: بترفض (403) لو مفتاح `write_impersonation` مقفول + بتسجّل
+  `impersonation_started` (بيشغّل التنبيه). انشرها **بس بعد تأكيد HS256** (البند ٢).
+- **تسجيل الخروج الإجباري = RPC** (`admin_force_logout`) مش function — المايجريشن كفاية.
+
+### 7-د) تحقّق god-mode (في اللوحة المنشورة، بحساب سوبر أدمن)
+- **مفاتيح/تجميد:** فعّل `freeze_sessions` في `/flags` → إدراج تسميع من معلّم يترفض بالـ RLS
+  والسوبر أدمن لسه بيقدر؛ بانر الصيانة يظهر؛ عطّله → يرجع طبيعي.
+- **الرئيسية الحيّة:** `/` بترندر من نداء `dashboard_metrics()` واحد؛ سجل النشاط بيتحدّث live؛
+  كروت الشذوذ بتظهر وقت التجميد/التقمّص.
+- **خروج إجباري:** زر "خروج" في `/users` بيمسح جلسات المستخدم (audit `force_logout`).
+- **كلمة السر:** زر "كلمة السر" بيرجّع رابط استرجاع (audit `password_reset_link`).
+- **التنبيهات:** أي من دول بيطلّع توست (تحت-شمال) عبر بثّ `super_admin_alert`.
+- **تقمّص بالكتابة (لو HS256):** `write_impersonation` مقفول → البدء يترفض؛ فعّله → ابدأ كمعلّم
+  (بانر أحمر "بتتصرّف كـ"، audit `impersonation_started`، تنبيه)؛ الكتابة تتنسب للموضوع؛
+  ينتهي بعد ٣٠ دقيقة؛ تقمّص سوبر أدمن يترفض.
+- **الأتمتة:** `/automation` بيعرض الـ ٦ كرونات؛ تفعيل/تعطيل بيظهر في `cron.job.active`؛
+  "تشغيل الآن" بيشغّل الـ worker (audit `cron_run_now`).

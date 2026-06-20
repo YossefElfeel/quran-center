@@ -16,6 +16,8 @@ const NAV = [
   { href: "/notifications", label: "الإشعارات والبثّ" },
   { href: "/media", label: "الوسائط والموافقات" },
   { href: "/settings", label: "إعدادات النظام" },
+  { href: "/flags", label: "المفاتيح ووضع الصيانة" },
+  { href: "/automation", label: "الأتمتة والمجدولات" },
   { href: "/subscriptions", label: "الاشتراكات" },
   { href: "/complaints", label: "الشكاوى" },
   { href: "/analytics", label: "تحليلات" },

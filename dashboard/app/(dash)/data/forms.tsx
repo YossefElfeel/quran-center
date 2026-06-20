@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useTransition } from "react";
+import { useActionState } from "react";
+
+import { DangerAction } from "@/components/danger-action";
 
 import { deleteRow, writeJson, type FormResult } from "./actions";
 
@@ -11,8 +13,6 @@ const mono =
   "rounded-lg border border-border px-3 py-2 font-mono text-xs outline-none focus:border-primary";
 const btn =
   "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
-const btnDanger =
-  "rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50";
 
 export function TableSelect({
   tables,
@@ -38,26 +38,15 @@ export function TableSelect({
 }
 
 export function DeleteRowButton({ table, id }: { table: string; id: string }) {
-  const [pending, start] = useTransition();
   return (
-    <button
-      disabled={pending}
-      className={btnDanger}
-      onClick={() => {
-        const reason = window.prompt(`حذف صف من «${table}»؟ اكتب السبب:`);
-        if (!reason) return;
-        const fd = new FormData();
-        fd.set("table", table);
-        fd.set("id", id);
-        fd.set("reason", reason);
-        start(async () => {
-          const r = await deleteRow(null, fd);
-          if (!r.ok) window.alert(r.error);
-        });
-      }}
-    >
-      {pending ? "…" : "حذف"}
-    </button>
+    <DangerAction
+      action={deleteRow}
+      label="حذف"
+      title={`حذف صف من «${table}»`}
+      description="⚠️ حذف صف مباشر من قاعدة البيانات — لا رجعة فيه."
+      hidden={{ table, id }}
+      submitLabel="احذف الصف"
+    />
   );
 }
 

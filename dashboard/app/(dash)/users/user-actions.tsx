@@ -2,11 +2,16 @@
 
 import { useActionState, useEffect, useState } from "react";
 
+import { DangerAction } from "@/components/danger-action";
+
 import {
   blockUser,
   deleteUser,
+  forceLogout,
   manageRole,
+  resetPassword,
   type ActionResult,
+  type ResetResult,
 } from "./actions";
 
 const ALL_ROLES: { value: string; label: string }[] = [
@@ -61,6 +66,17 @@ export function UserActions({
           <button className={btn} onClick={() => setOpen("deactivate")}>
             إيقاف
           </button>
+          <ResetPasswordButton personId={personId} fullName={fullName} />
+          <DangerAction
+            action={forceLogout}
+            tone="warn"
+            label="خروج"
+            title={`تسجيل خروج «${fullName}»`}
+            description="هيتم إنهاء كل جلسات المستخدم — هيحتاج يسجّل دخول تاني."
+            submitLabel="سجّل خروجه"
+            reasonPlaceholder="سبب تسجيل الخروج (مطلوب)"
+            hidden={{ target_person_id: personId }}
+          />
         </>
       ) : null}
 
@@ -358,5 +374,64 @@ function RestoreForm({ personId }: { personId: string }) {
         {pending ? "…" : "استرجاع"}
       </button>
     </form>
+  );
+}
+
+function ResetPasswordButton({
+  personId,
+  fullName,
+}: {
+  personId: string;
+  fullName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [state, formAction, pending] = useActionState<
+    ResetResult | null,
+    FormData
+  >(resetPassword, null);
+
+  return (
+    <>
+      <button className={btn} onClick={() => setOpen(true)}>
+        كلمة السر
+      </button>
+      {open ? (
+        <Modal title={`إعادة كلمة سر «${fullName}»`} onClose={() => setOpen(false)}>
+          <form action={formAction} className="flex flex-col gap-3">
+            <input type="hidden" name="target_person_id" value={personId} />
+            <p className="text-xs text-foreground/60">
+              بيتولّد رابط استرجاع — انسخه وابعته للمستخدم بنفسك (مش بيتبعت تلقائيًا).
+            </p>
+            <textarea
+              name="reason"
+              required
+              rows={2}
+              placeholder="السبب (مطلوب)"
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+            <button
+              type="submit"
+              disabled={pending}
+              className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {pending ? "…" : "ولّد الرابط"}
+            </button>
+            {state?.ok === false ? (
+              <p className="text-sm text-red-600">{state.error}</p>
+            ) : null}
+            {state?.ok === true ? (
+              <div className="flex flex-col gap-1 rounded-lg bg-primary/10 p-3 text-sm">
+                <span className="font-bold text-primary">
+                  اتولّد الرابط ✅ — ابعته للمستخدم:
+                </span>
+                <code className="break-all text-xs text-foreground/70">
+                  {state.actionLink ?? "(مفيش لينك)"}
+                </code>
+              </div>
+            ) : null}
+          </form>
+        </Modal>
+      ) : null}
+    </>
   );
 }
