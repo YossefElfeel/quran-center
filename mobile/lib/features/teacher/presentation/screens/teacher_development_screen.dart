@@ -15,45 +15,21 @@ import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/teacher_dev_entry.dart';
 import '../controllers/teacher_controllers.dart';
+import '../widgets/add_dev_entry_sheet.dart';
 
 /// شاشة المعلّم: مؤشّر أدائه + تطوّره (يضيف قيود يعتمدها المشرف).
 class TeacherDevelopmentScreen extends ConsumerWidget {
   const TeacherDevelopmentScreen({super.key});
 
-  Future<void> _add(BuildContext context, WidgetRef ref) async {
-    final AppL10n l = AppL10n.of(context);
-    final TextEditingController c = TextEditingController();
-    final bool? ok = await showDialog<bool>(
+  void _addEntry(BuildContext context) {
+    showAppModalSheet<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(l.tchNewDevEntryTitle),
-        content: AppTextField(
-          controller: c,
-          autofocus: true,
-          maxLines: 4,
-          label: l.tchDevEntryHint,
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.tchSend),
-          ),
-        ],
-      ),
+      title: AppL10n.of(context).tchNewDevEntryTitle,
+      builder: (BuildContext _) => const AddDevEntrySheet(),
     );
-    final String text = c.text;
-    c.dispose();
-    if (ok == true) {
-      await ref.read(myDevelopmentProvider.notifier).add(text);
-    }
   }
 
   @override
@@ -73,7 +49,7 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
         IconButton(
           tooltip: l.tchNewEntryTooltip,
           icon: const Icon(Icons.add),
-          onPressed: () => _add(context, ref),
+          onPressed: () => _addEntry(context),
         ),
       ],
       body: Column(
