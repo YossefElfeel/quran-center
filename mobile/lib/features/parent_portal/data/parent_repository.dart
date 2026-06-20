@@ -2,7 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
-import '../../enrollment/domain/gender.dart';
 import '../domain/child_card.dart';
 import '../domain/child_history.dart';
 import '../domain/child_summary.dart';
@@ -22,7 +21,7 @@ class ParentRepository {
   Future<List<ChildSummary>> fetchMyChildren() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('guardian_link')
-        .select('student:student_person_id(id, full_name, gender)')
+        .select('student:student_person_id(id, full_name)')
         .timeout(const Duration(seconds: 12));
     return rows
         .map((Map<String, dynamic> r) {
@@ -33,7 +32,6 @@ class ParentRepository {
           return ChildSummary(
             studentPersonId: studentId,
             fullName: (s?['full_name'] as String?) ?? '—',
-            gender: Gender.fromDb(s?['gender'] as String?),
           );
         })
         .whereType<ChildSummary>()
