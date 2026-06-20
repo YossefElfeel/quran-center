@@ -10,11 +10,15 @@ import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/attendance_sheet_pdf.dart';
+import '../../../progress_engine/domain/ledger_state.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
 import '../controllers/today_session_controller.dart';
@@ -140,6 +144,42 @@ class _SessionBody extends ConsumerWidget {
     );
   }
 
+  /// قائمة المدينين: مين لسه ماعدّاش المقطع الحالي (متعثّر أو لسه ماتسمّعش).
+  void _openDebtors(BuildContext context) {
+    final List<RosterEntry> debtors =
+        session.roster
+            .where((RosterEntry e) => e.ledgerState != LedgerState.passed)
+            .toList()
+          ..sort((RosterEntry a, RosterEntry b) {
+            int rank(LedgerState? s) => s == LedgerState.failedRetry ? 0 : 1;
+            return rank(a.ledgerState).compareTo(rank(b.ledgerState));
+          });
+    showAppModalSheet<void>(
+      context: context,
+      title: AppL10n.of(context).sesDebtorsTitle,
+      builder: (BuildContext context) {
+        final AppL10n l = AppL10n.of(context);
+        if (debtors.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Text(
+              l.sesNoDebtors,
+              style: AppTextStyles.bodyLg.copyWith(
+                color: context.palette.success,
+              ),
+            ),
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final RosterEntry e in debtors) _DebtorRow(entry: e),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _confirmAdvance(BuildContext context) async {
     final bool? ok = await showAdvanceConfirmationDialog(
       context,
@@ -193,6 +233,7 @@ class _SessionBody extends ConsumerWidget {
             passedCount: session.passedCount,
             debtCount: session.debtCount,
             total: session.roster.length,
+            onTap: () => _openDebtors(context),
           ),
         if (session.shouldAdvance)
           AdvanceSuggestionBanner(
@@ -262,6 +303,29 @@ class _ClosedView extends StatelessWidget {
             onPressed: onOpen,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// صف مدين في قائمة الدَيْن: اسم الطالب + حالته (متعثّر / لسه ماتسمّعش).
+class _DebtorRow extends StatelessWidget {
+  const _DebtorRow({required this.entry});
+
+  final RosterEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
+    final bool failed = entry.ledgerState == LedgerState.failedRetry;
+    return AppListCard(
+      leadingIcon: failed ? Icons.warning_amber : Icons.hourglass_empty,
+      iconColor: failed ? p.error : p.textSecondary,
+      title: entry.studentName,
+      trailing: AppStatusBadge(
+        label: failed ? l.sesDebtorFailed : l.sesDebtorPending,
+        kind: failed ? AppStatusKind.error : AppStatusKind.neutral,
       ),
     );
   }

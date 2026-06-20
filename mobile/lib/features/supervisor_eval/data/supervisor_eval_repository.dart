@@ -5,7 +5,10 @@ import '../../../core/supabase/supabase_providers.dart';
 import '../../../core/utils/arabic_date.dart';
 import '../../admin_setup/domain/circle.dart';
 import '../../documents/domain/monthly_circle_report.dart';
+import '../../parent_portal/domain/child_history.dart';
+import '../../progress_engine/domain/ledger_state.dart';
 import '../domain/circle_pass_rate.dart';
+import '../domain/circle_roster_score.dart';
 import '../domain/eval_criterion.dart';
 import '../domain/eval_student.dart';
 import '../domain/struggling_student.dart';
@@ -84,13 +87,97 @@ class SupervisorEvalRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('portion_ledger_entry')
         .select(
-          'attempts_count, '
+          'attempts_count, student_person_id, '
           'student:student_person_id(full_name), portion:portion_id(name)',
         )
         .eq('state', 'failed_retry')
         .gte('attempts_count', threshold)
         .order('attempts_count', ascending: false);
     return rows.map(StrugglingStudent.fromMap).toList();
+  }
+
+  /// سجلّ تسميع طالب (آخر المحاولات) — للمشرف يشوف نمط التعثّر. (RLS: المشرف
+  /// يقرا التسميع كله.) بنحلّ التسجيل النشط للطالب ثم نجيب محاولاته.
+  Future<List<TasmeeHistoryEntry>> fetchStudentTasmeeHistory(
+    String studentPersonId,
+  ) async {
+    final Map<String, dynamic>? enr = await _client
+        .from('enrollment')
+        .select('id')
+        .eq('student_person_id', studentPersonId)
+        .eq('status', 'active')
+        .maybeSingle();
+    final String? enrollmentId = enr?['id'] as String?;
+    if (enrollmentId == null) return const <TasmeeHistoryEntry>[];
+    final List<Map<String, dynamic>> rows = await _client
+        .from('daily_tasmee')
+        .select('attempt_date, score, passed, kind, portion:portion_id(name)')
+        .eq('enrollment_id', enrollmentId)
+        .order('attempt_date', ascending: false)
+        .order('created_at', ascending: false)
+        .limit(50);
+    return rows.map(TasmeeHistoryEntry.fromMap).toList();
+  }
+
+  /// تفصيل حلقة: المقطع الحالي + حالة كل طالب عليه (متعثّر/لسه/عدّى) — مرتّب
+  /// المتعثّرين أولًا. (RLS: المشرف يقرا الكل.)
+  Future<CircleScores> fetchCircleRosterScores(String circleId) async {
+    final Map<String, dynamic>? cycle = await _client
+        .from('group_portion_cycle')
+        .select('portion:portion_id(id, name)')
+        .eq('circle_id', circleId)
+        .isFilter('advanced_at', null)
+        .maybeSingle();
+    final Map<String, dynamic>? portion =
+        cycle?['portion'] as Map<String, dynamic>?;
+    final String? portionId = portion?['id'] as String?;
+    final String? portionName = portion?['name'] as String?;
+
+    final List<Map<String, dynamic>> roster = await _client
+        .from('enrollment')
+        .select('student_person_id, student:student_person_id(full_name)')
+        .eq('circle_id', circleId)
+        .eq('status', 'active')
+        .order('enrolled_at', ascending: true);
+    final List<String> ids = <String>[
+      for (final Map<String, dynamic> r in roster)
+        r['student_person_id'] as String,
+    ];
+
+    final Map<String, LedgerState> ledger = <String, LedgerState>{};
+    if (portionId != null && ids.isNotEmpty) {
+      final List<Map<String, dynamic>> lrows = await _client
+          .from('portion_ledger_entry')
+          .select('student_person_id, state')
+          .eq('portion_id', portionId)
+          .inFilter('student_person_id', ids);
+      for (final Map<String, dynamic> r in lrows) {
+        ledger[r['student_person_id'] as String] = LedgerState.fromDb(
+          r['state'] as String,
+        );
+      }
+    }
+
+    final List<CircleRosterScore> students = roster.map((
+      Map<String, dynamic> r,
+    ) {
+      final Map<String, dynamic> s = r['student'] as Map<String, dynamic>;
+      return CircleRosterScore(
+        studentName: s['full_name'] as String,
+        state: ledger[r['student_person_id'] as String],
+      );
+    }).toList();
+    // متعثّر أولًا، بعدين لسه ماتسمّع، بعدين عدّى.
+    int rank(LedgerState? s) => switch (s) {
+      LedgerState.failedRetry => 0,
+      null || LedgerState.assigned => 1,
+      LedgerState.passed => 2,
+    };
+    students.sort(
+      (CircleRosterScore a, CircleRosterScore b) =>
+          rank(a.state).compareTo(rank(b.state)),
+    );
+    return CircleScores(portionName: portionName, students: students);
   }
 
   /// نِسَب نجاح كل حلقة على مقطعها الحالي (عبر دالة السيرفر التجميعية).

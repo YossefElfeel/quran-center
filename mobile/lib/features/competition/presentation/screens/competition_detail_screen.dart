@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/auth/auth_providers.dart';
@@ -72,6 +73,16 @@ class CompetitionDetailScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _watchRecitation(BuildContext context, String url) async {
+    final Uri? uri = Uri.tryParse(url);
+    final bool ok =
+        uri != null &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      AppSnackbar.error(context, AppL10n.of(context).cmpCantOpenRecitation);
+    }
+  }
+
   AppStatusKind _statusKind(String status) {
     switch (status) {
       case 'accepted':
@@ -127,9 +138,22 @@ class CompetitionDetailScreen extends ConsumerWidget {
                     return AppListCard(
                       leadingIcon: Icons.record_voice_over,
                       title: a.applicantName,
+                      subtitle: a.youtubeUrl != null
+                          ? l.cmpHasRecitation
+                          : null,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
+                          if (a.youtubeUrl != null)
+                            IconButton(
+                              tooltip: l.cmpWatchRecitation,
+                              icon: Icon(
+                                Icons.play_circle_fill,
+                                color: context.palette.error,
+                              ),
+                              onPressed: () =>
+                                  _watchRecitation(context, a.youtubeUrl!),
+                            ),
                           AppStatusBadge(
                             label: a.status,
                             kind: _statusKind(a.status),

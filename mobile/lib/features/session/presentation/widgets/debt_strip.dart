@@ -4,41 +4,53 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 
-/// شريط ملخّص المقطع الحالي: عدّوا كام / عليهم دَيْن كام.
+/// شريط ملخّص المقطع الحالي: عدّوا كام / عليهم دَيْن كام. قابل للنقر → قائمة
+/// المدينين (مين لسه عليه دَيْن على المقطع الحالي).
 class DebtStrip extends StatelessWidget {
   const DebtStrip({
     required this.passedCount,
     required this.debtCount,
     required this.total,
+    this.onTap,
     super.key,
   });
 
   final int passedCount;
   final int debtCount;
   final int total;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      child: Row(
-        children: <Widget>[
-          _Pill(
-            label: l.sesDebtPassed,
-            value: '${arabicNumber(passedCount)}/${arabicNumber(total)}',
-            color: context.palette.success,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          _Pill(
-            label: l.sesDebtOwed,
-            value: arabicNumber(debtCount),
-            color: context.palette.error,
-          ),
-        ],
+    final AppPalette p = context.palette;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.sm),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          children: <Widget>[
+            _Pill(
+              label: l.sesDebtPassed,
+              value: '${arabicNumber(passedCount)}/${arabicNumber(total)}',
+              color: p.success,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            _Pill(
+              label: l.sesDebtOwed,
+              value: arabicNumber(debtCount),
+              color: p.error,
+            ),
+            if (onTap != null) ...<Widget>[
+              const Spacer(),
+              Icon(Icons.chevron_left, color: p.textSecondary, size: 20),
+            ],
+          ],
+        ),
       ),
     );
   }

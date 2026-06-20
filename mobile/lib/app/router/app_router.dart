@@ -29,6 +29,7 @@ import '../../features/monthly/presentation/screens/monthly_plan_editor_screen.d
 import '../../features/more/presentation/screens/more_hub_screen.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/parent_portal/presentation/screens/child_card_screen.dart';
+import '../../features/parent_portal/presentation/screens/child_history_screen.dart';
 import '../../features/recognition/presentation/screens/honor_board_screen.dart';
 import '../../features/session/presentation/screens/today_session_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
@@ -36,8 +37,11 @@ import '../../features/subscription/presentation/screens/household_members_scree
 import '../../features/subscription/presentation/screens/subscriptions_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/attention_screen.dart';
 import '../../features/supervisor_eval/presentation/screens/circle_eval_screen.dart';
+import '../../features/supervisor_eval/presentation/screens/circle_scores_screen.dart';
+import '../../features/supervisor_eval/presentation/screens/struggling_student_detail_screen.dart';
 import '../../features/teacher/presentation/screens/development_approval_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_development_screen.dart';
+import '../../features/teacher/presentation/screens/teacher_pass_rate_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_profile_screen.dart';
 import '../../features/user_invite/presentation/screens/invite_user_screen.dart';
 import '../shell/app_shell.dart';
@@ -234,6 +238,26 @@ GoRouter appRouter(Ref ref) {
             const AttentionScreen(),
       ),
       GoRoute(
+        path: Routes.supervisorStudentDetailPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            StrugglingStudentDetailScreen(
+              studentPersonId: state.pathParameters['studentId']!,
+              studentName: state.uri.queryParameters['name'] ?? 'الطالب',
+              portionName: state.uri.queryParameters['portion'] ?? '',
+              attempts:
+                  int.tryParse(state.uri.queryParameters['attempts'] ?? '0') ??
+                  0,
+            ),
+      ),
+      GoRoute(
+        path: Routes.supervisorCircleScoresPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            CircleScoresScreen(
+              circleId: state.pathParameters['circleId']!,
+              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+            ),
+      ),
+      GoRoute(
         path: Routes.teacherDevelopment,
         builder: (BuildContext context, GoRouterState state) =>
             const TeacherDevelopmentScreen(),
@@ -242,6 +266,11 @@ GoRouter appRouter(Ref ref) {
         path: Routes.teacherProfile,
         builder: (BuildContext context, GoRouterState state) =>
             const TeacherProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherPassRate,
+        builder: (BuildContext context, GoRouterState state) =>
+            const TeacherPassRateScreen(),
       ),
       GoRoute(
         path: Routes.supervisorDevApproval,
@@ -300,6 +329,16 @@ GoRouter appRouter(Ref ref) {
           studentPersonId: state.pathParameters['studentId']!,
           childName: state.uri.queryParameters['name'] ?? 'الطفل',
         ),
+      ),
+      GoRoute(
+        path: Routes.parentChildHistoryPattern,
+        builder: (BuildContext context, GoRouterState state) =>
+            ChildHistoryScreen(
+              studentPersonId: state.pathParameters['studentId']!,
+              childName: state.uri.queryParameters['name'] ?? 'الطفل',
+              initialTab:
+                  int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0,
+            ),
       ),
       GoRoute(
         path: Routes.settings,

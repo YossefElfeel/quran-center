@@ -17,6 +17,21 @@ class NotificationsController extends _$NotificationsController {
     ref.invalidateSelf();
     await future;
   }
+
+  /// يعلّم إشعارًا واحدًا مقروءًا — تحديث متفائل فوري (قبل التنقّل لمصدره).
+  Future<void> markRead(String id) async {
+    final List<AppNotification>? current = state.asData?.value;
+    if (current != null) {
+      state = AsyncData<List<AppNotification>>(<AppNotification>[
+        for (final AppNotification n in current)
+          if (n.id == id && !n.isRead)
+            n.copyWith(readAt: DateTime.now())
+          else
+            n,
+      ]);
+    }
+    await ref.read(notificationRepositoryProvider).markRead(id);
+  }
 }
 
 /// عدد الإشعارات غير المقروءة (للشارة).
