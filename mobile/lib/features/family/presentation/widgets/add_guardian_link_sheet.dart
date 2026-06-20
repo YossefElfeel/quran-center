@@ -6,8 +6,10 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../domain/household_option.dart';
 import '../../domain/student_option.dart';
 import '../controllers/guardian_links_controller.dart';
+import '../controllers/households_for_link_controller.dart';
 import '../controllers/students_for_link_controller.dart';
 
 /// شيت ربط ولي أمر جديد بطفل (بينشئ ولي الأمر بدور parent).
@@ -23,6 +25,8 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
   final TextEditingController _name = TextEditingController();
   String? _childId;
   String _relation = 'father';
+  // '' = أسرة جديدة (باسم ولي الأمر)؛ غير كده = معرّف أسرة موجودة.
+  String _householdId = '';
   bool _saving = false;
 
   @override
@@ -43,6 +47,7 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
             guardianName: name,
             childPersonId: childId,
             relation: _relation,
+            householdId: _householdId.isEmpty ? null : _householdId,
           );
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -60,6 +65,9 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<StudentOption>> students = ref.watch(
       studentsForLinkProvider,
+    );
+    final AsyncValue<List<HouseholdOption>> households = ref.watch(
+      householdsForLinkProvider,
     );
     return Padding(
       padding: EdgeInsets.only(
@@ -128,6 +136,35 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
               ),
             ],
             onChanged: (String? v) => setState(() => _relation = v ?? 'father'),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(l.famHouseholdLabel),
+          ),
+          households.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.famHouseholdsLoadError,
+              onRetry: () => ref.invalidate(householdsForLinkProvider),
+            ),
+            data: (List<HouseholdOption> list) => DropdownButton<String>(
+              isExpanded: true,
+              value: _householdId,
+              items: <DropdownMenuItem<String>>[
+                DropdownMenuItem<String>(
+                  value: '',
+                  child: Text(l.famHouseholdNew),
+                ),
+                ...list.map(
+                  (HouseholdOption h) => DropdownMenuItem<String>(
+                    value: h.id,
+                    child: Text(h.name),
+                  ),
+                ),
+              ],
+              onChanged: (String? v) => setState(() => _householdId = v ?? ''),
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(

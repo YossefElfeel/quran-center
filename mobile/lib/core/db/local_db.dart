@@ -136,15 +136,74 @@ class LocalDb extends _$LocalDb implements OutboxStore {
   }
 
   @override
-  Future<int> pendingCount() async {
+  Future<int> pendingCount() => _countWhere('pending');
+
+  @override
+  Future<int> deadLetterCount() => _countWhere('dead');
+
+  Future<int> _countWhere(String status) async {
     final Expression<int> cnt = outboxEntries.id.count();
     final TypedResult row =
         await (selectOnly(outboxEntries)
               ..addColumns(<Expression<Object>>[cnt])
-              ..where(outboxEntries.status.equals('pending')))
+              ..where(outboxEntries.status.equals(status)))
             .getSingle();
     return row.read(cnt) ?? 0;
   }
+
+  @override
+  Future<List<DeadLetterEntry>> deadLetters({int limit = 100}) {
+    return (select(outboxEntries)
+          ..where(($OutboxEntriesTable t) => t.status.equals('dead'))
+          ..orderBy(<OrderClauseGenerator<$OutboxEntriesTable>>[
+            ($OutboxEntriesTable t) => OrderingTerm(expression: t.createdAt),
+          ])
+          ..limit(limit))
+        .map(_toDeadLetter)
+        .get();
+  }
+
+  @override
+  Future<void> requeue(String id) async {
+    // إعادة المحاولة: ارجع للطابور المعلّق وصفّر العدّاد + امسح آخر خطأ.
+    await customUpdate(
+      "UPDATE outbox_entries SET status = 'pending', attempts = 0, "
+      'last_error = NULL WHERE id = ?',
+      variables: <Variable<Object>>[Variable<String>(id)],
+      updates: <TableInfo<Table, dynamic>>{outboxEntries},
+    );
+  }
+
+  @override
+  Future<void> discard(String id) async {
+    await (delete(
+      outboxEntries,
+    )..where(($OutboxEntriesTable t) => t.id.equals(id))).go();
+  }
+
+  /// بثّ حالة الطابور (معلّق/ميت) — يتحدّث تلقائيًا مع أي تغيير في الجدول،
+  /// فمؤشّر المزامنة في القشرة يبقى حيّ من غير invalidate يدوي.
+  Stream<SyncStatus> watchSyncStatus() {
+    return select(outboxEntries).watch().map((List<OutboxEntry> rows) {
+      int pending = 0;
+      int dead = 0;
+      for (final OutboxEntry r in rows) {
+        if (r.status == 'pending') {
+          pending++;
+        } else if (r.status == 'dead') {
+          dead++;
+        }
+      }
+      return SyncStatus(pending: pending, dead: dead);
+    });
+  }
+
+  DeadLetterEntry _toDeadLetter(OutboxEntry row) => DeadLetterEntry(
+    id: row.id,
+    type: OutboxOpType.fromDb(row.opType),
+    attempts: row.attempts,
+    lastError: row.lastError,
+  );
 
   OutboxOp _toOp(OutboxEntry row) => OutboxOp(
     id: row.id,

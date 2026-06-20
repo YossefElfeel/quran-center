@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/guardian_link_row.dart';
+import '../domain/household_option.dart';
 import '../domain/student_option.dart';
 
 part 'family_repository.g.dart';
@@ -46,27 +47,42 @@ class FamilyRepository {
     return rows.map(GuardianLinkRow.fromMap).toList();
   }
 
-  /// ينشئ ولي أمر جديد (شخص + دور parent) ويربطه بطفل.
-  Future<void> createGuardianAndLink({
+  /// الأسر المتاحة (لاختيار أسرة ولي الأمر أو إنشاء واحدة جديدة).
+  Future<List<HouseholdOption>> fetchHouseholds() async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('household')
+        .select('id, name')
+        .order('name', ascending: true)
+        .timeout(const Duration(seconds: 12));
+    return rows
+        .map(
+          (Map<String, dynamic> r) =>
+              HouseholdOption(id: r['id'] as String, name: r['name'] as String),
+        )
+        .toList();
+  }
+
+  /// ينشئ ولي أمر (شخص بالغ + دور parent) ويربطه بطفل **ويضمّه لأسرة** في
+  /// معاملة ذرّية عبر الدالة `create_guardian_with_household` — عشان ميتقفلش
+  /// بره بوابة الاشتراك (اللي بتتطلّب عضوية أسرة). لو [householdId] فاضي
+  /// بتتعمل أسرة جديدة باسم [newHouseholdName] (أو اسم ولي الأمر).
+  Future<void> createGuardianWithHousehold({
     required String guardianName,
     required String childPersonId,
     required String relation,
+    String? householdId,
+    String? newHouseholdName,
   }) async {
-    final Map<String, dynamic> guardian = await _client
-        .from('person')
-        .insert(<String, dynamic>{'full_name': guardianName})
-        .select('id')
-        .single();
-    final String guardianId = guardian['id'] as String;
-    await _client.from('role_assignment').insert(<String, dynamic>{
-      'person_id': guardianId,
-      'role': 'parent',
-    });
-    await _client.from('guardian_link').insert(<String, dynamic>{
-      'guardian_person_id': guardianId,
-      'student_person_id': childPersonId,
-      'relation': relation,
-    });
+    await _client.rpc<dynamic>(
+      'create_guardian_with_household',
+      params: <String, dynamic>{
+        'p_guardian_name': guardianName,
+        'p_child_person_id': childPersonId,
+        'p_relation': relation,
+        'p_household_id': householdId,
+        'p_new_household_name': newHouseholdName,
+      },
+    );
   }
 }
 

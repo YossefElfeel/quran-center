@@ -52,3 +52,6 @@ app.*.map.json
 # Flavor env files (real values — keep env/example.json only)
 /env/dev.json
 /env/prod.json
+
+# Dart DevTools per-developer config
+devtools_options.yaml
