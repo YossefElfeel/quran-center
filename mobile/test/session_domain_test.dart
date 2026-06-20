@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_center/features/progress_engine/domain/ledger_state.dart';
+import 'package:quran_center/features/session/data/surah_option.dart';
 import 'package:quran_center/features/session/domain/attendance_status.dart';
 import 'package:quran_center/features/session/domain/portion.dart';
 import 'package:quran_center/features/session/domain/roster_entry.dart';
@@ -87,6 +88,21 @@ void main() {
       expect(p.name, 'أول البقرة');
       expect(p.surahStart, 2);
       expect(p.ayahEnd, 5);
+    });
+  });
+
+  group('SurahOption.fromMap', () {
+    // ريجريشن: عمود الاسم في جدول surah اسمه name_ar (مش name). لو رجع لـ name
+    // هيرجع PostgREST 400 ومحدّد المقطع كله يقع. الاختبار ده بيقفل العقد ده.
+    test('بيقرأ name_ar زيّ ما الداتابيز بترجّعه', () {
+      final SurahOption s = SurahOption.fromMap(<String, dynamic>{
+        'number': 2,
+        'name_ar': 'البقرة',
+        'ayah_count': 286,
+      });
+      expect(s.number, 2);
+      expect(s.name, 'البقرة');
+      expect(s.ayahCount, 286);
     });
   });
 }
