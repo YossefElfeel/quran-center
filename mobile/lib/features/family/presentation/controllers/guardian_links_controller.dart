@@ -16,13 +16,17 @@ class GuardianLinksController extends _$GuardianLinksController {
     required String guardianName,
     required String childPersonId,
     required String relation,
+    String? householdId,
+    String? newHouseholdName,
   }) async {
     await ref
         .read(familyRepositoryProvider)
-        .createGuardianAndLink(
+        .createGuardianWithHousehold(
           guardianName: guardianName,
           childPersonId: childPersonId,
           relation: relation,
+          householdId: householdId,
+          newHouseholdName: newHouseholdName,
         );
     ref.invalidateSelf();
     await future;

@@ -38,7 +38,10 @@ class _FakeStore implements OutboxStore {
   @override
   Future<void> markFailed(String id, String error) async {
     final _Entry? e = _m[id];
-    if (e != null) e.attempts++;
+    if (e != null) {
+      e.attempts++;
+      e.lastError = error;
+    }
   }
 
   @override
@@ -47,12 +50,48 @@ class _FakeStore implements OutboxStore {
     if (e != null) {
       e.attempts++;
       e.status = 'dead';
+      e.lastError = error;
     }
   }
 
   @override
   Future<int> pendingCount() async =>
       _m.values.where((_Entry e) => e.status == 'pending').length;
+
+  @override
+  Future<int> deadLetterCount() async =>
+      _m.values.where((_Entry e) => e.status == 'dead').length;
+
+  @override
+  Future<List<DeadLetterEntry>> deadLetters({int limit = 100}) async {
+    final List<_Entry> es =
+        _m.values.where((_Entry e) => e.status == 'dead').toList()
+          ..sort((_Entry a, _Entry b) => a.seq.compareTo(b.seq));
+    return es
+        .take(limit)
+        .map(
+          (_Entry e) => DeadLetterEntry(
+            id: e.op.id,
+            type: e.op.type,
+            attempts: e.attempts,
+            lastError: e.lastError,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> requeue(String id) async {
+    final _Entry? e = _m[id];
+    if (e != null) {
+      e.status = 'pending';
+      e.attempts = 0;
+      e.lastError = null;
+    }
+  }
+
+  @override
+  Future<void> discard(String id) async => _m.remove(id);
 
   int get deadCount => _m.values.where((_Entry e) => e.status == 'dead').length;
 }
@@ -63,6 +102,7 @@ class _Entry {
   final int seq;
   String status = 'pending';
   int attempts = 0;
+  String? lastError;
 }
 
 OutboxOp _op(String id) => OutboxOp(
@@ -215,5 +255,64 @@ void main() {
         expect(await store.pendingCount(), 1);
       },
     );
+  });
+
+  group('إدارة العمليات الميتة (dead-letter)', () {
+    test('deadLetters تعرض الميتة مع آخر خطأ', () async {
+      final _FakeStore store = _FakeStore();
+      await store.enqueue(_op('a'));
+      await store.enqueue(_op('b'));
+      final OutboxProcessor p = OutboxProcessor(store, (OutboxOp op) async {
+        throw const TerminalError();
+      }, isTransient: _isTransient);
+
+      await p.flush();
+
+      final List<DeadLetterEntry> dead = await store.deadLetters();
+      expect(dead.length, 2);
+      expect(dead.first.id, 'a'); // ترتيب FIFO
+      expect(dead.first.lastError, isNotNull);
+      expect(await store.deadLetterCount(), 2);
+    });
+
+    test('requeue يرجّع العملية للطابور وflush يعيد إرسالها', () async {
+      final _FakeStore store = _FakeStore();
+      await store.enqueue(_op('a'));
+      bool reject = true;
+      final List<String> sent = <String>[];
+      final OutboxProcessor p = OutboxProcessor(store, (OutboxOp op) async {
+        if (reject) throw const TerminalError();
+        sent.add(op.id);
+      }, isTransient: _isTransient);
+
+      await p.flush(); // a → dead
+      expect(await store.deadLetterCount(), 1);
+
+      reject = false; // اتصلح سبب الرفض
+      await store.requeue('a');
+      expect(await store.pendingCount(), 1);
+      expect(await store.deadLetterCount(), 0);
+
+      await p.flush();
+      expect(sent, <String>['a']);
+      expect(await store.pendingCount(), 0);
+    });
+
+    test('discard يشيل العملية الميتة نهائيًا', () async {
+      final _FakeStore store = _FakeStore();
+      await store.enqueue(_op('a'));
+      final OutboxProcessor p = OutboxProcessor(
+        store,
+        (OutboxOp op) async => throw const TerminalError(),
+        isTransient: _isTransient,
+      );
+
+      await p.flush();
+      expect(await store.deadLetterCount(), 1);
+
+      await store.discard('a');
+      expect(await store.deadLetterCount(), 0);
+      expect(await store.deadLetters(), isEmpty);
+    });
   });
 }

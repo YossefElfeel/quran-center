@@ -1,3 +1,5 @@
+import '../../../core/logging/logger.dart';
+
 /// حالة مقطع في دفتر الطالب (الدَيْن/backlog).
 enum LedgerState {
   assigned,
@@ -10,9 +12,16 @@ enum LedgerState {
     LedgerState.passed => 'passed',
   };
 
-  static LedgerState fromDb(String value) => switch (value) {
-    'failed_retry' => LedgerState.failedRetry,
-    'passed' => LedgerState.passed,
-    _ => LedgerState.assigned,
-  };
+  static LedgerState fromDb(String value) {
+    switch (value) {
+      case 'assigned':
+        return LedgerState.assigned;
+      case 'failed_retry':
+        return LedgerState.failedRetry;
+      case 'passed':
+        return LedgerState.passed;
+    }
+    AppLog.warn('Unknown ledger state from server: $value');
+    return LedgerState.assigned;
+  }
 }

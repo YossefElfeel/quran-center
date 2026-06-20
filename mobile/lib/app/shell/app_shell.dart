@@ -6,12 +6,16 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../core/auth/auth_providers.dart';
 import '../../core/network/network_status.dart';
+import '../../core/sync/outbox_store.dart';
+import '../../core/sync/sync_status_provider.dart';
+import '../../core/utils/arabic_numerals.dart';
 import '../../features/notifications/presentation/controllers/notifications_controller.dart';
 import '../../features/onboarding/onboarding_provider.dart';
 import '../../features/onboarding/presentation/onboarding_view.dart';
 import '../../shared/widgets/account_suspended_view.dart';
 import '../../shared/widgets/app_inline_banner.dart';
 import 'nav_destinations.dart';
+import 'sync_status_sheet.dart';
 
 /// قشرة التطبيق — تحمل فروع التنقّل + شريط سفلي (موبايل) أو ريل (تابلت).
 class AppShell extends ConsumerWidget {
@@ -48,6 +52,7 @@ class AppShell extends ConsumerWidget {
     final int current = navigationShell.currentIndex;
     final bool online =
         ref.watch(connectivityOnlineProvider).asData?.value ?? true;
+    final SyncStatus? sync = ref.watch(syncStatusProvider).asData?.value;
     final bool onboardingSeen = ref.watch(onboardingSeenProvider);
 
     // غلاف يعرض شاشة الترحيب فوق القشرة كلها (شاملة الشريط) أول تشغيل.
@@ -70,6 +75,18 @@ class AppShell extends ConsumerWidget {
       children: <Widget>[
         if (!online)
           AppInlineBanner(message: l.noConnection, kind: AppBannerKind.offline),
+        if (sync != null && sync.hasFailures)
+          AppInlineBanner(
+            message: l.syncFailedBanner(arabicNumber(sync.dead)),
+            kind: AppBannerKind.error,
+            actionLabel: l.syncReview,
+            onAction: () => SyncStatusSheet.show(context),
+          )
+        else if (sync != null && sync.hasPending && online)
+          AppInlineBanner(
+            message: l.syncPending(arabicNumber(sync.pending)),
+            kind: AppBannerKind.syncing,
+          ),
         Expanded(child: navigationShell),
       ],
     );

@@ -1,3 +1,5 @@
+import '../../../core/logging/logger.dart';
+
 /// نوع الشهادة.
 enum CertificateKind {
   juzAmma,
@@ -19,10 +21,18 @@ enum CertificateKind {
     CertificateKind.honor => 'شهادة تفوّق',
   };
 
-  static CertificateKind fromDb(String value) => switch (value) {
-    'juz_amma' => CertificateKind.juzAmma,
-    'half' => CertificateKind.half,
-    'full' => CertificateKind.full,
-    _ => CertificateKind.honor,
-  };
+  static CertificateKind fromDb(String value) {
+    switch (value) {
+      case 'juz_amma':
+        return CertificateKind.juzAmma;
+      case 'half':
+        return CertificateKind.half;
+      case 'full':
+        return CertificateKind.full;
+      case 'honor':
+        return CertificateKind.honor;
+    }
+    AppLog.warn('Unknown certificate kind from server: $value');
+    return CertificateKind.honor;
+  }
 }

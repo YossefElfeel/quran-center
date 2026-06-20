@@ -1,3 +1,5 @@
+import '../../../core/logging/logger.dart';
+
 /// نوع التسميع: حفظ جديد أو مراجعة (بيوافق enum tasmee_kind في الداتابيز).
 enum TasmeeKind {
   memorization,
@@ -8,8 +10,14 @@ enum TasmeeKind {
     TasmeeKind.revision => 'revision',
   };
 
-  static TasmeeKind fromDb(String value) => switch (value) {
-    'revision' => TasmeeKind.revision,
-    _ => TasmeeKind.memorization,
-  };
+  static TasmeeKind fromDb(String value) {
+    switch (value) {
+      case 'memorization':
+        return TasmeeKind.memorization;
+      case 'revision':
+        return TasmeeKind.revision;
+    }
+    AppLog.warn('Unknown tasmee kind from server: $value');
+    return TasmeeKind.memorization;
+  }
 }

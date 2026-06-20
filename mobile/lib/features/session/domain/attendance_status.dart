@@ -1,3 +1,5 @@
+import '../../../core/logging/logger.dart';
+
 /// حالة حضور الطالب في الحصة.
 enum AttendanceStatus {
   present,
@@ -19,10 +21,18 @@ enum AttendanceStatus {
     AttendanceStatus.late => 'متأخّر',
   };
 
-  static AttendanceStatus fromDb(String value) => switch (value) {
-    'absent' => AttendanceStatus.absent,
-    'absent_excused' => AttendanceStatus.absentExcused,
-    'late' => AttendanceStatus.late,
-    _ => AttendanceStatus.present,
-  };
+  static AttendanceStatus fromDb(String value) {
+    switch (value) {
+      case 'present':
+        return AttendanceStatus.present;
+      case 'absent':
+        return AttendanceStatus.absent;
+      case 'absent_excused':
+        return AttendanceStatus.absentExcused;
+      case 'late':
+        return AttendanceStatus.late;
+    }
+    AppLog.warn('Unknown attendance status from server: $value');
+    return AttendanceStatus.present;
+  }
 }

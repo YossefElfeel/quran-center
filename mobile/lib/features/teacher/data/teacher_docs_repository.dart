@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../domain/teacher_document.dart';
 
@@ -26,7 +27,11 @@ class TeacherDocsRepository {
     return rows.map(TeacherDocument.fromMap).toList();
   }
 
+  /// أقصى حجم لملف المستند (٢٠ ميجا).
+  static const int maxUploadBytes = 20 * 1024 * 1024;
+
   /// يرفع ملفًا ويسجّله. مفتاح الفولدر = auth.uid() (لسياسة التخزين).
+  /// بيتأكّد من الحجم/الجلسة، ولو فشل تسجيل الصف بعد الرفع بينظّف الملف اليتيم.
   Future<void> upload({
     required String teacherPersonId,
     required String kind,
@@ -35,18 +40,40 @@ class TeacherDocsRepository {
     required String ext,
     String? mime,
   }) async {
-    final String uid = _client.auth.currentUser!.id;
-    final String path = '$uid/${const Uuid().v4()}.$ext';
-    await _client.storage
-        .from(_bucket)
-        .uploadBinary(path, bytes, fileOptions: FileOptions(contentType: mime));
-    await _client.from('teacher_document').insert(<String, dynamic>{
-      'teacher_person_id': teacherPersonId,
-      'kind': kind,
-      'title': title,
-      'storage_path': path,
-      'mime': ?mime,
-    });
+    if (bytes.length > maxUploadBytes) {
+      throw const ValidationException('الملف أكبر من ٢٠ ميجا — اختار ملف أصغر');
+    }
+    final User? user = _client.auth.currentUser;
+    if (user == null) {
+      throw const ValidationException('انتهت الجلسة — سجّل دخول تاني');
+    }
+    final String path = '${user.id}/${const Uuid().v4()}.$ext';
+    try {
+      await _client.storage
+          .from(_bucket)
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(contentType: mime),
+          );
+    } catch (_) {
+      throw const ValidationException('مش قادرين نرفع الملف — جرّب تاني');
+    }
+    try {
+      await _client.from('teacher_document').insert(<String, dynamic>{
+        'teacher_person_id': teacherPersonId,
+        'kind': kind,
+        'title': title,
+        'storage_path': path,
+        'mime': ?mime,
+      });
+    } catch (_) {
+      // فشل تسجيل الصف بعد الرفع → نظّف الملف اليتيم عشان ما يفضلش في التخزين.
+      try {
+        await _client.storage.from(_bucket).remove(<String>[path]);
+      } catch (_) {}
+      throw const ValidationException('مش قادرين نسجّل المستند — جرّب تاني');
+    }
   }
 
   Future<void> delete(TeacherDocument doc) async {
