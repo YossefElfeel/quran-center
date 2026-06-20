@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_error_view.dart';
 import '../../domain/circle_option.dart';
 import '../controllers/waiting_list_controller.dart';
 
@@ -76,7 +77,11 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
           const SizedBox(height: AppSpacing.lg),
           circles.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => Text(l.itkCirclesLoadError),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.itkCirclesLoadError,
+              onRetry: () =>
+                  ref.invalidate(circlesOfLevelProvider(widget.levelId)),
+            ),
             data: (List<CircleOption> list) => list.isEmpty
                 ? Text(l.itkNoCirclesInLevel)
                 : DropdownButton<String>(

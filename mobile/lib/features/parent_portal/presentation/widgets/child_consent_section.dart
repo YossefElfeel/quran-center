@@ -43,7 +43,26 @@ class ChildConsentSection extends ConsumerWidget {
             state.when(
               skipLoadingOnReload: true,
               loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace _) => Text(l.ppConsentsLoadError),
+              error: (Object e, StackTrace _) => Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        l.ppConsentsLoadError,
+                        style: TextStyle(color: context.palette.textSecondary),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => ref.invalidate(
+                        childConsentsControllerProvider(studentPersonId),
+                      ),
+                      child: Text(l.retry),
+                    ),
+                  ],
+                ),
+              ),
               data: (Set<String> active) => Column(
                 children: <Widget>[
                   _ConsentSwitch(

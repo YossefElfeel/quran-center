@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_error_view.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../domain/level_option.dart';
 import '../controllers/waiting_list_controller.dart';
@@ -95,7 +96,10 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
           ),
           levels.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => Text(l.itkLevelsLoadError),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.itkLevelsLoadError,
+              onRetry: () => ref.invalidate(levelOptionsProvider),
+            ),
             data: (List<LevelOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _levelId,

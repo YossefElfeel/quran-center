@@ -135,7 +135,21 @@ class ChildMediaSection extends ConsumerWidget {
             state.when(
               skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (Object e, StackTrace _) => Text(l.ppMediaLoadError),
+              error: (Object e, StackTrace _) => Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      l.ppMediaLoadError,
+                      style: TextStyle(color: context.palette.textSecondary),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        ref.invalidate(childMediaProvider(studentPersonId)),
+                    child: Text(l.retry),
+                  ),
+                ],
+              ),
               data: (List<MediaItem> items) {
                 if (items.isEmpty) {
                   return Text(

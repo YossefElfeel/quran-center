@@ -16,7 +16,8 @@ class CourseRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('course')
         .select('id, title, video_url, description')
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(Course.fromMap).toList();
   }
 

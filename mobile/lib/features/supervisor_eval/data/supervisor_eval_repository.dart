@@ -25,8 +25,12 @@ class SupervisorEvalRepository {
   Future<List<Circle>> fetchAllCircles() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('circle')
-        .select('id, level_id, name, max_size, status, teacher_id')
-        .order('created_at', ascending: true);
+        .select(
+          'id, level_id, name, max_size, status, teacher_id, '
+          'teacher:teacher_id(full_name)',
+        )
+        .order('created_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map(Circle.fromMap).toList();
   }
 
@@ -36,12 +40,13 @@ class SupervisorEvalRepository {
         .select('student_person_id, student:student_person_id(full_name)')
         .eq('circle_id', circleId)
         .eq('status', 'active')
-        .order('enrolled_at', ascending: true);
+        .order('enrolled_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map((Map<String, dynamic> r) {
-      final Map<String, dynamic> s = r['student'] as Map<String, dynamic>;
+      final Map<String, dynamic>? s = r['student'] as Map<String, dynamic>?;
       return EvalStudent(
         studentPersonId: r['student_person_id'] as String,
-        fullName: s['full_name'] as String,
+        fullName: (s?['full_name'] as String?) ?? '—',
       );
     }).toList();
   }
@@ -59,7 +64,8 @@ class SupervisorEvalRepository {
           'supervisor_id': ?supervisorId,
         })
         .select('id')
-        .single();
+        .single()
+        .timeout(const Duration(seconds: 12));
     return row['id'] as String;
   }
 
@@ -78,7 +84,10 @@ class SupervisorEvalRepository {
           'score': e.value,
         },
     ];
-    await _client.from('eval_score').insert(rows);
+    await _client
+        .from('eval_score')
+        .insert(rows)
+        .timeout(const Duration(seconds: 12));
   }
 
   /// الطلبة المتعثّرين: عليهم دَيْن وعدد محاولاتهم وصل حد التعثّر أو أكتر.
@@ -92,7 +101,8 @@ class SupervisorEvalRepository {
         )
         .eq('state', 'failed_retry')
         .gte('attempts_count', threshold)
-        .order('attempts_count', ascending: false);
+        .order('attempts_count', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(StrugglingStudent.fromMap).toList();
   }
 
@@ -106,7 +116,8 @@ class SupervisorEvalRepository {
         .select('id')
         .eq('student_person_id', studentPersonId)
         .eq('status', 'active')
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     final String? enrollmentId = enr?['id'] as String?;
     if (enrollmentId == null) return const <TasmeeHistoryEntry>[];
     final List<Map<String, dynamic>> rows = await _client
@@ -115,7 +126,8 @@ class SupervisorEvalRepository {
         .eq('enrollment_id', enrollmentId)
         .order('attempt_date', ascending: false)
         .order('created_at', ascending: false)
-        .limit(50);
+        .limit(50)
+        .timeout(const Duration(seconds: 12));
     return rows.map(TasmeeHistoryEntry.fromMap).toList();
   }
 
@@ -127,7 +139,8 @@ class SupervisorEvalRepository {
         .select('portion:portion_id(id, name)')
         .eq('circle_id', circleId)
         .isFilter('advanced_at', null)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     final Map<String, dynamic>? portion =
         cycle?['portion'] as Map<String, dynamic>?;
     final String? portionId = portion?['id'] as String?;
@@ -138,7 +151,8 @@ class SupervisorEvalRepository {
         .select('student_person_id, student:student_person_id(full_name)')
         .eq('circle_id', circleId)
         .eq('status', 'active')
-        .order('enrolled_at', ascending: true);
+        .order('enrolled_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     final List<String> ids = <String>[
       for (final Map<String, dynamic> r in roster)
         r['student_person_id'] as String,
@@ -150,7 +164,8 @@ class SupervisorEvalRepository {
           .from('portion_ledger_entry')
           .select('student_person_id, state')
           .eq('portion_id', portionId)
-          .inFilter('student_person_id', ids);
+          .inFilter('student_person_id', ids)
+          .timeout(const Duration(seconds: 12));
       for (final Map<String, dynamic> r in lrows) {
         ledger[r['student_person_id'] as String] = LedgerState.fromDb(
           r['state'] as String,
@@ -161,9 +176,9 @@ class SupervisorEvalRepository {
     final List<CircleRosterScore> students = roster.map((
       Map<String, dynamic> r,
     ) {
-      final Map<String, dynamic> s = r['student'] as Map<String, dynamic>;
+      final Map<String, dynamic>? s = r['student'] as Map<String, dynamic>?;
       return CircleRosterScore(
-        studentName: s['full_name'] as String,
+        studentName: (s?['full_name'] as String?) ?? '—',
         state: ledger[r['student_person_id'] as String],
       );
     }).toList();
@@ -182,7 +197,9 @@ class SupervisorEvalRepository {
 
   /// نِسَب نجاح كل حلقة على مقطعها الحالي (عبر دالة السيرفر التجميعية).
   Future<List<CirclePassRate>> fetchCirclePassRates() async {
-    final dynamic res = await _client.rpc('circle_pass_rates');
+    final dynamic res = await _client
+        .rpc('circle_pass_rates')
+        .timeout(const Duration(seconds: 12));
     final List<dynamic> rows = res as List<dynamic>;
     return rows
         .map((dynamic r) => CirclePassRate.fromMap(r as Map<String, dynamic>))
@@ -198,10 +215,12 @@ class SupervisorEvalRepository {
     final String monthIso =
         '${month.year.toString().padLeft(4, '0')}-'
         '${month.month.toString().padLeft(2, '0')}-01';
-    final dynamic res = await _client.rpc(
-      'monthly_circle_report',
-      params: <String, dynamic>{'p_circle': circleId, 'p_month': monthIso},
-    );
+    final dynamic res = await _client
+        .rpc(
+          'monthly_circle_report',
+          params: <String, dynamic>{'p_circle': circleId, 'p_month': monthIso},
+        )
+        .timeout(const Duration(seconds: 12));
     final Map<String, dynamic> m = res as Map<String, dynamic>;
     final List<dynamic> rawPortions = m['portions'] as List<dynamic>;
     return MonthlyCircleReport(

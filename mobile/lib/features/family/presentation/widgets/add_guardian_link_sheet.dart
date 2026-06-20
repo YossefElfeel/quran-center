@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_error_view.dart';
 import '../../domain/student_option.dart';
 import '../controllers/guardian_links_controller.dart';
 import '../controllers/students_for_link_controller.dart';
@@ -87,7 +88,10 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
           ),
           students.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => Text(l.famStudentsLoadError),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.famStudentsLoadError,
+              onRetry: () => ref.invalidate(studentsForLinkProvider),
+            ),
             data: (List<StudentOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _childId,

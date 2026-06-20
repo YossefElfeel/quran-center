@@ -17,7 +17,8 @@ class NotificationRepository {
         .from('notification')
         .select('id, type, title, body, read_at, created_at')
         .order('created_at', ascending: false)
-        .limit(50);
+        .limit(50)
+        .timeout(const Duration(seconds: 12));
     return rows.map(AppNotification.fromMap).toList();
   }
 

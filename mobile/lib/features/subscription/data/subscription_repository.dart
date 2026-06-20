@@ -18,7 +18,9 @@ class SubscriptionRepository {
   final SupabaseClient _client;
 
   Future<List<HouseholdSummary>> fetchHouseholds() async {
-    final dynamic res = await _client.rpc('households_with_status');
+    final dynamic res = await _client
+        .rpc('households_with_status')
+        .timeout(const Duration(seconds: 12));
     final List<dynamic> rows = res as List<dynamic>;
     final DateTime today = DateTime.now();
     return rows.map((dynamic r) {
@@ -65,13 +67,16 @@ class SubscriptionRepository {
         .select('period_month, amount, paid_at, voided')
         .eq('household_id', householdId)
         .order('period_month', ascending: false)
-        .limit(24);
+        .limit(24)
+        .timeout(const Duration(seconds: 12));
     return rows.map(PaymentRow.fromMap).toList();
   }
 
   /// هل اشتراك المستخدم الحالي (ولي الأمر) نشط؟ (لبوابة الوصول).
   Future<bool> mySubscriptionActive() async {
-    final dynamic res = await _client.rpc('my_subscription_active');
+    final dynamic res = await _client
+        .rpc('my_subscription_active')
+        .timeout(const Duration(seconds: 12));
     return (res as bool?) ?? false;
   }
 
@@ -80,7 +85,8 @@ class SubscriptionRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('person')
         .select('id, full_name')
-        .order('full_name', ascending: true);
+        .order('full_name', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows
         .map(
           (Map<String, dynamic> r) => PersonOption(
@@ -97,7 +103,8 @@ class SubscriptionRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('household_member')
         .select('role, person:person_id(full_name)')
-        .eq('household_id', householdId);
+        .eq('household_id', householdId)
+        .timeout(const Duration(seconds: 12));
     return rows.map(HouseholdMemberRow.fromMap).toList();
   }
 

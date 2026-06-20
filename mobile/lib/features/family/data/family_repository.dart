@@ -19,14 +19,16 @@ class FamilyRepository {
         .from('enrollment')
         .select('student:student_person_id(id, full_name)')
         .eq('status', 'active')
-        .order('enrolled_at', ascending: true);
+        .order('enrolled_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     final Map<String, StudentOption> byId = <String, StudentOption>{};
     for (final Map<String, dynamic> r in rows) {
-      final Map<String, dynamic> s = r['student'] as Map<String, dynamic>;
-      final String id = s['id'] as String;
+      final Map<String, dynamic>? s = r['student'] as Map<String, dynamic>?;
+      final String? id = s?['id'] as String?;
+      if (id == null) continue;
       byId[id] = StudentOption(
         personId: id,
-        fullName: s['full_name'] as String,
+        fullName: (s?['full_name'] as String?) ?? '—',
       );
     }
     return byId.values.toList();
@@ -39,7 +41,8 @@ class FamilyRepository {
           'relation, guardian:guardian_person_id(full_name), '
           'student:student_person_id(full_name)',
         )
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(GuardianLinkRow.fromMap).toList();
   }
 

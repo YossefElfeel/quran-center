@@ -118,9 +118,9 @@ class _PaymentsSheet extends ConsumerWidget {
         padding: EdgeInsets.all(AppSpacing.lg),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (Object e, StackTrace _) => Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Text(l.subsPaymentsLoadError),
+      error: (Object e, StackTrace _) => AppErrorView(
+        message: l.subsPaymentsLoadError,
+        onRetry: () => ref.invalidate(householdPaymentsProvider(householdId)),
       ),
       data: (List<PaymentRow> items) {
         if (items.isEmpty) {

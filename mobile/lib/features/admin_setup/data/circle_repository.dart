@@ -21,7 +21,8 @@ class CircleRepository {
           'teacher:teacher_id(full_name)',
         )
         .eq('level_id', levelId)
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map(Circle.fromMap).toList();
   }
 
@@ -30,14 +31,20 @@ class CircleRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('role_assignment')
         .select('person:person_id(id, full_name)')
-        .eq('role', 'teacher');
-    return rows.map((Map<String, dynamic> r) {
-      final Map<String, dynamic> p = r['person'] as Map<String, dynamic>;
-      return TeacherOption(
-        id: p['id'] as String,
-        fullName: p['full_name'] as String,
-      );
-    }).toList();
+        .eq('role', 'teacher')
+        .timeout(const Duration(seconds: 12));
+    return rows
+        .map((Map<String, dynamic> r) {
+          final Map<String, dynamic>? p = r['person'] as Map<String, dynamic>?;
+          final String? id = p?['id'] as String?;
+          if (id == null) return null;
+          return TeacherOption(
+            id: id,
+            fullName: (p?['full_name'] as String?) ?? '—',
+          );
+        })
+        .whereType<TeacherOption>()
+        .toList();
   }
 
   Future<void> add({

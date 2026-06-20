@@ -17,7 +17,8 @@ class LevelRepository {
         .from('level')
         .select('id, curriculum_id, ord, name')
         .eq('curriculum_id', curriculumId)
-        .order('ord', ascending: true);
+        .order('ord', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map(Level.fromMap).toList();
   }
 
@@ -28,7 +29,8 @@ class LevelRepository {
         .select('ord')
         .eq('curriculum_id', curriculumId)
         .order('ord', ascending: false)
-        .limit(1);
+        .limit(1)
+        .timeout(const Duration(seconds: 12));
     final int nextOrd = top.isEmpty ? 1 : (top.first['ord'] as int) + 1;
     await _client.from('level').insert(<String, dynamic>{
       'curriculum_id': curriculumId,

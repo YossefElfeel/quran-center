@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_error_view.dart';
 import '../../domain/teacher_option.dart';
 import '../controllers/circles_controller.dart';
 
@@ -89,7 +90,10 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
           ),
           teachers.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => Text(l.admTeachersLoadError),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.admTeachersLoadError,
+              onRetry: () => ref.invalidate(teacherOptionsProvider),
+            ),
             data: (List<TeacherOption> list) => DropdownButton<String?>(
               isExpanded: true,
               value: _teacherId,

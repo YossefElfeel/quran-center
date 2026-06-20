@@ -39,7 +39,26 @@ class ChildCommentsSection extends ConsumerWidget {
             const SizedBox(height: AppSpacing.sm),
             state.when(
               loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace _) => Text(l.ppCommentsLoadError),
+              error: (Object e, StackTrace _) => Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        l.ppCommentsLoadError,
+                        style: TextStyle(color: context.palette.textSecondary),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => ref.invalidate(
+                        childCommentsControllerProvider(studentPersonId),
+                      ),
+                      child: Text(l.retry),
+                    ),
+                  ],
+                ),
+              ),
               data: (List<ParentComment> items) => items.isEmpty
                   ? Text(
                       l.ppNoComments,
