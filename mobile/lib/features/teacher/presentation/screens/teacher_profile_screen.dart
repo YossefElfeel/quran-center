@@ -72,6 +72,80 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<AsyncValue<TeacherProfile?>>(myTeacherProfileProvider, (
+      AsyncValue<TeacherProfile?>? prev,
+      AsyncValue<TeacherProfile?> next,
+    ) {
+      final TeacherProfile? p = next.asData?.value;
+      if (p != null && !_prefilled) {
+        _about.text = p.cv ?? '';
+        _quals.text = p.qualifications.join('\n');
+        _existingCerts = p.certificates;
+        _prefilled = true;
+      }
+    });
+    final AppL10n l = AppL10n.of(context);
+    final AsyncValue<TeacherProfile?> state = ref.watch(
+      myTeacherProfileProvider,
+    );
+    return AppScaffold(
+      title: l.tchProfileTitle,
+      body: state.when(
+        loading: () => const AppLoader(),
+        error: (Object e, StackTrace _) => AppErrorView(
+          message: l.tchProfileLoadFailed,
+          onRetry: () => ref.invalidate(myTeacherProfileProvider),
+        ),
+        data: (TeacherProfile? _) => ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: <Widget>[
+            AppInlineBanner(
+              message: l.tchProfileIntro,
+              kind: AppBannerKind.info,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppSectionHeader(title: l.tchAboutMeLabel),
+            AppTextField(
+              controller: _about,
+              maxLines: 5,
+              label: l.tchAboutMeHint,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppSectionHeader(title: l.tchQualificationsLabel),
+            AppTextField(
+              controller: _quals,
+              maxLines: 4,
+              label: l.tchQualsHint,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: _saving ? l.tchSaving : l.tchSaveProfile,
+              icon: Icons.save,
+              isLoading: _saving,
+              onPressed: _save,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            const _DocumentsSection(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// قسم المستندات (السيرة + الشهادات) — مكتفي بذاته: بيقرا myTeacherDocuments
+/// وبيملك رفع/عرض/حذف المستندات بنفسه (بدل ما كان بيوصل لحالة الشاشة الأم عبر
+/// findAncestorStateOfType — كوبلينج هشّ).
+class _DocumentsSection extends ConsumerStatefulWidget {
+  const _DocumentsSection();
+
+  @override
+  ConsumerState<_DocumentsSection> createState() => _DocumentsSectionState();
+}
+
+class _DocumentsSectionState extends ConsumerState<_DocumentsSection> {
   String _mimeFor(String ext) => switch (ext.toLowerCase()) {
     'pdf' => 'application/pdf',
     'jpg' || 'jpeg' => 'image/jpeg',
@@ -143,76 +217,7 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<TeacherProfile?>>(myTeacherProfileProvider, (
-      AsyncValue<TeacherProfile?>? prev,
-      AsyncValue<TeacherProfile?> next,
-    ) {
-      final TeacherProfile? p = next.asData?.value;
-      if (p != null && !_prefilled) {
-        _about.text = p.cv ?? '';
-        _quals.text = p.qualifications.join('\n');
-        _existingCerts = p.certificates;
-        _prefilled = true;
-      }
-    });
     final AppL10n l = AppL10n.of(context);
-    final AsyncValue<TeacherProfile?> state = ref.watch(
-      myTeacherProfileProvider,
-    );
-    return AppScaffold(
-      title: l.tchProfileTitle,
-      body: state.when(
-        loading: () => const AppLoader(),
-        error: (Object e, StackTrace _) => AppErrorView(
-          message: l.tchProfileLoadFailed,
-          onRetry: () => ref.invalidate(myTeacherProfileProvider),
-        ),
-        data: (TeacherProfile? _) => ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          children: <Widget>[
-            AppInlineBanner(
-              message: l.tchProfileIntro,
-              kind: AppBannerKind.info,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppSectionHeader(title: l.tchAboutMeLabel),
-            AppTextField(
-              controller: _about,
-              maxLines: 5,
-              label: l.tchAboutMeHint,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppSectionHeader(title: l.tchQualificationsLabel),
-            AppTextField(
-              controller: _quals,
-              maxLines: 4,
-              label: l.tchQualsHint,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppButton(
-              label: _saving ? l.tchSaving : l.tchSaveProfile,
-              icon: Icons.save,
-              isLoading: _saving,
-              onPressed: _save,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            const _DocumentsSection(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// قسم المستندات (السيرة + الشهادات) — يقرا myTeacherDocuments.
-class _DocumentsSection extends ConsumerWidget {
-  const _DocumentsSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AppL10n l = AppL10n.of(context);
-    final _TeacherProfileScreenState parent = context
-        .findAncestorStateOfType<_TeacherProfileScreenState>()!;
     final AsyncValue<List<TeacherDocument>> docs = ref.watch(
       myTeacherDocumentsProvider,
     );
@@ -239,14 +244,14 @@ class _DocumentsSection extends ConsumerWidget {
             if (cv == null)
               _UploadButton(
                 label: l.tchUploadCv,
-                onTap: () => parent._pickAndUpload('cv'),
+                onTap: () => _pickAndUpload('cv'),
               )
             else
               _DocCard(
                 doc: cv,
-                onView: () => parent._view(cv),
-                onReplace: () => parent._pickAndUpload('cv'),
-                onDelete: () => parent._delete(cv),
+                onView: () => _view(cv),
+                onReplace: () => _pickAndUpload('cv'),
+                onDelete: () => _delete(cv),
               ),
             const SizedBox(height: AppSpacing.lg),
             AppSectionHeader(title: l.tchCertsSection),
@@ -267,14 +272,14 @@ class _DocumentsSection extends ConsumerWidget {
               for (final TeacherDocument d in certs)
                 _DocCard(
                   doc: d,
-                  onView: () => parent._view(d),
-                  onDelete: () => parent._delete(d),
+                  onView: () => _view(d),
+                  onDelete: () => _delete(d),
                 ),
             const SizedBox(height: AppSpacing.sm),
             _UploadButton(
               label: l.tchAddCertificate,
               icon: Icons.add,
-              onTap: () => parent._pickAndUpload('certificate'),
+              onTap: () => _pickAndUpload('certificate'),
             ),
           ],
         );
