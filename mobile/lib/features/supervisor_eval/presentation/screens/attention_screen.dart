@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -89,6 +91,9 @@ class _CircleTile extends StatelessWidget {
         arabicNumber(circle.passedCount),
         arabicNumber(circle.activeAtOpen),
       ),
+      onTap: () => context.push(
+        Routes.supervisorCircleScores(circle.circleId, circle.circleName),
+      ),
       trailing: Text(
         l.supPercent(arabicNumber(circle.percent)),
         style: AppTextStyles.titleMd.copyWith(
@@ -147,6 +152,14 @@ class _StrugglingTile extends StatelessWidget {
       subtitle: l.supStudentDebt(
         student.portionName,
         arabicNumber(student.attempts),
+      ),
+      onTap: () => context.push(
+        Routes.supervisorStudentDetail(
+          student.studentPersonId,
+          student.studentName,
+          student.portionName,
+          student.attempts,
+        ),
       ),
     );
   }

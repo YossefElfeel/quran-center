@@ -89,3 +89,59 @@ export async function deleteEnrollment(
   revalidatePath("/enrollment");
   return { ok: true };
 }
+
+export type BulkResult =
+  | { ok: true; enrolled: number; failed: number; sample: string[] }
+  | { ok: false; error: string };
+
+// التحاق جماعي من نص — كل سطر: الاسم[,النوع]. النوع الافتراضي ذكر.
+export async function bulkEnroll(
+  _p: BulkResult | null,
+  fd: FormData,
+): Promise<BulkResult> {
+  const circleId = String(fd.get("circle_id") ?? "");
+  const raw = String(fd.get("rows") ?? "").trim();
+  if (!circleId || !raw) return { ok: false, error: "اختر حلقة واكتب الأسماء." };
+  const parsed = raw
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [name, g] = line.split(",").map((s) => s?.trim());
+      const gender =
+        g === "أنثى" || g?.toLowerCase() === "female" || g === "f"
+          ? "female"
+          : "male";
+      return { name, gender };
+    })
+    .filter((p) => p.name);
+  if (parsed.length === 0) return { ok: false, error: "مفيش أسماء صالحة." };
+  if (parsed.length > 100)
+    return { ok: false, error: "الحد الأقصى ١٠٠ اسم في المرة." };
+
+  const supabase = await createSupabaseServerClient();
+  const settled = await Promise.all(
+    parsed.map(async (p) => {
+      const { error } = await supabase.rpc("enroll_student", {
+        p_circle: circleId,
+        p_name: p.name,
+        p_gender: p.gender,
+        p_national_id: null,
+      });
+      return { name: p.name, ok: !error };
+    }),
+  );
+  const enrolled = settled.filter((s) => s.ok).length;
+  const failed = settled.length - enrolled;
+  const sample = settled
+    .filter((s) => !s.ok)
+    .slice(0, 5)
+    .map((s) => s.name);
+  await logAudit({
+    action: "bulk_enrolled",
+    targetTable: "enrollment",
+    meta: { circle_id: circleId, enrolled, failed },
+  });
+  revalidatePath("/enrollment");
+  return { ok: true, enrolled, failed, sample };
+}

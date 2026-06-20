@@ -67,14 +67,16 @@ class TodaySessionController extends _$TodaySessionController {
         : const <String, LedgerState>{};
 
     final List<RosterEntry> roster = rosterRows.map((Map<String, dynamic> r) {
-      final Map<String, dynamic> s = r['student'] as Map<String, dynamic>;
+      // الـ embed ممكن يرجّع null لو RLS منعت قراءة person الطالب — منكسرش
+      // التحميل، نعرض بديل بدل ما نرمي TypeError.
+      final Map<String, dynamic>? s = r['student'] as Map<String, dynamic>?;
       final String enrId = r['id'] as String;
       final String pid = r['student_person_id'] as String;
       return RosterEntry(
         enrollmentId: enrId,
         studentPersonId: pid,
-        studentName: s['full_name'] as String,
-        gender: Gender.fromDb(s['gender'] as String?),
+        studentName: (s?['full_name'] as String?) ?? '—',
+        gender: Gender.fromDb(s?['gender'] as String?),
         attendance: AttendanceStatus.fromDb(att[enrId] ?? 'present'),
         ledgerState: ledger[pid],
       );

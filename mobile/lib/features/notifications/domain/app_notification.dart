@@ -28,4 +28,13 @@ class AppNotification {
   final DateTime? readAt;
 
   bool get isRead => readAt != null;
+
+  AppNotification copyWith({DateTime? readAt}) => AppNotification(
+    id: id,
+    type: type,
+    title: title,
+    body: body,
+    createdAt: createdAt,
+    readAt: readAt ?? this.readAt,
+  );
 }

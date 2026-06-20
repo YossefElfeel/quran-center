@@ -74,7 +74,9 @@ class MonthlyEvalRepository {
   Future<List<PendingMonthlyEval>> fetchPending() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('monthly_student_evaluation')
-        .select('id, summary, month, student:student_person_id(full_name)')
+        .select(
+          'id, summary, behavior, month, student:student_person_id(full_name)',
+        )
         .eq('status', 'submitted')
         .order('month', ascending: false);
     return rows.map(PendingMonthlyEval.fromMap).toList();

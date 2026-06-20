@@ -1,6 +1,7 @@
 /// نسبة نجاح حلقة على مقطعها الحالي (للوحة "محتاج انتباه").
 class CirclePassRate {
   const CirclePassRate({
+    required this.circleId,
     required this.circleName,
     required this.activeAtOpen,
     required this.passedCount,
@@ -8,12 +9,14 @@ class CirclePassRate {
   });
 
   factory CirclePassRate.fromMap(Map<String, dynamic> map) => CirclePassRate(
+    circleId: map['circle_id'] as String,
     circleName: map['circle_name'] as String,
     activeAtOpen: (map['active_at_open'] as num?)?.toInt() ?? 0,
     passedCount: (map['passed_count'] as num?)?.toInt() ?? 0,
     passRate: (map['pass_rate'] as num?)?.toDouble(),
   );
 
+  final String circleId;
   final String circleName;
   final int activeAtOpen;
   final int passedCount;

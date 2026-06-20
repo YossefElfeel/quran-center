@@ -50,6 +50,7 @@ abstract final class Routes {
   // المعلّم: ملفّه وتطوّره — والمشرف: اعتماد التطوّر
   static const String teacherDevelopment = '/teacher/development';
   static const String teacherProfile = '/teacher/profile';
+  static const String teacherPassRate = '/teacher/pass-rate';
   static const String supervisorDevApproval = '/supervisor/development';
 
   // التقييم الشهري للطالب: المعلّم يؤلّف، المشرف يعتمد
@@ -75,14 +76,39 @@ abstract final class Routes {
   // المشرف: طابور أعذار الغياب
   static const String supervisorExcuses = '/supervisor/excuses';
 
-  // المشرف: محتاج انتباه (الطلبة المتعثّرين)
+  // المشرف: محتاج انتباه (الطلبة المتعثّرين) + تفاصيل طالب/حلقة
   static const String supervisorAttention = '/supervisor/attention';
+  static const String supervisorStudentDetailPattern =
+      '/supervisor/student/:studentId';
+  static String supervisorStudentDetail(
+    String studentId,
+    String name,
+    String portion,
+    int attempts,
+  ) =>
+      '/supervisor/student/$studentId?name=${Uri.encodeComponent(name)}'
+      '&portion=${Uri.encodeComponent(portion)}&attempts=$attempts';
+  static const String supervisorCircleScoresPattern =
+      '/supervisor/circle/:circleId/scores';
+  static String supervisorCircleScores(String circleId, String name) =>
+      '/supervisor/circle/$circleId/scores?name=${Uri.encodeComponent(name)}';
 
   // ولي الأمر: أولاده + كارت الطفل
   static const String parentChildren = '/parent/children';
   static const String parentChildPattern = '/parent/child/:studentId';
   static String parentChild(String studentId, String name) =>
       '/parent/child/$studentId?name=${Uri.encodeComponent(name)}';
+
+  // سجلّ الطفل (تسميع/حضور) — tab=0 تسميع، tab=1 حضور
+  static const String parentChildHistoryPattern =
+      '/parent/child/:studentId/history';
+  static String parentChildHistory(
+    String studentId,
+    String name, {
+    int tab = 0,
+  }) =>
+      '/parent/child/$studentId/history'
+      '?name=${Uri.encodeComponent(name)}&tab=$tab';
 
   // الشكاوى: المستخدم + صندوق المدير
   static const String complaintsMine = '/complaints';

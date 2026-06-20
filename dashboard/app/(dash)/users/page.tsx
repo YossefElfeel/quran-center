@@ -1,3 +1,4 @@
+import { Pager, SearchForm } from "@/components/list-controls";
 import { getSuperAdmin } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -29,29 +30,41 @@ const STATUS_BADGE: Record<Status, { label: string; cls: string }> = {
   deactivated: { label: "موقوف", cls: "bg-gray-200 text-gray-600" },
 };
 
-export default async function UsersPage() {
+const PAGE_SIZE = 25;
+
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
+  const { q, page: pageRaw } = await searchParams;
+  const page = Math.max(1, Number(pageRaw) || 1);
+  const from = (page - 1) * PAGE_SIZE;
+
   const supabase = await createSupabaseServerClient();
   const admin = await getSuperAdmin();
-  // نقتصر على الناس اللي ليهم دور (طاقم/أولياء أمور) — مش كل الطلاب بلا دخول.
-  // role_assignment!inner => بترجّع بس الـ person اللي عنده دور واحد على الأقل.
-  const { data } = await supabase
+  let query = supabase
     .from("person")
     .select(
       "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment!inner(role)",
-    );
-
-  const rows = ((data ?? []) as unknown as PersonRow[])
-    .slice()
-    .sort((a, b) => a.full_name.localeCompare(b.full_name, "ar"));
+      { count: "exact" },
+    )
+    .order("full_name")
+    .range(from, from + PAGE_SIZE - 1);
+  if (q) query = query.ilike("full_name", `%${q}%`);
+  const { data, count } = await query;
+  const rows = (data ?? []) as unknown as PersonRow[];
+  const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
         <h1 className="text-2xl font-bold">المستخدمون والأدوار</h1>
         <p className="text-sm text-foreground/60">
-          تحكّم كامل: منح/سحب الأدوار، الحظر/فك الحظر، الإيقاف (حذف ناعم)
-          والحذف النهائي. كل عملية بتتسجّل في سجل التدقيق.
+          تحكّم كامل: منح/سحب الأدوار، الحظر/فك الحظر، الإيقاف والحذف. كل عملية
+          بتتسجّل في سجل التدقيق. ({count ?? 0} مستخدم)
         </p>
+        <SearchForm q={q} placeholder="ابحث بالاسم…" />
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
           <table className="w-full min-w-[640px] text-right text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
@@ -65,11 +78,8 @@ export default async function UsersPage() {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-4 py-6 text-center text-foreground/50"
-                  >
-                    مفيش مستخدمين لسه.
+                  <td colSpan={4} className="px-4 py-6 text-center text-foreground/50">
+                    مفيش نتائج.
                   </td>
                 </tr>
               ) : (
@@ -88,9 +98,7 @@ export default async function UsersPage() {
                       <td className="px-4 py-2">
                         <div className="flex flex-wrap gap-1">
                           {roles.length === 0 ? (
-                            <span className="text-xs text-foreground/40">
-                              —
-                            </span>
+                            <span className="text-xs text-foreground/40">—</span>
                           ) : (
                             roles.map((role) => (
                               <span
@@ -127,6 +135,7 @@ export default async function UsersPage() {
             </tbody>
           </table>
         </div>
+        <Pager page={page} totalPages={totalPages} params={q ? { q } : {}} />
       </section>
 
       <section className="flex flex-col gap-3">
