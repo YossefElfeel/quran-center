@@ -44,22 +44,32 @@ class AppAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppPalette p = context.palette;
     final String? imageUrl = this.imageUrl;
+    // قارئ الشاشة بينطق الاسم الكامل — مش الأحرف الأولى.
     if (imageUrl != null && imageUrl.isNotEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundImage: NetworkImage(imageUrl),
+      return Semantics(
+        label: name,
+        image: true,
+        excludeSemantics: true,
+        child: CircleAvatar(
+          radius: radius,
+          backgroundImage: NetworkImage(imageUrl),
+        ),
       );
     }
     final Color color = _color(p);
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: color.withValues(alpha: AppOpacity.badgeTint),
-      child: Text(
-        _initials,
-        style: AppTextStyles.titleMd.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-          fontSize: radius * 0.7,
+    return Semantics(
+      label: name,
+      excludeSemantics: true,
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: color.withValues(alpha: AppOpacity.badgeTint),
+        child: Text(
+          _initials,
+          style: AppTextStyles.titleMd.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+            fontSize: radius * 0.7,
+          ),
         ),
       ),
     );

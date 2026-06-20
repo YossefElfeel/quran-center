@@ -10,8 +10,10 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_hero.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../documents/domain/progress_card_pdf.dart';
@@ -94,6 +96,24 @@ class ChildCardScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: <Widget>[
+              Center(
+                child: Column(
+                  children: <Widget>[
+                    AppHero(
+                      tag: 'child-avatar-$studentPersonId',
+                      child: AppAvatar(name: childName, radius: 40),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      childName,
+                      style: AppTextStyles.titleLg.copyWith(
+                        color: context.palette.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
               _InfoCard(
                 icon: Icons.groups,
                 title: l.ppCircle,
