@@ -2,7 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
-import '../../enrollment/domain/gender.dart';
 import '../domain/child_card.dart';
 import '../domain/child_history.dart';
 import '../domain/child_summary.dart';
@@ -22,15 +21,21 @@ class ParentRepository {
   Future<List<ChildSummary>> fetchMyChildren() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('guardian_link')
-        .select('student:student_person_id(id, full_name, gender)');
-    return rows.map((Map<String, dynamic> r) {
-      final Map<String, dynamic> s = r['student'] as Map<String, dynamic>;
-      return ChildSummary(
-        studentPersonId: s['id'] as String,
-        fullName: s['full_name'] as String,
-        gender: Gender.fromDb(s['gender'] as String?),
-      );
-    }).toList();
+        .select('student:student_person_id(id, full_name)')
+        .timeout(const Duration(seconds: 12));
+    return rows
+        .map((Map<String, dynamic> r) {
+          // الـ embed بيرجع null لو الـ FK فاضي/الصف اتفلتر بالـ RLS/اتحذف.
+          final Map<String, dynamic>? s = r['student'] as Map<String, dynamic>?;
+          final String? studentId = s?['id'] as String?;
+          if (studentId == null) return null;
+          return ChildSummary(
+            studentPersonId: studentId,
+            fullName: (s?['full_name'] as String?) ?? '—',
+          );
+        })
+        .whereType<ChildSummary>()
+        .toList();
   }
 
   /// كارت طفل: الحلقة النشطة + آخر تسميع + ملخّص الحضور.
@@ -39,7 +44,8 @@ class ParentRepository {
         .from('person')
         .select('gender')
         .eq('id', studentPersonId)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     final bool isGirl = (person?['gender'] as String?) == 'female';
 
     final Map<String, dynamic>? enr = await _client
@@ -47,7 +53,8 @@ class ParentRepository {
         .select('id, circle:circle_id(name)')
         .eq('student_person_id', studentPersonId)
         .eq('status', 'active')
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     final String? enrollmentId = enr?['id'] as String?;
     final String? circleName =
         (enr?['circle'] as Map<String, dynamic>?)?['name'] as String?;
@@ -70,7 +77,8 @@ class ParentRepository {
         .eq('kind', 'memorization')
         .order('attempt_date', ascending: false)
         .order('created_at', ascending: false)
-        .limit(1);
+        .limit(1)
+        .timeout(const Duration(seconds: 12));
     LatestTasmee? latest;
     if (tasmee.isNotEmpty) {
       final Map<String, dynamic> t = tasmee.first;
@@ -85,7 +93,8 @@ class ParentRepository {
     final List<Map<String, dynamic>> att = await _client
         .from('attendance')
         .select('status')
-        .eq('enrollment_id', enrollmentId);
+        .eq('enrollment_id', enrollmentId)
+        .timeout(const Duration(seconds: 12));
     int present = 0, absent = 0, excused = 0, late = 0;
     for (final Map<String, dynamic> a in att) {
       switch (a['status'] as String) {
@@ -118,7 +127,8 @@ class ParentRepository {
         .select('id')
         .eq('student_person_id', studentPersonId)
         .eq('status', 'active')
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     return enr?['id'] as String?;
   }
 
@@ -134,7 +144,8 @@ class ParentRepository {
         .eq('enrollment_id', enrollmentId)
         .order('attempt_date', ascending: false)
         .order('created_at', ascending: false)
-        .limit(50);
+        .limit(50)
+        .timeout(const Duration(seconds: 12));
     return rows.map(TasmeeHistoryEntry.fromMap).toList();
   }
 
@@ -149,7 +160,8 @@ class ParentRepository {
         .select('status, session:session_id(session_date)')
         .eq('enrollment_id', enrollmentId)
         .order('created_at', ascending: false)
-        .limit(50);
+        .limit(50)
+        .timeout(const Duration(seconds: 12));
     return rows.map(AttendanceHistoryEntry.fromMap).toList();
   }
 
@@ -159,7 +171,8 @@ class ParentRepository {
         .from('consent_record')
         .select('scope')
         .eq('student_person_id', studentPersonId)
-        .isFilter('revoked_at', null);
+        .isFilter('revoked_at', null)
+        .timeout(const Duration(seconds: 12));
     return rows.map((Map<String, dynamic> r) => r['scope'] as String).toSet();
   }
 
@@ -196,7 +209,8 @@ class ParentRepository {
         .select('circle_id')
         .eq('student_person_id', studentPersonId)
         .eq('status', 'active')
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     final String? circleId = enr?['circle_id'] as String?;
     if (circleId == null) return null;
     final DateTime now = DateTime.now();
@@ -209,7 +223,8 @@ class ParentRepository {
         .eq('circle_id', circleId)
         .eq('month', month)
         .eq('published', true)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     if (row == null) return null;
     return MonthlyPlanView.fromMap(row);
   }
@@ -223,7 +238,8 @@ class ParentRepository {
           'circle:circle_id(name), teacher:teacher_id(full_name)',
         )
         .eq('student_person_id', studentPersonId)
-        .order('started_at', ascending: true);
+        .order('started_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map(JourneyStop.fromMap).toList();
   }
 
@@ -233,7 +249,8 @@ class ParentRepository {
         .from('parent_comment')
         .select('id, body, created_at, author:author_guardian_id(full_name)')
         .eq('student_person_id', studentPersonId)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(ParentComment.fromMap).toList();
   }
 

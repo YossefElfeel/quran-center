@@ -17,7 +17,8 @@ class SettingsRepository {
   Future<AppSettings> fetch() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('system_settings')
-        .select('key, value');
+        .select('key, value')
+        .timeout(const Duration(seconds: 12));
     final Map<String, Object?> m = <String, Object?>{
       for (final Map<String, dynamic> r in rows) r['key'] as String: r['value'],
     };

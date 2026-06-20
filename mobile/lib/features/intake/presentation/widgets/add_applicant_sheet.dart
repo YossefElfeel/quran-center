@@ -4,6 +4,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../domain/level_option.dart';
 import '../controllers/waiting_list_controller.dart';
@@ -71,10 +73,7 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: _name,
-            decoration: InputDecoration(labelText: l.itkApplicantNameLabel),
-          ),
+          AppTextField(controller: _name, label: l.itkApplicantNameLabel),
           const SizedBox(height: AppSpacing.lg),
           SegmentedButton<Gender>(
             segments: <ButtonSegment<Gender>>[
@@ -95,7 +94,10 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
           ),
           levels.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => Text(l.itkLevelsLoadError),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.itkLevelsLoadError,
+              onRetry: () => ref.invalidate(levelOptionsProvider),
+            ),
             data: (List<LevelOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _levelId,

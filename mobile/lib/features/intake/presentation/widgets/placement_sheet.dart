@@ -5,6 +5,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/level_option.dart';
 import '../controllers/waiting_list_controller.dart';
 
@@ -92,7 +94,10 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
           ),
           levels.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => Text(l.itkLevelsLoadError),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.itkLevelsLoadError,
+              onRetry: () => ref.invalidate(levelOptionsProvider),
+            ),
             data: (List<LevelOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _resultLevelId,
@@ -109,10 +114,10 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          TextField(
+          AppTextField(
             controller: _notes,
             maxLines: 2,
-            decoration: InputDecoration(labelText: l.itkNotesOptionalLabel),
+            label: l.itkNotesOptionalLabel,
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(

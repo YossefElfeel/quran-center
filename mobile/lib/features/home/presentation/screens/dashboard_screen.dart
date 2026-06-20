@@ -174,7 +174,7 @@ class _HeroHeader extends StatelessWidget {
                         Text(
                           _greeting(l),
                           style: AppTextStyles.headlineMd.copyWith(
-                            color: Colors.white,
+                            color: p.onHero,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -182,7 +182,7 @@ class _HeroHeader extends StatelessWidget {
                         Text(
                           l.welcome,
                           style: AppTextStyles.bodyMd.copyWith(
-                            color: Colors.white.withValues(alpha: 0.85),
+                            color: p.onHero.withValues(alpha: 0.85),
                           ),
                         ),
                       ],
@@ -224,13 +224,13 @@ class _HeroRoleChip extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: context.palette.onHero.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(AppRadii.full),
       ),
       child: Text(
         label,
         style: AppTextStyles.labelSm.copyWith(
-          color: Colors.white,
+          color: context.palette.onHero,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -246,7 +246,7 @@ class _HeroBell extends ConsumerWidget {
     final int count = ref.watch(unreadCountProvider).asData?.value ?? 0;
     final Widget bell = IconButton(
       tooltip: AppL10n.of(context).notificationsTooltip,
-      color: Colors.white,
+      color: context.palette.onHero,
       icon: const Icon(Icons.notifications_outlined),
       onPressed: () => context.go(Routes.notifications),
     );
@@ -261,7 +261,7 @@ class _HeroSettings extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: AppL10n.of(context).settingsTitle,
-      color: Colors.white,
+      color: context.palette.onHero,
       icon: const Icon(Icons.settings_outlined),
       onPressed: () => context.push(Routes.settings),
     );

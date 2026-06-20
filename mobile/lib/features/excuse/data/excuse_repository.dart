@@ -18,11 +18,14 @@ class ExcuseRepository {
     String? sessionId,
     String? reason,
   }) async {
-    await _client.from('excuse_request').insert(<String, dynamic>{
-      'enrollment_id': enrollmentId,
-      'session_id': ?sessionId,
-      'reason': ?reason,
-    });
+    await _client
+        .from('excuse_request')
+        .insert(<String, dynamic>{
+          'enrollment_id': enrollmentId,
+          'session_id': ?sessionId,
+          'reason': ?reason,
+        })
+        .timeout(const Duration(seconds: 12));
   }
 
   /// طابور الأعذار المعلّقة (مع اسم الطالب والحلقة).
@@ -35,7 +38,8 @@ class ExcuseRepository {
           'student:student_person_id(full_name), circle:circle_id(name))',
         )
         .eq('status', 'pending')
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map(PendingExcuse.fromMap).toList();
   }
 
@@ -54,15 +58,19 @@ class ExcuseRepository {
           'decided_by': ?supervisorId,
           'decided_at': DateTime.now().toUtc().toIso8601String(),
         })
-        .eq('id', excuseId);
+        .eq('id', excuseId)
+        .timeout(const Duration(seconds: 12));
 
     if (approve && sessionId != null) {
-      await _client.from('attendance').upsert(<String, dynamic>{
-        'session_id': sessionId,
-        'enrollment_id': enrollmentId,
-        'status': 'absent_excused',
-        'excuse_approved_by': ?supervisorId,
-      }, onConflict: 'session_id,enrollment_id');
+      await _client
+          .from('attendance')
+          .upsert(<String, dynamic>{
+            'session_id': sessionId,
+            'enrollment_id': enrollmentId,
+            'status': 'absent_excused',
+            'excuse_approved_by': ?supervisorId,
+          }, onConflict: 'session_id,enrollment_id')
+          .timeout(const Duration(seconds: 12));
     }
 
     // المشرف بيبلّغ المعلّم بقرار العذر (best-effort — مايوقفش القرار لو فشل).
@@ -84,7 +92,8 @@ class ExcuseRepository {
           'student:student_person_id(full_name)',
         )
         .eq('id', enrollmentId)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     final Map<String, dynamic>? circle =
         row?['circle'] as Map<String, dynamic>?;
     final String? teacherId = circle?['teacher_id'] as String?;
@@ -92,12 +101,16 @@ class ExcuseRepository {
     final Map<String, dynamic>? student =
         row?['student'] as Map<String, dynamic>?;
     final String studentName = (student?['full_name'] as String?) ?? 'الطالب';
-    await _client.from('notification').insert(<String, dynamic>{
-      'recipient_person_id': teacherId,
-      'type': 'excuse_decided',
-      'title': approve ? 'عذر غياب اتقبل' : 'عذر غياب اترفض',
-      'body': 'عذر غياب $studentName ${approve ? 'اتقبل' : 'اترفض'} من المشرف',
-    });
+    await _client
+        .from('notification')
+        .insert(<String, dynamic>{
+          'recipient_person_id': teacherId,
+          'type': 'excuse_decided',
+          'title': approve ? 'عذر غياب اتقبل' : 'عذر غياب اترفض',
+          'body':
+              'عذر غياب $studentName ${approve ? 'اتقبل' : 'اترفض'} من المشرف',
+        })
+        .timeout(const Duration(seconds: 12));
   }
 }
 

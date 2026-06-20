@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_avatar.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../domain/attendance_status.dart';
@@ -36,12 +37,12 @@ class StudentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AppPalette palette = context.palette;
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         vertical: AppSpacing.xs,
         horizontal: AppSpacing.md,
       ),
-      child: Padding(
+      child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Row(
           children: <Widget>[

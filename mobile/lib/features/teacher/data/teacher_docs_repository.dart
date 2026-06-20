@@ -21,7 +21,8 @@ class TeacherDocsRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_document')
         .select('id, kind, title, storage_path, mime, created_at')
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDocument.fromMap).toList();
   }
 
@@ -54,8 +55,10 @@ class TeacherDocsRepository {
   }
 
   /// رابط موقّع مؤقّت (ساعة) لعرض/تحميل المستند.
-  Future<String> signedUrl(String storagePath) =>
-      _client.storage.from(_bucket).createSignedUrl(storagePath, 3600);
+  Future<String> signedUrl(String storagePath) => _client.storage
+      .from(_bucket)
+      .createSignedUrl(storagePath, 3600)
+      .timeout(const Duration(seconds: 12));
 }
 
 @riverpod

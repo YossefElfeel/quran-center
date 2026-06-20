@@ -10,6 +10,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/gender.dart';
 import '../../domain/national_id.dart';
 import '../controllers/circle_roster_controller.dart';
@@ -103,10 +104,7 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: _name,
-            decoration: InputDecoration(labelText: l.enrStudentNameLabel),
-          ),
+          AppTextField(controller: _name, label: l.enrStudentNameLabel),
           const SizedBox(height: AppSpacing.lg),
           TextField(
             controller: _natId,

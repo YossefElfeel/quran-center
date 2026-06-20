@@ -8,12 +8,14 @@ class StrugglingStudent {
   });
 
   factory StrugglingStudent.fromMap(Map<String, dynamic> map) {
-    final Map<String, dynamic> student = map['student'] as Map<String, dynamic>;
-    final Map<String, dynamic> portion = map['portion'] as Map<String, dynamic>;
+    final Map<String, dynamic>? student =
+        map['student'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? portion =
+        map['portion'] as Map<String, dynamic>?;
     return StrugglingStudent(
       studentPersonId: map['student_person_id'] as String,
-      studentName: student['full_name'] as String,
-      portionName: portion['name'] as String,
+      studentName: (student?['full_name'] as String?) ?? '—',
+      portionName: (portion?['name'] as String?) ?? '—',
       attempts: (map['attempts_count'] as num).toInt(),
     );
   }

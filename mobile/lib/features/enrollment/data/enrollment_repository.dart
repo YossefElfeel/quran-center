@@ -20,8 +20,12 @@ class EnrollmentRepository {
         .select('id, status, student:student_person_id(id, full_name, gender)')
         .eq('circle_id', circleId)
         .eq('status', 'active')
-        .order('enrolled_at', ascending: true);
-    return rows.map(EnrolledStudent.fromMap).toList();
+        .order('enrolled_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
+    return rows
+        .map(EnrolledStudent.fromMap)
+        .whereType<EnrolledStudent>()
+        .toList();
   }
 
   /// بينشئ طالب جديد ويسجّله في الحلقة + يضبط الرقم القومي (اختياري) في معاملة

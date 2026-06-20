@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/competition_models.dart';
 import '../controllers/competition_controllers.dart';
@@ -25,10 +26,10 @@ class CompetitionsScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text(l.cmpNewCompetition),
-        content: TextField(
+        content: AppTextField(
           controller: name,
           autofocus: true,
-          decoration: InputDecoration(labelText: l.cmpCompetitionName),
+          label: l.cmpCompetitionName,
         ),
         actions: <Widget>[
           TextButton(

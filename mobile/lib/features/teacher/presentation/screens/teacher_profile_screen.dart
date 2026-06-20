@@ -8,6 +8,7 @@ import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_confirm_sheet.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_inline_banner.dart';
 import '../../../../shared/widgets/app_loader.dart';
@@ -68,85 +69,6 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
       AppSnackbar.error(context, l.tchProfileSaveFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  String _mimeFor(String ext) => switch (ext.toLowerCase()) {
-    'pdf' => 'application/pdf',
-    'jpg' || 'jpeg' => 'image/jpeg',
-    'png' => 'image/png',
-    _ => 'application/octet-stream',
-  };
-
-  Future<void> _pickAndUpload(String kind) async {
-    final AppL10n l = AppL10n.of(context);
-    final FilePickerResult? res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: <String>['pdf', 'jpg', 'jpeg', 'png'],
-      withData: true,
-    );
-    final PlatformFile? f = res?.files.isNotEmpty ?? false
-        ? res!.files.first
-        : null;
-    if (f == null || f.bytes == null) return;
-    final String ext = (f.extension ?? 'pdf').toLowerCase();
-    try {
-      await ref
-          .read(myTeacherDocumentsProvider.notifier)
-          .upload(
-            kind: kind,
-            title: f.name,
-            bytes: f.bytes!,
-            ext: ext,
-            mime: _mimeFor(ext),
-          );
-      if (mounted) AppSnackbar.success(context, l.tchDocUploaded);
-    } catch (_) {
-      if (mounted) AppSnackbar.error(context, l.tchDocUploadFailed);
-    }
-  }
-
-  Future<void> _view(TeacherDocument doc) async {
-    final AppL10n l = AppL10n.of(context);
-    try {
-      final String url = await ref.read(
-        teacherDocSignedUrlProvider(doc.storagePath).future,
-      );
-      final Uri? uri = Uri.tryParse(url);
-      final bool ok =
-          uri != null &&
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok && mounted) AppSnackbar.error(context, l.tchCantOpenDoc);
-    } catch (_) {
-      if (mounted) AppSnackbar.error(context, l.tchCantOpenDoc);
-    }
-  }
-
-  Future<void> _delete(TeacherDocument doc) async {
-    final AppL10n l = AppL10n.of(context);
-    final bool? ok = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(l.tchDeleteDocConfirm),
-        content: Text(doc.title),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.delete),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    try {
-      await ref.read(myTeacherDocumentsProvider.notifier).remove(doc);
-      if (mounted) AppSnackbar.success(context, l.tchDocDeleted);
-    } catch (_) {
-      if (mounted) AppSnackbar.error(context, l.tchDocUploadFailed);
     }
   }
 
@@ -213,15 +135,89 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
   }
 }
 
-/// قسم المستندات (السيرة + الشهادات) — يقرا myTeacherDocuments.
-class _DocumentsSection extends ConsumerWidget {
+/// قسم المستندات (السيرة + الشهادات) — مكتفي بذاته: بيقرا myTeacherDocuments
+/// وبيملك رفع/عرض/حذف المستندات بنفسه (بدل ما كان بيوصل لحالة الشاشة الأم عبر
+/// findAncestorStateOfType — كوبلينج هشّ).
+class _DocumentsSection extends ConsumerStatefulWidget {
   const _DocumentsSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DocumentsSection> createState() => _DocumentsSectionState();
+}
+
+class _DocumentsSectionState extends ConsumerState<_DocumentsSection> {
+  String _mimeFor(String ext) => switch (ext.toLowerCase()) {
+    'pdf' => 'application/pdf',
+    'jpg' || 'jpeg' => 'image/jpeg',
+    'png' => 'image/png',
+    _ => 'application/octet-stream',
+  };
+
+  Future<void> _pickAndUpload(String kind) async {
     final AppL10n l = AppL10n.of(context);
-    final _TeacherProfileScreenState parent = context
-        .findAncestorStateOfType<_TeacherProfileScreenState>()!;
+    final FilePickerResult? res = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: <String>['pdf', 'jpg', 'jpeg', 'png'],
+      withData: true,
+    );
+    final PlatformFile? f = res?.files.isNotEmpty ?? false
+        ? res!.files.first
+        : null;
+    if (f == null || f.bytes == null) return;
+    final String ext = (f.extension ?? 'pdf').toLowerCase();
+    try {
+      await ref
+          .read(myTeacherDocumentsProvider.notifier)
+          .upload(
+            kind: kind,
+            title: f.name,
+            bytes: f.bytes!,
+            ext: ext,
+            mime: _mimeFor(ext),
+          );
+      if (mounted) AppSnackbar.success(context, l.tchDocUploaded);
+    } catch (_) {
+      if (mounted) AppSnackbar.error(context, l.tchDocUploadFailed);
+    }
+  }
+
+  Future<void> _view(TeacherDocument doc) async {
+    final AppL10n l = AppL10n.of(context);
+    try {
+      final String url = await ref.read(
+        teacherDocSignedUrlProvider(doc.storagePath).future,
+      );
+      final Uri? uri = Uri.tryParse(url);
+      final bool ok =
+          uri != null &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) AppSnackbar.error(context, l.tchCantOpenDoc);
+    } catch (_) {
+      if (mounted) AppSnackbar.error(context, l.tchCantOpenDoc);
+    }
+  }
+
+  Future<void> _delete(TeacherDocument doc) async {
+    final AppL10n l = AppL10n.of(context);
+    final bool ok = await showAppConfirmSheet(
+      context: context,
+      title: l.tchDeleteDocConfirm,
+      message: doc.title,
+      confirmLabel: l.delete,
+      destructive: true,
+    );
+    if (!ok) return;
+    try {
+      await ref.read(myTeacherDocumentsProvider.notifier).remove(doc);
+      if (mounted) AppSnackbar.success(context, l.tchDocDeleted);
+    } catch (_) {
+      if (mounted) AppSnackbar.error(context, l.tchDocUploadFailed);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<TeacherDocument>> docs = ref.watch(
       myTeacherDocumentsProvider,
     );
@@ -248,14 +244,14 @@ class _DocumentsSection extends ConsumerWidget {
             if (cv == null)
               _UploadButton(
                 label: l.tchUploadCv,
-                onTap: () => parent._pickAndUpload('cv'),
+                onTap: () => _pickAndUpload('cv'),
               )
             else
               _DocCard(
                 doc: cv,
-                onView: () => parent._view(cv),
-                onReplace: () => parent._pickAndUpload('cv'),
-                onDelete: () => parent._delete(cv),
+                onView: () => _view(cv),
+                onReplace: () => _pickAndUpload('cv'),
+                onDelete: () => _delete(cv),
               ),
             const SizedBox(height: AppSpacing.lg),
             AppSectionHeader(title: l.tchCertsSection),
@@ -276,14 +272,14 @@ class _DocumentsSection extends ConsumerWidget {
               for (final TeacherDocument d in certs)
                 _DocCard(
                   doc: d,
-                  onView: () => parent._view(d),
-                  onDelete: () => parent._delete(d),
+                  onView: () => _view(d),
+                  onDelete: () => _delete(d),
                 ),
             const SizedBox(height: AppSpacing.sm),
             _UploadButton(
               label: l.tchAddCertificate,
               icon: Icons.add,
-              onTap: () => parent._pickAndUpload('certificate'),
+              onTap: () => _pickAndUpload('certificate'),
             ),
           ],
         );

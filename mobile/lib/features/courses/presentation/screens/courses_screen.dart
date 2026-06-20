@@ -11,6 +11,7 @@ import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/course.dart';
 import '../controllers/courses_controller.dart';
@@ -40,18 +41,9 @@ class CoursesScreen extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(
-              controller: title,
-              decoration: InputDecoration(labelText: l.courseTitleLabel),
-            ),
-            TextField(
-              controller: url,
-              decoration: InputDecoration(labelText: l.courseUrlLabel),
-            ),
-            TextField(
-              controller: desc,
-              decoration: InputDecoration(labelText: l.courseDescLabel),
-            ),
+            AppTextField(controller: title, label: l.courseTitleLabel),
+            AppTextField(controller: url, label: l.courseUrlLabel),
+            AppTextField(controller: desc, label: l.courseDescLabel),
           ],
         ),
         actions: <Widget>[

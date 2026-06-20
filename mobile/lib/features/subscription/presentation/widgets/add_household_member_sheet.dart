@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_error_view.dart';
 import '../../domain/person_option.dart';
 import '../controllers/all_persons_controller.dart';
 import '../controllers/household_members_controller.dart';
@@ -73,7 +74,10 @@ class _AddHouseholdMemberSheetState
           ),
           persons.when(
             loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => Text(l.subsPersonsLoadError),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.subsPersonsLoadError,
+              onRetry: () => ref.invalidate(allPersonsProvider),
+            ),
             data: (List<PersonOption> list) => DropdownButton<String>(
               isExpanded: true,
               value: _personId,

@@ -26,7 +26,8 @@ Future<String?> currentPersonId(Ref ref) async {
       .from('app_user')
       .select('person_id')
       .eq('auth_user_id', userId)
-      .maybeSingle();
+      .maybeSingle()
+      .timeout(const Duration(seconds: 12));
   return me?['person_id'] as String?;
 }
 
@@ -41,6 +42,7 @@ Future<List<String>> currentRoles(Ref ref) async {
   final List<Map<String, dynamic>> rows = await client
       .from('role_assignment')
       .select('role')
-      .eq('person_id', personId);
+      .eq('person_id', personId)
+      .timeout(const Duration(seconds: 12));
   return rows.map((Map<String, dynamic> r) => r['role'] as String).toList();
 }

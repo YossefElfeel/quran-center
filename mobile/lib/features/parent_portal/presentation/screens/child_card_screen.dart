@@ -10,7 +10,10 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_avatar.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_hero.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../documents/domain/progress_card_pdf.dart';
@@ -93,6 +96,24 @@ class ChildCardScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: <Widget>[
+              Center(
+                child: Column(
+                  children: <Widget>[
+                    AppHero(
+                      tag: 'child-avatar-$studentPersonId',
+                      child: AppAvatar(name: childName, radius: 40),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      childName,
+                      style: AppTextStyles.titleLg.copyWith(
+                        color: context.palette.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
               _InfoCard(
                 icon: Icons.groups,
                 title: l.ppCircle,
@@ -160,34 +181,46 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppPalette p = context.palette;
     final String? hint = this.hint;
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: ListTile(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: AppCard(
         onTap: onTap,
-        leading: Icon(icon, color: p.primary),
-        title: Text(
-          title,
-          style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
-        ),
-        subtitle: Text(
-          value,
-          style: AppTextStyles.titleMd.copyWith(
-            color: valueColor ?? p.textPrimary,
-          ),
-        ),
-        trailing: onTap == null
-            ? null
-            : Row(
+        child: Row(
+          children: <Widget>[
+            Icon(icon, color: p.primary),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  if (hint != null)
-                    Text(
-                      hint,
-                      style: AppTextStyles.labelSm.copyWith(color: p.primary),
+                  Text(
+                    title,
+                    style: AppTextStyles.labelSm.copyWith(
+                      color: p.textSecondary,
                     ),
-                  Icon(Icons.chevron_left, color: p.textSecondary),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: AppTextStyles.titleMd.copyWith(
+                      color: valueColor ?? p.textPrimary,
+                    ),
+                  ),
                 ],
               ),
+            ),
+            if (onTap != null) ...<Widget>[
+              const SizedBox(width: AppSpacing.sm),
+              if (hint != null)
+                Text(
+                  hint,
+                  style: AppTextStyles.labelSm.copyWith(color: p.primary),
+                ),
+              Icon(Icons.chevron_left, color: p.textSecondary),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -203,60 +236,52 @@ class _AttendanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AppPalette p = context.palette;
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: AppCard(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.lg),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      l.ppAttendance,
-                      style: AppTextStyles.labelSm.copyWith(
-                        color: p.textSecondary,
-                      ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    l.ppAttendance,
+                    style: AppTextStyles.labelSm.copyWith(
+                      color: p.textSecondary,
                     ),
                   ),
-                  if (onTap != null) ...<Widget>[
-                    Text(
-                      l.ppViewAttendanceLog,
-                      style: AppTextStyles.labelSm.copyWith(color: p.primary),
-                    ),
-                    Icon(Icons.chevron_left, size: 18, color: p.textSecondary),
-                  ],
+                ),
+                if (onTap != null) ...<Widget>[
+                  Text(
+                    l.ppViewAttendanceLog,
+                    style: AppTextStyles.labelSm.copyWith(color: p.primary),
+                  ),
+                  Icon(Icons.chevron_left, size: 18, color: p.textSecondary),
                 ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: <Widget>[
-                  _Pill(
-                    label: l.ppPresent,
-                    count: card.present,
-                    color: p.success,
-                  ),
-                  _Pill(label: l.ppAbsent, count: card.absent, color: p.error),
-                  _Pill(
-                    label: l.ppExcused,
-                    count: card.excused,
-                    color: p.accent,
-                  ),
-                  _Pill(
-                    label: l.ppLate,
-                    count: card.late,
-                    color: p.textSecondary,
-                  ),
-                ],
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: <Widget>[
+                _Pill(
+                  label: l.ppPresent,
+                  count: card.present,
+                  color: p.success,
+                ),
+                _Pill(label: l.ppAbsent, count: card.absent, color: p.error),
+                _Pill(label: l.ppExcused, count: card.excused, color: p.accent),
+                _Pill(
+                  label: l.ppLate,
+                  count: card.late,
+                  color: p.textSecondary,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

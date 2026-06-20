@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/feedback_repository.dart';
 
 /// شيت تقييم المحفّظ (نجوم + تعليق) — خاص للمدير/المشرف، المعلّم مايشوفوش.
@@ -92,14 +93,11 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(
+          AppTextField(
             controller: _comment,
             minLines: 2,
             maxLines: 4,
-            decoration: InputDecoration(
-              labelText: l.fbkRateCommentLabel,
-              border: const OutlineInputBorder(),
-            ),
+            label: l.fbkRateCommentLabel,
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(

@@ -8,7 +8,8 @@ class SurahOption {
 
   factory SurahOption.fromMap(Map<String, dynamic> map) => SurahOption(
     number: (map['number'] as num).toInt(),
-    name: map['name'] as String,
+    // العمود في الداتابيز اسمه name_ar (مش name) — ده كان سبب فشل تحميل السور.
+    name: (map['name_ar'] ?? map['name']) as String,
     ayahCount: (map['ayah_count'] as num).toInt(),
   );
 

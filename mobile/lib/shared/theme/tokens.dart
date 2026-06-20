@@ -113,6 +113,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.primary,
     required this.primaryDeep,
     required this.onPrimary,
+    required this.onHero,
     required this.accent,
     required this.accentHi,
     required this.background,
@@ -135,6 +136,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color primary;
   final Color primaryDeep;
   final Color onPrimary;
+
+  /// لون النص/الأيقونات فوق تدرّج الـ hero (دايمًا أبيض — التدرّج غامق في كل الثيمات).
+  final Color onHero;
   final Color accent;
   final Color accentHi;
   final Color background;
@@ -158,6 +162,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     primary: Color(0xFF0C7C59),
     primaryDeep: Color(0xFF073A2B),
     onPrimary: Color(0xFFFFFFFF),
+    onHero: Color(0xFFFFFFFF),
     accent: Color(0xFFC8A03C),
     accentHi: Color(0xFFE6C463),
     background: Color(0xFFF7F8F5),
@@ -186,6 +191,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     primary: Color(0xFF2BB888),
     primaryDeep: Color(0xFF0F2A20),
     onPrimary: Color(0xFF06231A),
+    onHero: Color(0xFFFFFFFF),
     accent: Color(0xFFE6C463),
     accentHi: Color(0xFFF1D789),
     background: Color(0xFF0E1512),
@@ -214,6 +220,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     primary: Color(0xFF2BB888),
     primaryDeep: Color(0xFF0A2A20),
     onPrimary: Color(0xFF06231A),
+    onHero: Color(0xFFFFFFFF),
     accent: Color(0xFFE6C463),
     accentHi: Color(0xFFF1D789),
     background: Color(0xFF000000),
@@ -237,11 +244,70 @@ class AppPalette extends ThemeExtension<AppPalette> {
     shadowColor: Color(0xFF000000),
   );
 
+  /// تباين عالي (فاتح) — نصّ أسود نقي، حدود واضحة، ألوان سيمانتيك أغمق.
+  static const AppPalette highContrastLight = AppPalette(
+    primary: Color(0xFF0A5C43),
+    primaryDeep: Color(0xFF052E22),
+    onPrimary: Color(0xFFFFFFFF),
+    onHero: Color(0xFFFFFFFF),
+    accent: Color(0xFF8A6D14),
+    accentHi: Color(0xFFB68F1E),
+    background: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
+    surfaceVariant: Color(0xFFE7ECE8),
+    textPrimary: Color(0xFF000000),
+    textSecondary: Color(0xFF2E3A34),
+    border: Color(0xFF5A6660),
+    success: Color(0xFF0F6B3F),
+    warning: Color(0xFF8A5E00),
+    error: Color(0xFF9E2218),
+    info: Color(0xFF134C92),
+    heroGradient: <Color>[
+      Color(0xFF0A5C43),
+      Color(0xFF074733),
+      Color(0xFF052E22),
+    ],
+    offline: Color(0xFF2E3A34),
+    syncPending: Color(0xFF8A5E00),
+    synced: Color(0xFF0F6B3F),
+    shadowColor: Color(0xFF000000),
+  );
+
+  /// تباين عالي (داكن) — نصّ أبيض نقي على أسود، حدود واضحة.
+  static const AppPalette highContrastDark = AppPalette(
+    primary: Color(0xFF3FD99F),
+    primaryDeep: Color(0xFF0A2A20),
+    onPrimary: Color(0xFF00130C),
+    onHero: Color(0xFFFFFFFF),
+    accent: Color(0xFFF1D789),
+    accentHi: Color(0xFFF7E6AC),
+    background: Color(0xFF000000),
+    surface: Color(0xFF0A0A0A),
+    surfaceVariant: Color(0xFF1A1A1A),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFD8E4DD),
+    border: Color(0xFF6A7A72),
+    success: Color(0xFF5FD99E),
+    warning: Color(0xFFF2C158),
+    error: Color(0xFFFF7A6B),
+    info: Color(0xFF79AEF5),
+    heroGradient: <Color>[
+      Color(0xFF115540),
+      Color(0xFF0B3528),
+      Color(0xFF000000),
+    ],
+    offline: Color(0xFFD8E4DD),
+    syncPending: Color(0xFFF2C158),
+    synced: Color(0xFF5FD99E),
+    shadowColor: Color(0xFF000000),
+  );
+
   @override
   AppPalette copyWith({
     Color? primary,
     Color? primaryDeep,
     Color? onPrimary,
+    Color? onHero,
     Color? accent,
     Color? accentHi,
     Color? background,
@@ -264,6 +330,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       primary: primary ?? this.primary,
       primaryDeep: primaryDeep ?? this.primaryDeep,
       onPrimary: onPrimary ?? this.onPrimary,
+      onHero: onHero ?? this.onHero,
       accent: accent ?? this.accent,
       accentHi: accentHi ?? this.accentHi,
       background: background ?? this.background,
@@ -298,6 +365,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       primary: Color.lerp(primary, other.primary, t)!,
       primaryDeep: Color.lerp(primaryDeep, other.primaryDeep, t)!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
+      onHero: Color.lerp(onHero, other.onHero, t)!,
       accent: Color.lerp(accent, other.accent, t)!,
       accentHi: Color.lerp(accentHi, other.accentHi, t)!,
       background: Color.lerp(background, other.background, t)!,

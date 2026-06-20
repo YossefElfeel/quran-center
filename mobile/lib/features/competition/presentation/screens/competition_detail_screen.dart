@@ -14,6 +14,7 @@ import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/competition_models.dart';
 import '../controllers/competition_controllers.dart';
@@ -40,11 +41,11 @@ class CompetitionDetailScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text('${l.cmpScore} ${app.applicantName}'),
-        content: TextField(
+        content: AppTextField(
           controller: c,
           autofocus: true,
           keyboardType: TextInputType.number,
-          decoration: InputDecoration(labelText: l.cmpScoreOutOf100),
+          label: l.cmpScoreOutOf100,
         ),
         actions: <Widget>[
           TextButton(

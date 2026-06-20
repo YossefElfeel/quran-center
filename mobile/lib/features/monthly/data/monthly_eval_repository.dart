@@ -24,10 +24,12 @@ class MonthlyEvalRepository {
         .from('enrollment')
         .select('student:student_person_id(id, full_name)')
         .eq('circle_id', circleId)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .timeout(const Duration(seconds: 12));
     final List<Map<String, dynamic>> students = <Map<String, dynamic>>[
       for (final Map<String, dynamic> r in enr)
-        r['student'] as Map<String, dynamic>,
+        if (r['student'] is Map<String, dynamic>)
+          r['student'] as Map<String, dynamic>,
     ];
     final List<String> ids = <String>[
       for (final Map<String, dynamic> s in students) s['id'] as String,
@@ -38,7 +40,8 @@ class MonthlyEvalRepository {
               .from('monthly_student_evaluation')
               .select('student_person_id, status, summary, behavior')
               .eq('month', _thisMonth())
-              .inFilter('student_person_id', ids);
+              .inFilter('student_person_id', ids)
+              .timeout(const Duration(seconds: 12));
     final Map<String, Map<String, dynamic>> byStudent =
         <String, Map<String, dynamic>>{
           for (final Map<String, dynamic> e in evals)
@@ -78,7 +81,8 @@ class MonthlyEvalRepository {
           'id, summary, behavior, month, student:student_person_id(full_name)',
         )
         .eq('status', 'submitted')
-        .order('month', ascending: false);
+        .order('month', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(PendingMonthlyEval.fromMap).toList();
   }
 

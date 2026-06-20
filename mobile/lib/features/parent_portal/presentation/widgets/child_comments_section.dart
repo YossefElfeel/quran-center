@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/parent_comment.dart';
 import '../controllers/child_comments_controller.dart';
 
@@ -39,7 +40,26 @@ class ChildCommentsSection extends ConsumerWidget {
             const SizedBox(height: AppSpacing.sm),
             state.when(
               loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace _) => Text(l.ppCommentsLoadError),
+              error: (Object e, StackTrace _) => Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        l.ppCommentsLoadError,
+                        style: TextStyle(color: context.palette.textSecondary),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => ref.invalidate(
+                        childCommentsControllerProvider(studentPersonId),
+                      ),
+                      child: Text(l.retry),
+                    ),
+                  ],
+                ),
+              ),
               data: (List<ParentComment> items) => items.isEmpty
                   ? Text(
                       l.ppNoComments,
@@ -105,15 +125,11 @@ class _CommentComposerState extends ConsumerState<_CommentComposer> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Expanded(
-          child: TextField(
+          child: AppTextField(
             controller: _controller,
             minLines: 1,
             maxLines: 3,
-            decoration: InputDecoration(
-              hintText: l.ppCommentComposerHint,
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
+            hint: l.ppCommentComposerHint,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),

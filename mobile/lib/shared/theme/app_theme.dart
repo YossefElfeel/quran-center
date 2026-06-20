@@ -13,6 +13,10 @@ abstract final class AppTheme {
   static ThemeData light() => _build(AppPalette.light, Brightness.light);
   static ThemeData dark() => _build(AppPalette.dark, Brightness.dark);
   static ThemeData amoled() => _build(AppPalette.amoled, Brightness.dark);
+  static ThemeData highContrastLight() =>
+      _build(AppPalette.highContrastLight, Brightness.light);
+  static ThemeData highContrastDark() =>
+      _build(AppPalette.highContrastDark, Brightness.dark);
 
   static ThemeData _build(AppPalette p, Brightness brightness) {
     final bool isDark = brightness == Brightness.dark;

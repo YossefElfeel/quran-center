@@ -23,7 +23,8 @@ class IntakeRepository {
           'student:student_person_id(id, full_name, gender)',
         )
         .eq('status', 'waiting')
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map(WaitingApplicant.fromMap).toList();
   }
 
@@ -31,7 +32,8 @@ class IntakeRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('level')
         .select('id, name, curriculum:curriculum_id(name)')
-        .order('ord', ascending: true);
+        .order('ord', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map((Map<String, dynamic> r) {
       final Map<String, dynamic>? cur =
           r['curriculum'] as Map<String, dynamic>?;
@@ -49,7 +51,8 @@ class IntakeRepository {
         .from('circle')
         .select('id, name')
         .eq('level_id', levelId)
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows
         .map(
           (Map<String, dynamic> r) =>

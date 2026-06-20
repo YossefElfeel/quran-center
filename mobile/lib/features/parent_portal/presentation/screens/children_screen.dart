@@ -7,6 +7,7 @@ import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_hero.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_loader.dart';
@@ -67,7 +68,10 @@ class _ChildrenList extends ConsumerWidget {
                 itemBuilder: (BuildContext context, int i) {
                   final ChildSummary c = items[i];
                   return AppListCard(
-                    leading: AppAvatar(name: c.fullName, radius: 22),
+                    leading: AppHero(
+                      tag: 'child-avatar-${c.studentPersonId}',
+                      child: AppAvatar(name: c.fullName, radius: 22),
+                    ),
                     title: c.fullName,
                     onTap: () => context.push(
                       Routes.parentChild(c.studentPersonId, c.fullName),

@@ -1,8 +1,10 @@
 import { stopImpersonation } from "@/app/(dash)/impersonation/actions";
 import { signOut } from "@/app/login/actions";
+import { AlertToaster } from "@/components/alert-toaster";
 import { Sidebar } from "@/components/sidebar";
 import { getSuperAdmin } from "@/lib/auth";
 import { getActiveImpersonation } from "@/lib/impersonation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function DashLayout({
   children,
@@ -32,11 +34,29 @@ export default async function DashLayout({
   const impersonation = await getActiveImpersonation(admin.personId);
   const showBanner = impersonation && !impersonation.expired;
 
+  const supabase = await createSupabaseServerClient();
+  const { data: maintRow } = await supabase
+    .from("feature_flag")
+    .select("enabled")
+    .eq("key", "maintenance_mode")
+    .maybeSingle();
+  const maintenance = maintRow?.enabled === true;
+
   return (
     <div className="flex min-h-full flex-1 flex-col">
+      <AlertToaster />
+      {maintenance ? (
+        <div className="bg-amber-500 px-6 py-2 text-center text-sm font-bold text-white">
+          🛠️ وضع الصيانة مفعّل — كتابة الجلسات والمدفوعات متجمّدة لكل المستخدمين
+          (عدا السوبر أدمن)
+        </div>
+      ) : null}
       {showBanner ? (
-        <div className="flex items-center justify-between gap-3 bg-accent px-6 py-2 text-sm font-bold text-white">
-          <span>👁️ بتعاين كـ «{impersonation.subjectName}» (قراءة فقط، مدقّق)</span>
+        <div className="flex items-center justify-between gap-3 bg-red-600 px-6 py-2 text-sm font-bold text-white">
+          <span>
+            🔴 بتتصرّف كـ «{impersonation.subjectName}» — كل تغيير بيتنسب لك (مدقّق،
+            ٣٠ دقيقة)
+          </span>
           <form action={stopImpersonation}>
             <button className="rounded bg-white/20 px-3 py-1 hover:bg-white/30">
               إيقاف

@@ -19,7 +19,8 @@ class TeacherRepository {
         .from('teacher_profile')
         .select('cv, qualifications, certificates')
         .limit(1)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 12));
     return row == null ? null : TeacherProfile.fromMap(row);
   }
 
@@ -42,7 +43,8 @@ class TeacherRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
         .select('id, month, status, memorization_progress')
-        .order('month', ascending: false);
+        .order('month', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
   }
 
@@ -61,10 +63,12 @@ class TeacherRepository {
 
   /// نسبة نجاح طلبتي (مؤشّر أداء).
   Future<double> myPassRate(String teacherPersonId) async {
-    final dynamic res = await _client.rpc(
-      'teacher_pass_rate',
-      params: <String, dynamic>{'p_teacher': teacherPersonId},
-    );
+    final dynamic res = await _client
+        .rpc(
+          'teacher_pass_rate',
+          params: <String, dynamic>{'p_teacher': teacherPersonId},
+        )
+        .timeout(const Duration(seconds: 12));
     return (res as num?)?.toDouble() ?? 0;
   }
 
@@ -77,7 +81,8 @@ class TeacherRepository {
           'teacher:teacher_person_id(full_name)',
         )
         .eq('status', 'submitted')
-        .order('month', ascending: false);
+        .order('month', ascending: false)
+        .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
   }
 

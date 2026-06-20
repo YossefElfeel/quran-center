@@ -16,7 +16,8 @@ class CurriculumRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('curriculum')
         .select('id, name, type, created_at')
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: true)
+        .timeout(const Duration(seconds: 12));
     return rows.map(Curriculum.fromMap).toList();
   }
 

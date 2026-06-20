@@ -5,10 +5,12 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
 import 'portion_range_row.dart';
+import 'surah_load_error.dart';
 
 /// شيت تحديد مقطع الحفظ — أول مقطع (setPortion) أو مقطع الانتقال (advance).
 class SetPortionSheet extends ConsumerStatefulWidget {
@@ -107,8 +109,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
           height: 140,
           child: Center(child: CircularProgressIndicator()),
         ),
-        error: (Object e, StackTrace _) =>
-            Text(l.sesSurahsLoadError, textAlign: TextAlign.center),
+        error: (Object e, StackTrace _) => const SurahLoadError(),
         data: (List<SurahOption> list) => SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -125,10 +126,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: _name,
-                decoration: InputDecoration(labelText: l.sesPortionNameLabel),
-              ),
+              AppTextField(controller: _name, label: l.sesPortionNameLabel),
               const SizedBox(height: AppSpacing.md),
               PortionRangeRow(
                 title: l.sesRangeFrom,

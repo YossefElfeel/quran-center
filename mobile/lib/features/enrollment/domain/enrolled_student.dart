@@ -14,13 +14,18 @@ class EnrolledStudent {
   final String name;
   final Gender? gender;
 
-  factory EnrolledStudent.fromMap(Map<String, dynamic> map) {
-    final Map<String, dynamic> student = map['student'] as Map<String, dynamic>;
+  /// الـ embed بيرجع null لو الـ FK فاضي/الصف اتفلتر بالـ RLS/اتحذف — في الحالة
+  /// دي بنرجّع null عشان الـ caller يفلتر الصف (مفيش طالب من غير id).
+  static EnrolledStudent? fromMap(Map<String, dynamic> map) {
+    final Map<String, dynamic>? student =
+        map['student'] as Map<String, dynamic>?;
+    final String? studentPersonId = student?['id'] as String?;
+    if (studentPersonId == null) return null;
     return EnrolledStudent(
       enrollmentId: map['id'] as String,
-      studentPersonId: student['id'] as String,
-      name: student['full_name'] as String,
-      gender: Gender.fromDb(student['gender'] as String?),
+      studentPersonId: studentPersonId,
+      name: (student?['full_name'] as String?) ?? '—',
+      gender: Gender.fromDb(student?['gender'] as String?),
     );
   }
 }

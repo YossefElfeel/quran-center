@@ -19,13 +19,14 @@ class WaitingApplicant {
   final Gender? gender;
 
   factory WaitingApplicant.fromMap(Map<String, dynamic> map) {
-    final Map<String, dynamic> student = map['student'] as Map<String, dynamic>;
+    final Map<String, dynamic>? student =
+        map['student'] as Map<String, dynamic>?;
     final Map<String, dynamic>? level = map['level'] as Map<String, dynamic>?;
     return WaitingApplicant(
       waitingId: map['id'] as String,
-      personId: student['id'] as String,
-      name: student['full_name'] as String,
-      gender: Gender.fromDb(student['gender'] as String?),
+      personId: (student?['id'] as String?) ?? '',
+      name: (student?['full_name'] as String?) ?? '—',
+      gender: Gender.fromDb(student?['gender'] as String?),
       levelId: map['level_id'] as String,
       levelName: level?['name'] as String? ?? '—',
     );

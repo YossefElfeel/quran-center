@@ -5,10 +5,12 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
 import 'portion_range_row.dart';
+import 'surah_load_error.dart';
 
 /// شيت قفل الحصة بخطة: تحديد مراجعة الحصة الجاية (اختياري) + قفل الحصة.
 class CloseSessionSheet extends ConsumerStatefulWidget {
@@ -99,8 +101,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
           height: 140,
           child: Center(child: CircularProgressIndicator()),
         ),
-        error: (Object e, StackTrace _) =>
-            Text(l.sesSurahsLoadError, textAlign: TextAlign.center),
+        error: (Object e, StackTrace _) => const SurahLoadError(),
         data: (List<SurahOption> list) => SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -120,10 +121,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
                 style: TextStyle(color: context.palette.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _revName,
-                decoration: InputDecoration(labelText: l.sesRevisionNameLabel),
-              ),
+              AppTextField(controller: _revName, label: l.sesRevisionNameLabel),
               const SizedBox(height: AppSpacing.sm),
               PortionRangeRow(
                 title: l.sesRangeFrom,

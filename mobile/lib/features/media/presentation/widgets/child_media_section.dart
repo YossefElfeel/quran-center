@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -135,7 +136,21 @@ class ChildMediaSection extends ConsumerWidget {
             state.when(
               skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (Object e, StackTrace _) => Text(l.ppMediaLoadError),
+              error: (Object e, StackTrace _) => Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      l.ppMediaLoadError,
+                      style: TextStyle(color: context.palette.textSecondary),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        ref.invalidate(childMediaProvider(studentPersonId)),
+                    child: Text(l.retry),
+                  ),
+                ],
+              ),
               data: (List<MediaItem> items) {
                 if (items.isEmpty) {
                   return Text(
@@ -179,8 +194,9 @@ class _MediaTile extends ConsumerWidget {
   void _openPhoto(BuildContext context, String url) {
     showDialog<void>(
       context: context,
-      builder: (BuildContext _) =>
-          Dialog(child: InteractiveViewer(child: Image.network(url))),
+      builder: (BuildContext _) => Dialog(
+        child: InteractiveViewer(child: CachedNetworkImage(imageUrl: url)),
+      ),
     );
   }
 
@@ -214,10 +230,11 @@ class _MediaTile extends ConsumerWidget {
         ),
         error: (Object e, StackTrace _) => const _BrokenTile(),
         data: (String u) => RepaintBoundary(
-          child: Image.network(
-            u,
+          child: CachedNetworkImage(
+            imageUrl: u,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const _BrokenTile(),
+            placeholder: (_, _) => const ColoredBox(color: Colors.black12),
+            errorWidget: (_, _, _) => const _BrokenTile(),
           ),
         ),
       ),
