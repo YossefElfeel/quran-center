@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/parent_comment.dart';
 import '../controllers/child_comments_controller.dart';
 
@@ -124,15 +125,11 @@ class _CommentComposerState extends ConsumerState<_CommentComposer> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
         Expanded(
-          child: TextField(
+          child: AppTextField(
             controller: _controller,
             minLines: 1,
             maxLines: 3,
-            decoration: InputDecoration(
-              hintText: l.ppCommentComposerHint,
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
+            hint: l.ppCommentComposerHint,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),

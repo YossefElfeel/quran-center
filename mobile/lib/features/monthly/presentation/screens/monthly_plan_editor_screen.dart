@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/monthly_plan.dart';
 import '../controllers/circle_monthly_plan_controller.dart';
 
@@ -100,34 +101,25 @@ class _MonthlyPlanEditorScreenState
               style: TextStyle(color: context.palette.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
-            TextField(
+            AppTextField(
               controller: _curriculum,
               minLines: 2,
               maxLines: 4,
-              decoration: InputDecoration(
-                labelText: l.monCurriculumLabel,
-                border: const OutlineInputBorder(),
-              ),
+              label: l.monCurriculumLabel,
             ),
             const SizedBox(height: AppSpacing.md),
-            TextField(
+            AppTextField(
               controller: _method,
               minLines: 1,
               maxLines: 3,
-              decoration: InputDecoration(
-                labelText: l.monTeachingMethodLabel,
-                border: const OutlineInputBorder(),
-              ),
+              label: l.monTeachingMethodLabel,
             ),
             const SizedBox(height: AppSpacing.md),
-            TextField(
+            AppTextField(
               controller: _portions,
               minLines: 1,
               maxLines: 2,
-              decoration: InputDecoration(
-                labelText: l.monPortionsLabel,
-                border: const OutlineInputBorder(),
-              ),
+              label: l.monPortionsLabel,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(

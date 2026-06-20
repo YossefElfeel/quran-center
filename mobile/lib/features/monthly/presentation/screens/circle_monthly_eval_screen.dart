@@ -6,6 +6,7 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../recognition/data/recognition_repository.dart';
 import '../../domain/monthly_eval.dart';
@@ -41,20 +42,18 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(
+            AppTextField(
               controller: summary,
               minLines: 2,
               maxLines: 4,
-              decoration: InputDecoration(
-                labelText: l.monPerformanceSummaryLabel,
-              ),
+              label: l.monPerformanceSummaryLabel,
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextField(
+            AppTextField(
               controller: behavior,
               minLines: 1,
               maxLines: 3,
-              decoration: InputDecoration(labelText: l.monBehaviorLabel),
+              label: l.monBehaviorLabel,
             ),
           ],
         ),

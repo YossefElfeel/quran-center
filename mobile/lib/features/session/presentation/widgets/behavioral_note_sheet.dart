@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/today_session_controller.dart';
 
 /// شيت تسجيل ملاحظة سلوك لطالب — مرئية لولي الأمر أو داخلية.
@@ -94,14 +95,11 @@ class _BehavioralNoteSheetState extends ConsumerState<BehavioralNoteSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          TextField(
+          AppTextField(
             controller: _text,
             minLines: 3,
             maxLines: 5,
-            decoration: InputDecoration(
-              hintText: l.sesNoteHint,
-              border: const OutlineInputBorder(),
-            ),
+            hint: l.sesNoteHint,
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
