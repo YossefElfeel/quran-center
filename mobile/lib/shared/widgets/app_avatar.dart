@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_text_styles.dart';
@@ -52,7 +53,7 @@ class AppAvatar extends StatelessWidget {
         excludeSemantics: true,
         child: CircleAvatar(
           radius: radius,
-          backgroundImage: NetworkImage(imageUrl),
+          backgroundImage: CachedNetworkImageProvider(imageUrl),
         ),
       );
     }
