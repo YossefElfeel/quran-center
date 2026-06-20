@@ -75,7 +75,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                             shape: BoxShape.circle,
                             boxShadow: AppElevation.shadowMd(p.shadowColor),
                           ),
-                          child: Icon(s.icon, size: 56, color: Colors.white),
+                          child: Icon(s.icon, size: 56, color: p.onHero),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         Text(
