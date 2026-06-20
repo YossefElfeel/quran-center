@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/levels_controller.dart';
 
 /// شيت إضافة مستوى (الاسم بس؛ الترتيب تلقائي).
@@ -64,10 +65,7 @@ class _AddLevelSheetState extends ConsumerState<AddLevelSheet> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: _name,
-            decoration: InputDecoration(labelText: l.admLevelNameLabel),
-          ),
+          AppTextField(controller: _name, label: l.admLevelNameLabel),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: _saving ? l.admSaving : l.admSave,

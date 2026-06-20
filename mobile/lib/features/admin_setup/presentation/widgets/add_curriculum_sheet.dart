@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/curriculum.dart';
 import '../controllers/curricula_controller.dart';
 
@@ -64,10 +65,7 @@ class _AddCurriculumSheetState extends ConsumerState<AddCurriculumSheet> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.lg),
-          TextField(
-            controller: _name,
-            decoration: InputDecoration(labelText: l.admCurriculumNameLabel),
-          ),
+          AppTextField(controller: _name, label: l.admCurriculumNameLabel),
           const SizedBox(height: AppSpacing.lg),
           SegmentedButton<CurriculumType>(
             segments: CurriculumType.values

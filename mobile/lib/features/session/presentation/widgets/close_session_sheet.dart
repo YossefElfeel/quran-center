@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
@@ -120,10 +121,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
                 style: TextStyle(color: context.palette.textSecondary),
               ),
               const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _revName,
-                decoration: InputDecoration(labelText: l.sesRevisionNameLabel),
-              ),
+              AppTextField(controller: _revName, label: l.sesRevisionNameLabel),
               const SizedBox(height: AppSpacing.sm),
               PortionRangeRow(
                 title: l.sesRangeFrom,

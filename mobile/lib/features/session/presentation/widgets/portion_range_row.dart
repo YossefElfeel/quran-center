@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
 
 /// صف اختيار طرف نطاق (سورة + آية) — مشترك بين تحديد المقطع وخطة المراجعة.
@@ -53,10 +54,10 @@ class PortionRangeRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           flex: 2,
-          child: TextField(
+          child: AppTextField(
             controller: ayahController,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: l.sesAyahLabel),
+            label: l.sesAyahLabel,
           ),
         ),
       ],

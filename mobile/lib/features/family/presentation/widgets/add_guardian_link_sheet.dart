@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/student_option.dart';
 import '../controllers/guardian_links_controller.dart';
 import '../controllers/students_for_link_controller.dart';
@@ -77,10 +78,7 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSpacing.md),
-          TextField(
-            controller: _name,
-            decoration: InputDecoration(labelText: l.famGuardianNameLabel),
-          ),
+          AppTextField(controller: _name, label: l.famGuardianNameLabel),
           const SizedBox(height: AppSpacing.md),
           Align(
             alignment: AlignmentDirectional.centerStart,
