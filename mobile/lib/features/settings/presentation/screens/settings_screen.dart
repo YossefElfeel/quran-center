@@ -11,6 +11,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_section_header.dart';
+import '../../../../shared/widgets/app_segmented_control.dart';
 
 /// شاشة الإعدادات — المظهر + سهولة الوصول + الخروج.
 class SettingsScreen extends ConsumerWidget {
@@ -114,19 +115,14 @@ class SettingsScreen extends ConsumerWidget {
                     style: AppTextStyles.labelLg.copyWith(color: p.textPrimary),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  SegmentedButton<AppTextSize>(
-                    showSelectedIcon: false,
-                    segments: <ButtonSegment<AppTextSize>>[
+                  AppSegmentedControl<AppTextSize>(
+                    segments: <({AppTextSize value, String label})>[
                       for (final AppTextSize s in AppTextSize.values)
-                        ButtonSegment<AppTextSize>(
-                          value: s,
-                          label: Text(_sizeLabel(l, s)),
-                        ),
+                        (value: s, label: _sizeLabel(l, s)),
                     ],
-                    selected: <AppTextSize>{textSize},
-                    onSelectionChanged: (Set<AppTextSize> sel) {
-                      ref.read(textSizeProvider.notifier).set(sel.first);
-                    },
+                    selected: textSize,
+                    onChanged: (AppTextSize s) =>
+                        ref.read(textSizeProvider.notifier).set(s),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   // معاينة حيّة — بتكبر/بتصغر مع الاختيار.

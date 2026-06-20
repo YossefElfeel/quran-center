@@ -8,6 +8,7 @@ import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_confirm_sheet.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_inline_banner.dart';
 import '../../../../shared/widgets/app_loader.dart';
@@ -124,24 +125,14 @@ class _TeacherProfileScreenState extends ConsumerState<TeacherProfileScreen> {
 
   Future<void> _delete(TeacherDocument doc) async {
     final AppL10n l = AppL10n.of(context);
-    final bool? ok = await showDialog<bool>(
+    final bool ok = await showAppConfirmSheet(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(l.tchDeleteDocConfirm),
-        content: Text(doc.title),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.delete),
-          ),
-        ],
-      ),
+      title: l.tchDeleteDocConfirm,
+      message: doc.title,
+      confirmLabel: l.delete,
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     try {
       await ref.read(myTeacherDocumentsProvider.notifier).remove(doc);
       if (mounted) AppSnackbar.success(context, l.tchDocDeleted);
