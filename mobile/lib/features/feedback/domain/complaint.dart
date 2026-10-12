@@ -7,6 +7,7 @@ class Complaint {
     required this.status,
     required this.createdAt,
     this.managerResponse,
+    this.respondedAt,
     this.authorName,
   });
 
@@ -19,6 +20,9 @@ class Complaint {
       status: map['status'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
       managerResponse: map['manager_response'] as String?,
+      respondedAt: map['responded_at'] == null
+          ? null
+          : DateTime.parse(map['responded_at'] as String),
       authorName: author?['full_name'] as String?,
     );
   }
@@ -29,7 +33,14 @@ class Complaint {
   final String status;
   final DateTime createdAt;
   final String? managerResponse;
+  final DateTime? respondedAt;
   final String? authorName;
+
+  /// رقم مرجعي قصير وثابت يسهل تداوله بدل UUID الكامل.
+  String get referenceNumber {
+    final String compact = id.replaceAll('-', '').toUpperCase();
+    return compact.length <= 8 ? compact : compact.substring(0, 8);
+  }
 
   bool get isAnswered => managerResponse != null && managerResponse!.isNotEmpty;
 

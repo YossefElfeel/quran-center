@@ -6,6 +6,7 @@ class TeacherDevEntry {
     required this.status,
     this.progress,
     this.teacherName,
+    this.approvedAt,
   });
 
   factory TeacherDevEntry.fromMap(Map<String, dynamic> map) {
@@ -17,6 +18,9 @@ class TeacherDevEntry {
       status: map['status'] as String,
       progress: map['memorization_progress'] as String?,
       teacherName: teacher?['full_name'] as String?,
+      approvedAt: map['approved_at'] == null
+          ? null
+          : DateTime.parse(map['approved_at'] as String),
     );
   }
 
@@ -25,6 +29,7 @@ class TeacherDevEntry {
   final String status;
   final String? progress;
   final String? teacherName;
+  final DateTime? approvedAt;
 
   bool get isApproved => status == 'approved';
 }

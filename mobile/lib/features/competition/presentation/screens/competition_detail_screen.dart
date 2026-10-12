@@ -75,12 +75,19 @@ class CompetitionDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _watchRecitation(BuildContext context, String url) async {
-    final Uri? uri = Uri.tryParse(url);
-    final bool ok =
-        uri != null &&
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      AppSnackbar.error(context, AppL10n.of(context).cmpCantOpenRecitation);
+    try {
+      final Uri? uri = Uri.tryParse(url);
+      final bool ok =
+          uri != null &&
+          uri.hasScheme &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        AppSnackbar.error(context, AppL10n.of(context).cmpCantOpenRecitation);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, AppL10n.of(context).cmpCantOpenRecitation);
+      }
     }
   }
 

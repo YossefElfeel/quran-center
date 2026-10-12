@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/media_repository.dart';
 import '../../domain/image_watermark.dart';
 import '../../domain/media_item.dart';
@@ -186,9 +187,21 @@ class _MediaTile extends ConsumerWidget {
 
   final MediaItem item;
 
-  Future<void> _openVideo(WidgetRef ref) async {
-    final String url = await ref.read(mediaSignedUrlProvider(item.id).future);
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  Future<void> _openVideo(BuildContext context, WidgetRef ref) async {
+    final AppL10n l = AppL10n.of(context);
+    try {
+      final String url = await ref.read(mediaSignedUrlProvider(item.id).future);
+      final Uri? uri = Uri.tryParse(url);
+      final bool ok =
+          uri != null &&
+          uri.hasScheme &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        AppSnackbar.error(context, l.videoOpenError);
+      }
+    } catch (_) {
+      if (context.mounted) AppSnackbar.error(context, l.videoOpenError);
+    }
   }
 
   void _openPhoto(BuildContext context, String url) {
@@ -204,7 +217,7 @@ class _MediaTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (item.isVideo) {
       return _TileFrame(
-        onTap: () => _openVideo(ref),
+        onTap: () => _openVideo(context, ref),
         child: const ColoredBox(
           color: Colors.black12,
           child: Center(child: Icon(Icons.play_circle_fill, size: 30)),

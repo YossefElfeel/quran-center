@@ -5,8 +5,11 @@ class PendingExcuse {
     required this.enrollmentId,
     required this.studentName,
     required this.circleName,
+    required this.status,
+    required this.createdAt,
     this.sessionId,
     this.reason,
+    this.decidedAt,
   });
 
   factory PendingExcuse.fromMap(Map<String, dynamic> map) {
@@ -23,6 +26,11 @@ class PendingExcuse {
       studentName: (student?['full_name'] as String?) ?? 'الطالب',
       circleName: (circle?['name'] as String?) ?? 'الحلقة',
       reason: map['reason'] as String?,
+      status: map['status'] as String? ?? 'pending',
+      createdAt: DateTime.parse(map['created_at'] as String),
+      decidedAt: map['decided_at'] == null
+          ? null
+          : DateTime.parse(map['decided_at'] as String),
     );
   }
 
@@ -32,4 +40,23 @@ class PendingExcuse {
   final String studentName;
   final String circleName;
   final String? reason;
+  final String status;
+  final DateTime createdAt;
+  final DateTime? decidedAt;
+
+  bool get isPending => status == 'pending';
+  bool get isApproved => status == 'approved';
+
+  PendingExcuse copyWith({String? status, DateTime? decidedAt}) =>
+      PendingExcuse(
+        id: id,
+        enrollmentId: enrollmentId,
+        studentName: studentName,
+        circleName: circleName,
+        status: status ?? this.status,
+        createdAt: createdAt,
+        sessionId: sessionId,
+        reason: reason,
+        decidedAt: decidedAt ?? this.decidedAt,
+      );
 }

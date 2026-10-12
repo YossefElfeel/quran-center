@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_date.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
@@ -14,6 +16,7 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/complaint.dart';
 import '../controllers/feedback_controllers.dart';
+import '../widgets/complaint_detail_content.dart';
 
 /// شكاوي المستخدم — يرفع شكوى ويشوف الردود.
 class MyComplaintsScreen extends ConsumerWidget {
@@ -116,6 +119,14 @@ class _ComplaintCard extends StatelessWidget {
 
   final Complaint complaint;
 
+  void _openDetails(BuildContext context) {
+    showAppModalSheet<void>(
+      context: context,
+      title: AppL10n.of(context).fbkComplaintDetails,
+      builder: (BuildContext _) => ComplaintDetailContent(complaint: complaint),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
@@ -126,6 +137,7 @@ class _ComplaintCard extends StatelessWidget {
         horizontal: AppSpacing.md,
       ),
       child: AppCard(
+        onTap: () => _openDetails(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -151,8 +163,16 @@ class _ComplaintCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
+              '${l.fbkComplaintNumber(complaint.referenceNumber)} · '
+              '${arabicDateTimeLabel(complaint.createdAt)}',
+              style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
               complaint.body,
               style: AppTextStyles.bodyMd.copyWith(color: p.textPrimary),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             if (complaint.isAnswered) ...<Widget>[
               const Divider(),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/utils/arabic_date.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -21,8 +22,35 @@ import '../controllers/teacher_controllers.dart';
 import '../widgets/add_dev_entry_sheet.dart';
 
 /// شاشة المعلّم: مؤشّر أدائه + تطوّره (يضيف قيود يعتمدها المشرف).
-class TeacherDevelopmentScreen extends ConsumerWidget {
+class TeacherDevelopmentScreen extends ConsumerStatefulWidget {
   const TeacherDevelopmentScreen({super.key});
+
+  @override
+  ConsumerState<TeacherDevelopmentScreen> createState() =>
+      _TeacherDevelopmentScreenState();
+}
+
+class _TeacherDevelopmentScreenState
+    extends ConsumerState<TeacherDevelopmentScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(myDevelopmentProvider);
+    }
+  }
 
   void _addEntry(BuildContext context) {
     showAppModalSheet<void>(
@@ -33,7 +61,7 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<TeacherDevEntry>> state = ref.watch(
       myDevelopmentProvider,
@@ -170,6 +198,13 @@ class _DevTile extends StatelessWidget {
                   ? AppBannerKind.success
                   : AppBannerKind.info,
             ),
+            if (entry.approvedAt != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l.tchApprovedAt(arabicDateTimeLabel(entry.approvedAt!)),
+                style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+              ),
+            ],
           ],
         );
       },

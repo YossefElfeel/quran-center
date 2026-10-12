@@ -14,12 +14,14 @@ class CriteriaEvalSheet extends ConsumerStatefulWidget {
     required this.circleId,
     required this.studentPersonId,
     required this.studentName,
+    this.initialScores = const <EvalCriterion, int>{},
     super.key,
   });
 
   final String circleId;
   final String studentPersonId;
   final String studentName;
+  final Map<EvalCriterion, int> initialScores;
 
   @override
   ConsumerState<CriteriaEvalSheet> createState() => _CriteriaEvalSheetState();
@@ -30,6 +32,12 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
   bool _saving = false;
 
   bool get _complete => _scores.length == EvalCriterion.values.length;
+
+  @override
+  void initState() {
+    super.initState();
+    _scores.addAll(widget.initialScores);
+  }
 
   Future<void> _save() async {
     if (!_complete) return;

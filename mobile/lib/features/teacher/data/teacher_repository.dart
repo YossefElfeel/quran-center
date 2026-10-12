@@ -42,7 +42,7 @@ class TeacherRepository {
   Future<List<TeacherDevEntry>> fetchMyDevelopment() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
-        .select('id, month, status, memorization_progress')
+        .select('id, month, status, memorization_progress, approved_at')
         .order('month', ascending: false)
         .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
@@ -77,7 +77,7 @@ class TeacherRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
         .select(
-          'id, month, status, memorization_progress, '
+          'id, month, status, memorization_progress, approved_at, '
           'teacher:teacher_person_id(full_name)',
         )
         .eq('status', 'submitted')
@@ -90,7 +90,10 @@ class TeacherRepository {
     await _client
         .from('teacher_development')
         .update(<String, dynamic>{'status': 'approved'})
-        .eq('id', id);
+        .eq('id', id)
+        .select('id, status')
+        .single()
+        .timeout(const Duration(seconds: 12));
   }
 }
 

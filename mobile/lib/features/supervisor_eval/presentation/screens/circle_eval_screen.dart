@@ -38,6 +38,7 @@ class CircleEvalScreen extends ConsumerWidget {
         circleId: circleId,
         studentPersonId: s.studentPersonId,
         studentName: s.fullName,
+        initialScores: s.scores,
       ),
     );
   }

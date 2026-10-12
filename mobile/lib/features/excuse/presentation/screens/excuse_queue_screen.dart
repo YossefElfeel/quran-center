@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_date.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/pending_excuse.dart';
 import '../controllers/pending_excuses_controller.dart';
@@ -15,6 +19,71 @@ import '../widgets/excuse_decision_tile.dart';
 /// طابور المشرف: أعذار الغياب المستنية موافقة.
 class ExcuseQueueScreen extends ConsumerWidget {
   const ExcuseQueueScreen({super.key});
+
+  void _openDetails(BuildContext context, PendingExcuse excuse) {
+    final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
+    showAppModalSheet<void>(
+      context: context,
+      title: l.excDetailsTitle,
+      builder: (BuildContext _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            excuse.studentName,
+            style: AppTextStyles.titleLg.copyWith(color: p.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            excuse.circleName,
+            style: AppTextStyles.bodyMd.copyWith(color: p.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppStatusBadge(
+            label: excuse.isPending
+                ? l.excPending
+                : excuse.isApproved
+                ? l.excApproved
+                : l.excRejected,
+            kind: excuse.isPending
+                ? AppStatusKind.warning
+                : excuse.isApproved
+                ? AppStatusKind.success
+                : AppStatusKind.error,
+            icon: excuse.isPending
+                ? Icons.schedule
+                : excuse.isApproved
+                ? Icons.check_circle
+                : Icons.cancel,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            l.excSubmittedAt(arabicDateTimeLabel(excuse.createdAt)),
+            style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+          ),
+          if (excuse.decidedAt != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              l.excDecidedAt(arabicDateTimeLabel(excuse.decidedAt!)),
+              style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+            ),
+          ],
+          const Divider(height: AppSpacing.xl),
+          Text(
+            l.excReasonLabel,
+            style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          SelectableText(
+            excuse.reason?.trim().isNotEmpty == true
+                ? excuse.reason!
+                : l.excNoReason,
+            style: AppTextStyles.bodyLg.copyWith(color: p.textPrimary),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,6 +117,7 @@ class ExcuseQueueScreen extends ConsumerWidget {
                 excuse: items[i],
                 onApprove: () => notifier.decide(items[i], approve: true),
                 onReject: () => notifier.decide(items[i], approve: false),
+                onTap: () => _openDetails(context, items[i]),
               ),
             ),
           );

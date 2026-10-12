@@ -22,10 +22,17 @@ class CoursesScreen extends ConsumerWidget {
 
   Future<void> _open(BuildContext context, String url) async {
     final AppL10n l = AppL10n.of(context);
-    final Uri uri = Uri.tryParse(url) ?? Uri();
-    final bool ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      AppSnackbar.error(context, l.videoOpenError);
+    try {
+      final Uri? uri = Uri.tryParse(url);
+      final bool ok =
+          uri != null &&
+          uri.hasScheme &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        AppSnackbar.error(context, l.videoOpenError);
+      }
+    } catch (_) {
+      if (context.mounted) AppSnackbar.error(context, l.videoOpenError);
     }
   }
 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
-import '../../../../shared/theme/tokens.dart';
+import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_list_card.dart';
+import '../../domain/eval_criterion.dart';
 import '../../domain/eval_student.dart';
 
 /// بلاطة طالب في تقييم المشرف — تمييز المختار + شارة "اتقيّم" + زر تقييم.
@@ -21,19 +22,34 @@ class EvalStudentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    final AppPalette p = context.palette;
+    final String average = toArabicDigits(
+      student.average.toStringAsFixed(1).replaceAll('.', '٫'),
+    );
+    String score(EvalCriterion criterion) =>
+        arabicNumber(student.scores[criterion] ?? 0);
+    final String breakdown = <EvalCriterion>[
+      EvalCriterion.memorization,
+      EvalCriterion.recitation,
+      EvalCriterion.mushafReading,
+    ].map(score).join('، ');
+    final String? subtitle = student.scored
+        ? '${l.supEvaluationResult(average, student.levelAr)}\n'
+              '${l.supEvaluationBreakdown(breakdown)}'
+        : student.selected
+        ? l.supSelectedForEval
+        : null;
     return AppListCard(
       leading: AppAvatar(name: student.fullName, radius: 22),
       title: student.fullName,
-      subtitle: student.selected ? l.supSelectedForEval : null,
-      trailing: student.scored
-          ? Icon(Icons.check_circle, color: p.success)
-          : AppButton(
-              label: l.supEvaluate,
-              onPressed: onEvaluate,
-              variant: AppButtonVariant.text,
-              expanded: false,
-            ),
+      subtitle: subtitle,
+      onTap: student.scored ? onEvaluate : null,
+      trailing: AppButton(
+        label: student.scored ? l.supViewEvaluation : l.supEvaluate,
+        icon: student.scored ? Icons.check_circle : null,
+        onPressed: onEvaluate,
+        variant: AppButtonVariant.text,
+        expanded: false,
+      ),
     );
   }
 }

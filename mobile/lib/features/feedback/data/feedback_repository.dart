@@ -33,7 +33,10 @@ class FeedbackRepository {
   Future<List<Complaint>> fetchMyComplaints() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('complaint')
-        .select('id, category, body, status, manager_response, created_at')
+        .select(
+          'id, category, body, status, manager_response, '
+          'created_at, responded_at',
+        )
         .order('created_at', ascending: false);
     return rows.map(Complaint.fromMap).toList();
   }
@@ -44,6 +47,7 @@ class FeedbackRepository {
         .from('complaint')
         .select(
           'id, category, body, status, manager_response, created_at, '
+          'responded_at, '
           'author:author_person_id(full_name)',
         )
         .order('created_at', ascending: false);

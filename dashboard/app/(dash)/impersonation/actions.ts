@@ -22,8 +22,15 @@ export async function startImpersonation(formData: FormData) {
   if (!admin) redirect("/impersonation");
 
   const supabase = await createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    redirect(`/impersonation?e=${encodeURIComponent("انتهت جلسة الدخول — سجّل دخول تاني.")}`);
+  }
   const { data, error } = await supabase.functions.invoke("impersonate", {
     body: { subject_person_id: subject, reason },
+    headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
   if (error) {
@@ -36,7 +43,9 @@ export async function startImpersonation(formData: FormData) {
     }
     const msg = detail.includes("disabled")
       ? "التقمّص بالكتابة مقفول — فعّله من «المفاتيح» الأول."
-      : detail.toLowerCase().includes("super_admin")
+      : detail.includes("caller is not super_admin")
+        ? "جلسة الدخول مش متعرّف عليها كسوبر أدمن — سجّل خروج وادخل تاني."
+        : detail.toLowerCase().includes("super_admin")
         ? "مينفعش تتقمّص سوبر أدمن."
         : detail.includes("login account")
           ? "المستخدم ده ماعندوش حساب دخول."
@@ -49,7 +58,7 @@ export async function startImpersonation(formData: FormData) {
     const cookieStore = await cookies();
     cookieStore.set(IMP_COOKIE, token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 1800,
       path: "/",

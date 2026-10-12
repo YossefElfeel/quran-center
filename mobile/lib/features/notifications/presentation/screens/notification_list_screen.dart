@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/utils/arabic_date.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
@@ -24,14 +25,68 @@ import '../controllers/notifications_controller.dart';
 class NotificationListScreen extends ConsumerWidget {
   const NotificationListScreen({super.key});
 
-  Future<void> _open(
+  Future<void> _markRead(WidgetRef ref, String id) async {
+    try {
+      await ref.read(notificationsControllerProvider.notifier).markRead(id);
+    } catch (_) {
+      ref.invalidate(notificationsControllerProvider);
+    }
+  }
+
+  void _open(
     BuildContext context,
     WidgetRef ref,
     AppNotification n,
-    String route,
-  ) async {
-    await ref.read(notificationsControllerProvider.notifier).markRead(n.id);
-    if (context.mounted) unawaited(context.push(route));
+    String? route,
+  ) {
+    unawaited(_markRead(ref, n.id));
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            MediaQuery.viewInsetsOf(sheetContext).bottom + AppSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Text(
+                n.title,
+                style: Theme.of(sheetContext).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                arabicDateTimeLabel(n.createdAt),
+                style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
+                  color: sheetContext.palette.textSecondary,
+                ),
+              ),
+              if (n.body?.trim().isNotEmpty ?? false) ...<Widget>[
+                const SizedBox(height: AppSpacing.md),
+                SelectableText(n.body!.trim()),
+              ],
+              if (route != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.lg),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    unawaited(context.push(route));
+                  },
+                  icon: const Icon(Icons.open_in_new),
+                  label: Text(AppL10n.of(sheetContext).notificationOpenSource),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -85,9 +140,7 @@ class NotificationListScreen extends ConsumerWidget {
                     return _NotificationTile(
                       key: ValueKey<String>(n.id),
                       notification: n,
-                      onTap: route == null
-                          ? null
-                          : () => _open(context, ref, n, route),
+                      onTap: () => _open(context, ref, n, route),
                     );
                   },
                 ),
@@ -108,16 +161,20 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppPalette p = context.palette;
     final bool read = notification.isRead;
-    // غير مقروء → نقطة؛ مقروء وقابل للنقر → سهم؛ غير ذلك → لا شيء.
-    final Widget? trailing = !read
-        ? Container(
+    final Widget trailing = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        if (!read) ...<Widget>[
+          Container(
             width: 10,
             height: 10,
             decoration: BoxDecoration(color: p.primary, shape: BoxShape.circle),
-          )
-        : (onTap != null
-              ? Icon(Icons.chevron_left, color: p.textSecondary)
-              : null);
+          ),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        Icon(Icons.chevron_left, color: p.textSecondary),
+      ],
+    );
     return AppListCard(
       leadingIcon: _iconForType(notification.type),
       iconColor: read ? p.textSecondary : p.primary,

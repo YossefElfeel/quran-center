@@ -33,7 +33,8 @@ class ExcuseRepository {
     final List<Map<String, dynamic>> rows = await _client
         .from('excuse_request')
         .select(
-          'id, enrollment_id, session_id, reason, '
+          'id, enrollment_id, session_id, reason, status, created_at, '
+          'decided_at, '
           'enrollment:enrollment_id('
           'student:student_person_id(full_name), circle:circle_id(name))',
         )
@@ -59,6 +60,8 @@ class ExcuseRepository {
           'decided_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', excuseId)
+        .select('id')
+        .single()
         .timeout(const Duration(seconds: 12));
 
     if (approve && sessionId != null) {
