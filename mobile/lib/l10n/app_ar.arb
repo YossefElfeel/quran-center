@@ -2172,7 +2172,7 @@
   "@enrNoCirclesHint": {
     "description": "Empty state of the circle picker when no circles exist"
   },
-  "enrCircleStudentCount": "{count, plural, other{{countText} طالب}}",
+  "enrCircleStudentCount": "{count, plural, =0{مفيش طلاب} =1{طالب واحد} =2{طالبين} few{{countText} طلاب} other{{countText} طالب}}",
   "@enrCircleStudentCount": {
     "description": "Circle picker subtitle: active students (no capacity limit). countText is count formatted with Arabic digits.",
     "placeholders": {
@@ -2378,9 +2378,9 @@
       }
     }
   },
-  "fyHomeCircleEvalNone": "لسه محدش اتقيّم الشهر ده من {total} طالب",
+  "fyHomeCircleEvalNone": "لسه محدش اتقيّم الشهر ده من {total}",
   "@fyHomeCircleEvalNone": {
-    "description": "Supervisor home: no student in the circle evaluated yet this month (avoids a lone Arabic zero that looks like a dot)",
+    "description": "Supervisor home: no student evaluated yet this month; total is an already-pluralised student count (avoids a lone Arabic zero that looks like a dot)",
     "placeholders": {
       "total": {
         "type": "String"

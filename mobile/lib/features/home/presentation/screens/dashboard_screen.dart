@@ -582,7 +582,9 @@ class _SupervisorCircles extends ConsumerWidget {
     final String? line = total == null
         ? null
         : evaluated == 0
-        ? l.fyHomeCircleEvalNone(arabicNumber(total))
+        ? l.fyHomeCircleEvalNone(
+            l.enrCircleStudentCount(total, arabicNumber(total)),
+          )
         : l.fyHomeCircleEvalProgress(
             arabicNumber(evaluated),
             arabicNumber(total),
