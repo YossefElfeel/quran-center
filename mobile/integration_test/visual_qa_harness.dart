@@ -246,7 +246,8 @@ class _FakeNotifications extends NotificationsController {
       id: 'notification-1',
       type: 'general',
       title: 'تذكير مهم',
-      body: 'هذا إشعار عام بلا صفحة مصدر، ويجب أن يفتح كاملًا بدل أن يكون طريقًا مسدودًا.',
+      body:
+          'هذا إشعار عام بلا صفحة مصدر، ويجب أن يفتح كاملًا بدل أن يكون طريقًا مسدودًا.',
       createdAt: DateTime(2026, 9, 20, 9),
     ),
   ];
