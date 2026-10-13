@@ -38,20 +38,34 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
+    // بانر معلومة + إجراء ثانوي (tonal) — "اقفل الحصة" يفضل الزرّ الأساسي
+    // الوحيد في الشاشة.
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
-          l.sesNoPortionYet,
-          textAlign: TextAlign.center,
-          style: AppTextStyles.bodyMd.copyWith(
-            color: context.palette.textSecondary,
-          ),
+        Row(
+          children: <Widget>[
+            Icon(Icons.info_outline, color: p.info),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                l.sesNoPortionYet,
+                style: AppTextStyles.bodyMd.copyWith(color: p.textPrimary),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        AppButton(
-          label: l.sesSetPortion,
-          icon: Icons.menu_book,
-          onPressed: onSetPortion,
+        const SizedBox(height: AppSpacing.sm),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: AppButton(
+            label: l.sesSetPortion,
+            icon: Icons.menu_book,
+            variant: AppButtonVariant.tonal,
+            expanded: false,
+            onPressed: onSetPortion,
+          ),
         ),
       ],
     );

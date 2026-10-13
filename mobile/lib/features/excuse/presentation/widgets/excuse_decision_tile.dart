@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_confirm_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
 import '../../domain/pending_excuse.dart';
+import '../excuse_labels.dart';
 
 /// بلاطة طلب عذر — اسم الطالب والحلقة والسبب + موافقة/رفض.
 class ExcuseDecisionTile extends StatefulWidget {
@@ -81,6 +82,18 @@ class _ExcuseDecisionTileState extends State<ExcuseDecisionTile> {
               excuse.circleName,
               style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
             ),
+            const SizedBox(height: AppSpacing.xs),
+            if (excuse.absenceDate != null)
+              _MetaLine(
+                icon: Icons.event_busy,
+                text: l.fyExcuseAbsenceDay(
+                  excuseDateLabel(excuse.absenceDate!),
+                ),
+              ),
+            _MetaLine(
+              icon: Icons.person_outline,
+              text: excuseRequestedLine(l, excuse),
+            ),
             if (reason != null && reason.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -125,6 +138,38 @@ class _ExcuseDecisionTileState extends State<ExcuseDecisionTile> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// سطر معلومة صغير (أيقونة + نص) في كارت العذر.
+class _MetaLine extends StatelessWidget {
+  const _MetaLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 16, color: p.textSecondary),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.bodyMd.copyWith(color: p.textSecondary),
+            ),
+          ),
+        ],
       ),
     );
   }

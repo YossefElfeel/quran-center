@@ -99,7 +99,7 @@ final List<FeatureItem> kFeatureCatalog = <FeatureItem>[
   ),
   // الإشراف
   FeatureItem(
-    label: (AppL10n l) => l.navEvalCircles,
+    label: (AppL10n l) => l.tabReviews,
     icon: Icons.fact_check,
     route: Routes.supervisorEval,
     roles: _supervisors,

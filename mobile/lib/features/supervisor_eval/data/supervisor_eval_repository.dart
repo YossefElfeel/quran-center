@@ -27,11 +27,40 @@ class SupervisorEvalRepository {
         .from('circle')
         .select(
           'id, level_id, name, max_size, status, teacher_id, '
-          'teacher:teacher_id(full_name)',
+          'teacher:teacher_id(full_name), enrollment(count)',
         )
+        .eq('enrollment.status', 'active')
         .order('created_at', ascending: true)
         .timeout(const Duration(seconds: 12));
     return rows.map(Circle.fromMap).toList();
+  }
+
+  /// عدد الطلبة اللي اتقيّموا (مميّزين) في كل حلقة خلال شهر [month] —
+  /// استعلام واحد لكل الحلقات (لملخّص الهوم).
+  Future<Map<String, int>> fetchEvaluatedCountsForMonth(DateTime month) async {
+    final DateTime start = DateTime(month.year, month.month);
+    final DateTime end = DateTime(month.year, month.month + 1);
+    final List<Map<String, dynamic>> rows = await _client
+        .from('supervisor_evaluation')
+        .select('circle_id, scores:eval_score(student_person_id)')
+        .gte('created_at', start.toUtc().toIso8601String())
+        .lt('created_at', end.toUtc().toIso8601String())
+        .timeout(const Duration(seconds: 12));
+    final Map<String, Set<String>> students = <String, Set<String>>{};
+    for (final Map<String, dynamic> row in rows) {
+      final Set<String> set = students.putIfAbsent(
+        row['circle_id'] as String,
+        () => <String>{},
+      );
+      for (final dynamic raw
+          in row['scores'] as List<dynamic>? ?? const <dynamic>[]) {
+        set.add((raw as Map<String, dynamic>)['student_person_id'] as String);
+      }
+    }
+    return students.map(
+      (String circleId, Set<String> ids) =>
+          MapEntry<String, int>(circleId, ids.length),
+    );
   }
 
   Future<List<EvalStudent>> fetchStudents(String circleId) async {

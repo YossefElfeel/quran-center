@@ -27,7 +27,8 @@ class EvalCirclesScreen extends ConsumerWidget {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<Circle>> state = ref.watch(evalCirclesProvider);
     return AppScaffold(
-      title: l.navEvalCircles,
+      // نفس اسم التبويب ("المراجعات") عشان المشرف مايتلخبطش بين اسمين.
+      title: l.tabReviews,
       bottom: appBarBottom,
       body: state.when(
         loading: () => const AppListSkeleton(),

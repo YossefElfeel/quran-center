@@ -28,21 +28,42 @@ class ExcuseRepository {
         .timeout(const Duration(seconds: 12));
   }
 
-  /// طابور الأعذار المعلّقة (مع اسم الطالب والحلقة).
+  /// الأعمدة + الـ joins المشتركة بين الطابور والسجل: الطالب، الحلقة ومعلّمها
+  /// (اللي طلب العذر)، ويوم الحصة اللي غاب فيها.
+  static const String _select =
+      'id, enrollment_id, session_id, reason, status, created_at, '
+      'decided_at, '
+      'session:session_id(session_date), '
+      'enrollment:enrollment_id('
+      'student:student_person_id(full_name), '
+      'circle:circle_id(name, teacher:teacher_id(full_name)))';
+
+  /// طابور الأعذار المعلّقة (الأقدم الأول).
   Future<List<PendingExcuse>> fetchPending({
     int offset = 0,
     int limit = 50,
   }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('excuse_request')
-        .select(
-          'id, enrollment_id, session_id, reason, status, created_at, '
-          'decided_at, '
-          'enrollment:enrollment_id('
-          'student:student_person_id(full_name), circle:circle_id(name))',
-        )
+        .select(_select)
         .eq('status', 'pending')
         .order('created_at', ascending: true)
+        .order('id')
+        .range(offset, offset + limit - 1)
+        .timeout(const Duration(seconds: 12));
+    return rows.map(PendingExcuse.fromMap).toList();
+  }
+
+  /// سجل الأعذار اللي اتقرّرت (الأحدث قرارًا الأول) — صفحات بـ range.
+  Future<List<PendingExcuse>> fetchDecided({
+    int offset = 0,
+    int limit = 50,
+  }) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('excuse_request')
+        .select(_select)
+        .neq('status', 'pending')
+        .order('decided_at', ascending: false, nullsFirst: false)
         .order('id')
         .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));

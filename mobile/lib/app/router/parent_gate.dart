@@ -1,6 +1,19 @@
 /// مسار شاشة الاشتراك (وجهة بوابة ولي الأمر).
 const String parentSubscriptionRoute = '/parent/subscription';
 
+/// قيمة `from` لما البوابة تحوّل من كارت طفل (شاشة الاشتراك بتعرض بانر بالسبب).
+const String parentGateFromChild = 'child';
+
+/// مسار شاشة الاشتراك بعد تحويل البوابة: `?from=child&name=<اسم الطفل>`.
+String parentSubscriptionGateLocation({String? childName}) => Uri(
+  path: parentSubscriptionRoute,
+  queryParameters: <String, String>{
+    'from': parentGateFromChild,
+    if (childName != null && childName.trim().isNotEmpty)
+      'name': childName.trim(),
+  },
+).toString();
+
 const List<String> _staffRoles = <String>[
   'admin',
   'super_admin',
@@ -13,14 +26,19 @@ const List<String> _staffRoles = <String>[
 /// بنحوّل لشاشة الاشتراك **بس** لما السيرفر يقول صراحةً إن الاشتراك مش نشط.
 /// أي خطأ (أوفلاين/مهلة/غير معروف) بيعدّي ولي الأمر للكارت المتخزّن بدل ما
 /// يقفله بره — السيرفر (RLS) هو الحارس الحقيقي للبيانات.
+///
+/// [childName] (اختياري) بيتبعت لشاشة الاشتراك عشان تشرح ليه اتحوّل.
 Future<String?> parentChildGateRedirect({
   required Future<List<String>> Function() roles,
   required Future<bool> Function() subscriptionActive,
+  String? childName,
 }) async {
   try {
     final List<String> r = await roles();
     if (!r.contains('parent') || r.any(_staffRoles.contains)) return null;
-    return await subscriptionActive() ? null : parentSubscriptionRoute;
+    return await subscriptionActive()
+        ? null
+        : parentSubscriptionGateLocation(childName: childName);
   } catch (_) {
     return null;
   }

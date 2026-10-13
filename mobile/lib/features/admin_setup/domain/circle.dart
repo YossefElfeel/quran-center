@@ -17,7 +17,8 @@ enum CircleStatus {
   };
 }
 
-/// حلقة (دُفعة) داخل مستوى. `teacherName` بيتعبّى من join مع person.
+/// حلقة (دُفعة) داخل مستوى. `teacherName` بيتعبّى من join مع person،
+/// و`activeStudentCount` من `enrollment(count)` (مفلتر على النشطين) لو اتطلب.
 class Circle {
   const Circle({
     required this.id,
@@ -27,6 +28,7 @@ class Circle {
     required this.status,
     this.teacherId,
     this.teacherName,
+    this.activeStudentCount,
   });
 
   final String id;
@@ -37,9 +39,18 @@ class Circle {
   final String? teacherId;
   final String? teacherName;
 
+  /// عدد الطلبة النشطين (null = الاستعلام ماطلبهوش).
+  final int? activeStudentCount;
+
   factory Circle.fromMap(Map<String, dynamic> map) {
     final Map<String, dynamic>? teacher =
         map['teacher'] as Map<String, dynamic>?;
+    final List<dynamic>? enrollment = map['enrollment'] as List<dynamic>?;
+    final Object? rawCount = enrollment == null
+        ? null
+        : enrollment.isEmpty
+        ? 0
+        : (enrollment.first as Map<String, dynamic>)['count'];
     return Circle(
       id: map['id'] as String,
       levelId: map['level_id'] as String,
@@ -48,6 +59,7 @@ class Circle {
       status: CircleStatus.fromDb(map['status'] as String),
       teacherId: map['teacher_id'] as String?,
       teacherName: teacher?['full_name'] as String?,
+      activeStudentCount: rawCount is num ? rawCount.toInt() : null,
     );
   }
 }

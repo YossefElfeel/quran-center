@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_date.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -30,14 +31,34 @@ class EvalStudentTile extends StatelessWidget {
     );
     String score(EvalCriterion criterion) =>
         arabicNumber(student.scores[criterion] ?? 0);
-    final String breakdown = <EvalCriterion>[
-      EvalCriterion.memorization,
-      EvalCriterion.recitation,
-      EvalCriterion.mushafReading,
-    ].map(score).join('، '); // l10n-ignore: Arabic list separator
-    final String? subtitle = student.scored
-        ? '${l.supEvaluationResult(average, student.level.label(l))}\n'
-              '${l.supEvaluationBreakdown(breakdown)}'
+    final String breakdown = l.fyEvalBreakdown(
+      score(EvalCriterion.memorization),
+      score(EvalCriterion.recitation),
+      score(EvalCriterion.mushafReading),
+    );
+    // آخر تقييم من شهر فات؟ مايتحسبش "اتقيّم" على الشهر ده — نعرضه كمرجع بس.
+    final DateTime? at = student.evaluatedAt?.toLocal();
+    final DateTime now = DateTime.now();
+    final bool fromOlderMonth =
+        student.scored &&
+        at != null &&
+        (at.year != now.year || at.month != now.month);
+    final bool doneThisMonth = student.scored && !fromOlderMonth;
+    final String? subtitle = fromOlderMonth
+        ? <String>[
+            if (student.selected) l.supSelectedForEval,
+            l.fyEvalNotThisMonth,
+            l.fyEvalPrevious(
+              arabicMonthLabel(at),
+              average,
+              student.level.label(l),
+            ),
+          ].join('\n')
+        : doneThisMonth
+        ? <String>[
+            l.supEvaluationResult(average, student.level.label(l)),
+            breakdown,
+          ].join('\n')
         : student.selected
         ? l.supSelectedForEval
         : null;
@@ -47,8 +68,8 @@ class EvalStudentTile extends StatelessWidget {
       subtitle: subtitle,
       onTap: student.scored ? onEvaluate : null,
       trailing: AppButton(
-        label: student.scored ? l.supViewEvaluation : l.supEvaluate,
-        icon: student.scored ? Icons.check_circle : null,
+        label: doneThisMonth ? l.supViewEvaluation : l.supEvaluate,
+        icon: doneThisMonth ? Icons.check_circle : null,
         onPressed: onEvaluate,
         variant: AppButtonVariant.text,
         expanded: false,

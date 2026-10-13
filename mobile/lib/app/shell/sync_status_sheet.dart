@@ -5,10 +5,13 @@ import '../../core/db/local_db.dart';
 import '../../core/sync/outbox_op.dart';
 import '../../core/sync/outbox_store.dart';
 import '../../core/sync/sync_status_provider.dart';
+import '../../core/utils/arabic_date.dart';
 import '../../core/utils/arabic_numerals.dart';
 import '../../features/session/data/session_sync.dart';
 import '../../features/session/domain/session_write_block.dart';
 import '../../features/session/presentation/session_write_block_label.dart';
+import '../../shared/presentation/relative_date.dart';
+import '../../shared/theme/app_text_styles.dart';
 import '../../shared/theme/tokens.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_card.dart';
@@ -116,6 +119,48 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
     return true;
   }
 
+  /// "آخر مزامنة: النهارده ١٤:٣٠" — لو فيه وقت متسجّل.
+  Widget? _lastSyncLine(AppL10n l, DateTime? at) {
+    if (at == null) return null;
+    return Text(
+      l.fxSyncLastSync('${relativeDayLabel(l, at)} ${arabicTimeLabel(at)}'),
+      textAlign: TextAlign.center,
+      style: AppTextStyles.labelSm.copyWith(
+        color: context.palette.textSecondary,
+      ),
+    );
+  }
+
+  /// حالة الهدوء: مفيش معلّق ولا فاشل ⇒ تأكيد بسيط + "زامن دلوقتي" ثانوي.
+  Widget _allSynced(AppL10n l, Widget? lastSync) {
+    final AppPalette p = context.palette;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const SizedBox(height: AppSpacing.sm),
+        Icon(Icons.cloud_done_outlined, size: 48, color: p.synced),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          l.fxSyncAllSynced,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.titleMd.copyWith(color: p.textPrimary),
+        ),
+        if (lastSync != null) ...<Widget>[
+          const SizedBox(height: AppSpacing.xs),
+          lastSync,
+        ],
+        const SizedBox(height: AppSpacing.sm),
+        AppButton(
+          label: l.syncNow,
+          icon: Icons.sync,
+          variant: AppButtonVariant.text,
+          isLoading: _busy,
+          onPressed: () => _perform(_flush),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppL10n.of(context);
@@ -125,136 +170,160 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
     final SessionWriteBlock? blocked = ref.watch(
       sessionWritesBlockStateProvider,
     );
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          if (blocked != null) ...<Widget>[
-            AppCard(
-              child: Row(
+    final Widget? lastSync = _lastSyncLine(l, ref.watch(lastSyncAtProvider));
+    final List<Widget> header = <Widget>[
+      if (blocked != null) ...<Widget>[
+        AppCard(
+          child: Row(
+            children: <Widget>[
+              Icon(Icons.pause_circle_outline, color: context.palette.warning),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('${blocked.label(l)}\n${l.syncBlockedSaved}'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    ];
+    // الـ AppModalSheet بيدّي الحواف؛ المحتوى بياخد مقاسه (mainAxisSize.min).
+    return FutureBuilder<QueueDetails>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ...header,
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
+          );
+        }
+        if (snapshot.hasError) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ...header,
+              AppErrorView(message: l.syncReadQueueError, onRetry: _reload),
+            ],
+          );
+        }
+        final (pending, dead) = snapshot.data!;
+        if (pending.isEmpty && dead.isEmpty) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[...header, _allSynced(l, lastSync)],
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            ...header,
+            AppButton(
+              label: l.syncNow,
+              icon: Icons.sync,
+              isLoading: _busy,
+              onPressed: () => _perform(_flush),
+            ),
+            if (lastSync != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              lastSync,
+            ],
+            const SizedBox(height: 12),
+            // بياخد مقاس المحتوى؛ يتمرّر بس لو الصفوف كتير.
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
                 children: <Widget>[
-                  Icon(
-                    Icons.pause_circle_outline,
-                    color: context.palette.warning,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text('${blocked.label(l)}\n${l.syncBlockedSaved}'),
-                  ),
+                  if (pending.isNotEmpty)
+                    Text(l.syncPending(arabicNumber(pending.length))),
+                  for (final op in pending)
+                    ListTile(
+                      leading: const Icon(Icons.schedule),
+                      title: Text(op.displayLabel ?? label(l, op.type)),
+                      subtitle: Text(l.syncSavedOnDeviceAwaiting),
+                    ),
+                  if (dead.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Text(
+                        l.syncNoFailures,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  if (dead.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () => _perform(() async {
+                              final db = ref.read(localDbProvider);
+                              for (final entry in dead) {
+                                await db.requeue(entry.id);
+                              }
+                              return _flush();
+                            }),
+                      icon: const Icon(Icons.refresh),
+                      label: Text(l.syncRetryAll),
+                    ),
+                  for (final entry in dead)
+                    ListTile(
+                      leading: const Icon(Icons.error_outline),
+                      title: Text(entry.displayLabel ?? label(l, entry.type)),
+                      subtitle: Text(reason(l, entry.lastError)),
+                      trailing: Wrap(
+                        children: <Widget>[
+                          IconButton(
+                            tooltip: l.syncRetry,
+                            onPressed: _busy
+                                ? null
+                                : () => _perform(() async {
+                                    await ref
+                                        .read(localDbProvider)
+                                        .requeue(entry.id);
+                                    return _flush();
+                                  }),
+                            icon: const Icon(Icons.refresh),
+                          ),
+                          IconButton(
+                            tooltip: l.syncDismiss,
+                            onPressed: _busy
+                                ? null
+                                : () => _perform(() async {
+                                    if (!await showAppConfirmSheet(
+                                      context: context,
+                                      title:
+                                          entry.type ==
+                                              OutboxOpType.tasmeeRecord
+                                          ? l.syncDeleteScoreTitle
+                                          : l.syncDeleteRecordTitle,
+                                      message: l.syncDeleteRecordMessage,
+                                      confirmLabel: l.syncDeletePermanently,
+                                      destructive: true,
+                                    )) {
+                                      return false;
+                                    }
+                                    await ref
+                                        .read(localDbProvider)
+                                        .discard(entry.id);
+                                    return true;
+                                  }, success: l.syncRecordDeleted),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
           ],
-          AppButton(
-            label: l.syncNow,
-            icon: Icons.sync,
-            isLoading: _busy,
-            onPressed: () => _perform(_flush),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * .55,
-            child: FutureBuilder<QueueDetails>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return AppErrorView(
-                    message: l.syncReadQueueError,
-                    onRetry: _reload,
-                  );
-                }
-                final (pending, dead) = snapshot.data!;
-                return ListView(
-                  children: <Widget>[
-                    if (pending.isNotEmpty)
-                      Text(l.syncPending(arabicNumber(pending.length))),
-                    for (final op in pending)
-                      ListTile(
-                        leading: const Icon(Icons.schedule),
-                        title: Text(op.displayLabel ?? label(l, op.type)),
-                        subtitle: Text(l.syncSavedOnDeviceAwaiting),
-                      ),
-                    if (dead.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          l.syncNoFailures,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    if (dead.isNotEmpty)
-                      TextButton.icon(
-                        onPressed: _busy
-                            ? null
-                            : () => _perform(() async {
-                                final db = ref.read(localDbProvider);
-                                for (final entry in dead) {
-                                  await db.requeue(entry.id);
-                                }
-                                return _flush();
-                              }),
-                        icon: const Icon(Icons.refresh),
-                        label: Text(l.syncRetryAll),
-                      ),
-                    for (final entry in dead)
-                      ListTile(
-                        leading: const Icon(Icons.error_outline),
-                        title: Text(entry.displayLabel ?? label(l, entry.type)),
-                        subtitle: Text(reason(l, entry.lastError)),
-                        trailing: Wrap(
-                          children: <Widget>[
-                            IconButton(
-                              tooltip: l.syncRetry,
-                              onPressed: _busy
-                                  ? null
-                                  : () => _perform(() async {
-                                      await ref
-                                          .read(localDbProvider)
-                                          .requeue(entry.id);
-                                      return _flush();
-                                    }),
-                              icon: const Icon(Icons.refresh),
-                            ),
-                            IconButton(
-                              tooltip: l.syncDismiss,
-                              onPressed: _busy
-                                  ? null
-                                  : () => _perform(() async {
-                                      if (!await showAppConfirmSheet(
-                                        context: context,
-                                        title:
-                                            entry.type ==
-                                                OutboxOpType.tasmeeRecord
-                                            ? l.syncDeleteScoreTitle
-                                            : l.syncDeleteRecordTitle,
-                                        message: l.syncDeleteRecordMessage,
-                                        confirmLabel: l.syncDeletePermanently,
-                                        destructive: true,
-                                      )) {
-                                        return false;
-                                      }
-                                      await ref
-                                          .read(localDbProvider)
-                                          .discard(entry.id);
-                                      return true;
-                                    }, success: l.syncRecordDeleted),
-                              icon: const Icon(Icons.close),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

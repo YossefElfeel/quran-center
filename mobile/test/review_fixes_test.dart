@@ -256,8 +256,17 @@ void main() {
           roles: parent,
           subscriptionActive: () async => false,
         ),
-        parentSubscriptionRoute,
+        parentSubscriptionGateLocation(),
       );
+      final String? withName = await parentChildGateRedirect(
+        roles: parent,
+        subscriptionActive: () async => false,
+        childName: 'أحمد علي',
+      );
+      final Uri uri = Uri.parse(withName!);
+      expect(uri.path, parentSubscriptionRoute);
+      expect(uri.queryParameters['from'], parentGateFromChild);
+      expect(uri.queryParameters['name'], 'أحمد علي');
       expect(
         await parentChildGateRedirect(
           roles: parent,

@@ -22,8 +22,11 @@ class SessionRepository {
   Future<List<Circle>> fetchMyCircles(String teacherPersonId) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('circle')
-        .select('id, level_id, name, max_size, status, teacher_id')
+        .select(
+          'id, level_id, name, max_size, status, teacher_id, enrollment(count)',
+        )
         .eq('teacher_id', teacherPersonId)
+        .eq('enrollment.status', 'active')
         .order('created_at', ascending: true);
     return rows.map(Circle.fromMap).toList();
   }

@@ -37,12 +37,24 @@ class Complaint {
   final String? authorName;
 
   /// رقم مرجعي قصير وثابت يسهل تداوله بدل UUID الكامل.
-  String get referenceNumber {
-    final String compact = id.replaceAll('-', '').toUpperCase();
-    return compact.length <= 8 ? compact : compact.substring(0, 8);
-  }
+  String get referenceNumber => complaintReferenceNumber(id);
+
+  /// كود مختصر للقوايم (آخر ٤ حروف من [referenceNumber]) — مثلاً "#A183".
+  String get shortReference => complaintShortReference(id);
 
   bool get isAnswered => managerResponse != null && managerResponse!.isNotEmpty;
+}
+
+/// رقم مرجعي من معرّف الشكوى (أول ٨ حروف من الـ UUID بدون شرط).
+String complaintReferenceNumber(String id) {
+  final String compact = id.replaceAll('-', '').toUpperCase();
+  return compact.length <= 8 ? compact : compact.substring(0, 8);
+}
+
+/// كود مختصر "#XXXX" (آخر ٤ حروف من [complaintReferenceNumber]).
+String complaintShortReference(String id) {
+  final String ref = complaintReferenceNumber(id);
+  return '#${ref.length <= 4 ? ref : ref.substring(ref.length - 4)}';
 }
 
 /// تصنيفات الشكوى (قيم الـ DB) بترتيب العرض في الفورم.

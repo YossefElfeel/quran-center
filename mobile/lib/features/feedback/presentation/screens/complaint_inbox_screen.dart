@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_date.dart';
+import '../../../../core/utils/bidi.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -90,8 +91,10 @@ class ComplaintInboxScreen extends ConsumerWidget {
                     return AppListCard(
                       leadingIcon: Icons.support_agent,
                       title: c.authorName ?? l.fbkUnknownUser,
+                      // الكود معزول LTR والتاريخ في سطر لوحده عشان الـ bidi
+                      // ميكسرش السطر.
                       subtitle:
-                          '${l.fbkComplaintNumber(c.referenceNumber)} · '
+                          '${l.fbkComplaintNumber(ltrIsolate(c.shortReference))}\n'
                           '${arabicDateTimeLabel(c.createdAt)}\n'
                           '${c.categoryLabel(l)}: ${c.body}',
                       onTap: () => _openDetails(context, ref, c),

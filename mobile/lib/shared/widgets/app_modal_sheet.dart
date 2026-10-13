@@ -5,6 +5,10 @@ import 'app_section_header.dart';
 
 /// يفتح bottom sheet موحّد (drag handle + زوايا xl من الثيم) مع تعامل صحيح
 /// مع لوحة المفاتيح (viewInsets). يستبدل البويلربليت المكرّر في `*_sheet.dart`.
+///
+/// بيتفتح على الـ root navigator عشان يغطّي شريط التنقّل السفلي بتاع القشرة
+/// (StatefulShellRoute) بدل ما يتحط تحته. الـ sheets بتقفل نفسها بالـ context
+/// بتاع الـ builder، فمفيش اعتماد على الـ navigator المتداخل.
 Future<T?> showAppModalSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -14,6 +18,7 @@ Future<T?> showAppModalSheet<T>({
 }) {
   return showModalBottomSheet<T>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: isScrollControlled,
     builder: (BuildContext ctx) => AppModalSheet(
       title: title,

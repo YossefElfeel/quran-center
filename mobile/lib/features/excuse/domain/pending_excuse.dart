@@ -1,4 +1,4 @@
-/// طلب عذر غياب مُعلّق في طابور المشرف (مع اسم الطالب والحلقة).
+/// طلب عذر غياب في طابور المشرف (مع اسم الطالب والحلقة ويوم الغياب ومين طلبه).
 class PendingExcuse {
   const PendingExcuse({
     required this.id,
@@ -10,6 +10,8 @@ class PendingExcuse {
     this.sessionId,
     this.reason,
     this.decidedAt,
+    this.absenceDate,
+    this.requesterName,
   });
 
   factory PendingExcuse.fromMap(Map<String, dynamic> map) {
@@ -19,6 +21,11 @@ class PendingExcuse {
         enrollment?['student'] as Map<String, dynamic>?;
     final Map<String, dynamic>? circle =
         enrollment?['circle'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? teacher =
+        circle?['teacher'] as Map<String, dynamic>?;
+    final Map<String, dynamic>? session =
+        map['session'] as Map<String, dynamic>?;
+    final String? sessionDate = session?['session_date'] as String?;
     return PendingExcuse(
       id: map['id'] as String,
       enrollmentId: map['enrollment_id'] as String,
@@ -31,6 +38,8 @@ class PendingExcuse {
       decidedAt: map['decided_at'] == null
           ? null
           : DateTime.parse(map['decided_at'] as String),
+      absenceDate: sessionDate == null ? null : DateTime.parse(sessionDate),
+      requesterName: teacher?['full_name'] as String?,
     );
   }
 
@@ -43,6 +52,13 @@ class PendingExcuse {
   final String status;
   final DateTime createdAt;
   final DateTime? decidedAt;
+
+  /// يوم الحصة اللي الطالب غاب فيها (`circle_session.session_date`).
+  final DateTime? absenceDate;
+
+  /// مين طلب العذر — معلّم الحلقة (الجدول مفيهوش `requested_by`؛ الـ RLS
+  /// بيسمح بالإنشاء لمعلّم الحلقة أو الأدمن).
+  final String? requesterName;
 
   bool get isPending => status == 'pending';
   bool get isApproved => status == 'approved';
@@ -58,5 +74,7 @@ class PendingExcuse {
         sessionId: sessionId,
         reason: reason,
         decidedAt: decidedAt ?? this.decidedAt,
+        absenceDate: absenceDate,
+        requesterName: requesterName,
       );
 }

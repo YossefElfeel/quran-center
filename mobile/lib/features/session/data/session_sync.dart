@@ -190,10 +190,22 @@ class OutboxSync extends _$OutboxSync {
     if (processor == null) return;
     final LocalDb db = ref.read(localDbProvider);
     _retryTimer?.cancel();
+    final int before = await db.pendingCount();
+    final int deadBefore = before > 0 ? await db.deadLetterCount() : 0;
+    bool flushed = false;
     try {
       await processor.flush();
+      flushed = true;
     } finally {
       final int pending = _disposed ? 0 : await db.pendingCount();
+      // "آخر مزامنة" = كان فيه معلّق، اتفرّغ، وواحدة ع الأقل اتقبلت فعلًا
+      // (مش كله اترفض ودخل الـ dead-letter).
+      if (flushed && !_disposed && before > 0 && pending == 0) {
+        final int newlyDead = await db.deadLetterCount() - deadBefore;
+        if (!_disposed && newlyDead < before) {
+          unawaited(ref.read(lastSyncAtProvider.notifier).markNow());
+        }
+      }
       if (_disposed || pending == 0) {
         _backoff = 1;
       } else if (ref.read(sessionWritesBlockStateProvider) != null) {

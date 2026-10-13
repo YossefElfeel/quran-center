@@ -78,14 +78,18 @@ class SubscriptionRepository {
 
   HouseholdSummary _household(Map<String, dynamic> m, DateTime today) {
     final String? lastPaid = m['last_paid_month'] as String?;
+    final DateTime? lastPaidMonth = lastPaid != null
+        ? DateTime.parse(lastPaid)
+        : null;
     return HouseholdSummary(
       id: m['id'] as String,
       name: m['name'] as String,
       monthlyAmount: (m['monthly_amount'] as num).toDouble(),
       status: deriveSubscriptionStatus(
-        lastPaidMonth: lastPaid != null ? DateTime.parse(lastPaid) : null,
+        lastPaidMonth: lastPaidMonth,
         today: today,
       ),
+      lastPaidMonth: lastPaidMonth,
     );
   }
 
