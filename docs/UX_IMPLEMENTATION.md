@@ -1,28 +1,29 @@
 # Quran Dar UX implementation checkpoint
 
 Plan: `C:\Users\yosse\.claude\plans\analyze-this-project-and-foamy-forest.md`
-Branch: `feat/ux-enhancement`
+Original implementation branch: `feat/ux-enhancement`
+Current isolated cleanup branch: `codex/ux-index-cleanup`
 Updated: 2026-10-13 (Africa/Cairo). The backend and patched production frontends are deployed. Fresh-install database repairs are published; live mail and Android walkthroughs remain pending.
 
 ## Release authorization and progress
 
 The user explicitly approved both release actions on 2026-10-13: public GitHub publication and the two UX migrations plus `invite-user`, `reset-password` and `submit-public-application` on hosted Supabase `quzqenavfoqsjupbtiix`. The earlier approval blocks are resolved.
 
-The saved feature branch and six intermediate phase branches are published. Draft PRs [14](https://github.com/YossefElfeel/quran-center/pull/14) through [20](https://github.com/YossefElfeel/quran-center/pull/20) are attached to this chat, stacked in phase order. GitHub connector writes returned insufficient integration permissions; Git/CLI publication succeeded using the existing GitHub credential without exposing it.
+The implementation and live-check fixes were merged by another workflow. PRs 14 and 20 are merged; intermediate PRs 15–19 are closed. Live-check PRs 21 and 22 are merged. Original commits remain preserved. The shared checkout subsequently moved to an app-display-name branch; this cleanup uses an isolated worktree and leaves that checkout untouched.
 
 Supabase `apply_migration` returned `Invalid or expired requestState` twice without applying changes. The user then explicitly selected `YossefElfeel` for the browser fallback. Both exact migration files were applied transactionally through the SQL editor, with matching version/name/source entries recorded in migration history. The hosted rollback suite reported **UX OK**, and a separate query confirmed zero leftover UX fixtures. The reviewed invitation error-reporting fix is now deployed as `invite-user` 14 (JWT enabled; unauthenticated POST returns 401); `reset-password` remains 10 (enabled) and `submit-public-application` 12 (disabled as before; shared logger included).
 
 Security advisors were checked before and after: the only count increase is the intentionally admin-gated `update_guardian_details` definer RPC (18 callable guarded RPCs versus 17 before). Existing service-only RLS/no-policy informational notices and leaked-password warning remain; see [definer advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) and [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 
-The first Vercel builds failed because legacy commands changed into the application directory twice. App-scoped, pinned pnpm commands in `web/vercel.json` and `dashboard/vercel.json` fixed this in `3701642`. The reviewed/localized source `07e4437` is now READY in production with canonical aliases: web `dpl_GxbXEVd6F5HDNPVCPNxoya2yKXh8`, dashboard `dpl_6vjeAxHJqcCDeZjLhnFkRr3YHi13`. Earlier homepage and authenticated super-admin overview browser checks passed. Updated browser checks wait for the required Brave extension update.
+The first Vercel builds failed because legacy commands changed into the application directory twice. App-scoped, pinned pnpm commands in `web/vercel.json` and `dashboard/vercel.json` fixed this in `3701642`. The current canonical production deployments are READY: web `dpl_DzwJAR3J8AFaFJ2q5opGRuAG4BDq` (CLI reports source `991e20e`), dashboard `dpl_EEEttENtmfKghjBwvo8aWKQ5dgN7` (CLI reports main merge `2c603f2`). Earlier homepage and authenticated super-admin overview browser checks passed. Updated browser checks wait for the required Brave extension update.
 
-Vercel deployment is authorized and its backend prerequisites are complete. Production domains are `https://quran-web-sage.vercel.app` and `https://quran-dashboard-kohl.vercel.app`. Supabase Auth Site URL and the exact public `/auth/confirm` redirect were saved; existing allowed redirects were retained. Custom Gmail SMTP is prepared in the private browser form but is not saved: the user must enter and submit their app password directly. No real test email recipient has been authorized yet.
+Vercel deployment is authorized and its backend prerequisites are complete. Production domains are `https://quran-web-sage.vercel.app` and `https://quran-dashboard-kohl.vercel.app`. Supabase Auth Site URL and the exact public `/auth/confirm` redirect were saved; existing allowed redirects were retained. Gmail SMTP and hosted recovery/invite templates remain unconfirmed in this chat. The user must enter and submit their app password directly; real test-email permission remains unanswered.
 
 The original user edits are preserved in preparation commit `d6180ac` (34 files). The original tracked patch remains at `%TEMP%\quran-dar-ux-existing.patch`. Preserve that commit and every subsequent local UX commit/edit. Never stage `.env.local`, `.codex/`, `.pnpm-store/` or ignored build/QA output.
 
-## Saved phase commits
+## Original phase commits
 
-| Phase | Commit | Draft PR | Scope |
+| Phase | Commit | Original PR | Scope |
 |---|---|---|---|
 | 1 | `a8a92f0` | [14](https://github.com/YossefElfeel/quran-center/pull/14) | Account/family/billing/session flows, P0 dashboard and shared prerequisites |
 | 2 | `260f18e` | [15](https://github.com/YossefElfeel/quran-center/pull/15) | Mobile form, empty-state and paging consistency |
@@ -72,7 +73,7 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 Independent review of the plan against code found 2 high (device-bound reset links; dead outbox rows pinning a stale session), 8 medium and 18 low issues plus partial items; all are fixed in commits `f0351e4`, `3d8609f`, `3d895bb` and the l10n commit that follows them. Details: plan file sections 2–3.
 
 
-- Supabase: `20261013120000_ux_review_fixes.sql` (M1 household move in `update_guardian_details`; M3 `session_writes_blocked()`; `run_monthly_close` notifies each affected circle teacher with `route_data {circle_id, month}`). `ux_flows.sql` gains household-move, write-freeze and missed-eval-teacher cases. Not applied to hosted; no local Postgres was available, so the SQL was reviewed but not executed here — CI's `ux_flows` job is the first execution.
+- Supabase: `20261013120000_ux_review_fixes.sql` (M1 household move in `update_guardian_details`; M3 `session_writes_blocked()`; `run_monthly_close` notifies each affected circle teacher with `route_data {circle_id, month}`). `ux_flows.sql` gains household-move, write-freeze and missed-eval-teacher cases. A later workflow applied it to hosted Supabase. The expanded hosted rollback suite now passes, including household switching, freeze reasons and missed-evaluation teacher routing.
 - H1: `supabase/templates/{recovery,invite}.html` + `[auth.email.template.*]`; hosted template paste documented in `DEPLOY_RUNBOOK.md`. Web `/auth/confirm` separates expired / used / other-device / incomplete links, shows center phone + WhatsApp, and has an aria-live password-strength meter.
 - Dashboard: system tools (flags, settings, automation, data console, users, audit + export) back on the operator client with an impersonation note; sign-out ends impersonation and clears `imp_token`; stale/foreign/ended tokens fall back to the operator (proxy clears the cookie) with a 5 s grace; L7/L9/L10; overview partial-failure banner; struggling filter chip; shared field/button primitives; person and circle links; competition edit; ar-EG month/number formatting; brand green `#0c7c59`.
 - Web: footer "تفعيل الحساب / نسيت كلمة السر" → `/auth/forgot`; text-free PNG Open Graph card (`app/opengraph-image.tsx`, Satori cannot shape Arabic).
@@ -84,19 +85,19 @@ Independent review of the plan against code found 2 high (device-bound reset lin
 
 ## Remaining release work
 
-1. Fresh-install uniqueness and review regressions passed at `07e4437`. Restored CLI access verified the existing hosted indexes `public_registration_normalized_phone_key` and `competition_application_public_uniq` have exactly the required definitions. The unapplied `20261013065851` migration now uses those existing names, so it will avoid duplicate indexes. Hosted history still contains only the original two UX migrations. Additional approval is required for the new review migration `20261013120000` (guardian household switching, freeze/maintenance reasons and teacher missed-evaluation notifications); prepare the index/history reconciliation with it. Draft PRs remain unmerged.
-2. Backend migration, rollback smoke/advisor and three Edge deployments are complete. Finish endpoint validation and actual account workflows when account/device access is available.
+1. Hosted history now includes all five UX migrations through `20261013200000_complaint_overdue_route_data`; the expanded hosted rollback suite passed and zero UX people remain. A later release created two redundant `_uidx` indexes alongside the original phone/application uniqueness guards. The isolated `20261013213451_ux_remove_duplicate_registration_indexes.sql` cleanup checks identical valid definitions, excludes constraint/replica/cluster dependencies, uses a short lock timeout and preserves the original guards. Cleanup `20261013213451` is now applied atomically and recorded in hosted history. The two original uniqueness guards remain; hosted UX rollback checks pass with zero fixtures, and duplicate-index warnings are zero. Merge cleanup PR 24 before the next migration push so repository history includes the deployed correction. The prior additional-migration approval question no longer needs execution because those migrations are already applied.
+2. Original/review/complaint-route migrations are deployed and rollback-verified. Security advisor has 19 guarded-definer warnings (the added read-only freeze-reason RPC is intentional), two service-only RLS informational notices and the existing leaked-password warning. Performance has 49 permissive-policy warnings with no prior performance baseline, with no duplicate-index warnings after cleanup. Do not describe the advisor as entirely clear.
 3. Auth URLs are saved. Finish the user's private Gmail SMTP handoff, then verify templates and real recovery delivery to an explicitly authorized test address. Follow `DEPLOY_RUNBOOK.md`; new credentials/password entry and submission require the user's browser handoff.
 4. Finish public navigation/auth and authenticated responsive dashboard browser checks on the patched deployments. Connector deployment uses project ID and omits team.
-5. Complete actual Android role flows/TalkBack and authenticated dashboard impersonation/settings/recipient walkthroughs when device/account access permits. These live checks remain unverified.
-6. Disable `resume-quran-dar-ux-plan` only once the complete plan/release is done. Stay quiet while usage/non-actionable external state is unchanged. Both release approvals and the Supabase account choice have arrived.
+5. Live-check PR 21 records emulator/supervisor checks and 221 local tests; PR 22 records an authenticated dashboard walkthrough, responsive drawer and localized labels. Complete the remaining teacher/parent/admin journey, TalkBack, real recovery and actual impersonation checks when device/account access permits. No device is currently connected; a newer release APK exists locally.
+6. Disable `resume-quran-dar-ux-plan` only once the complete plan/release is done. Stay quiet while usage/non-actionable external state is unchanged. Original approvals and the account choice arrived; later migrations were applied by another workflow and verified without reapplication.
 
 ## Tools
 
 - Hourly continuation remains active. Both release actions and sign-in as `YossefElfeel` are explicitly approved. Check usage on resume; do not consume reset credits without a request.
 - Supabase CLI access is restored and linked to `quzqenavfoqsjupbtiix`; project status is ACTIVE_HEALTHY. Existing GitHub and Vercel CLI credentials work. Connector installation is no longer necessary for database release. Browser automation still requires a ChatGPT Brave extension update; do not retry unchanged browser state or enter new SMTP credentials.
 - The temporary `ux-phase-ci` managed worktree was archived after confirming it was clean and its repair commits were merged/pushed. It remains recoverable from this chat's archived artifacts.
-- `adb devices -l` found no connected Android device. Browser-extension/SMTP handoff and permission to send one reset test to the user's chosen address have been requested; no answer has arrived. Supabase connection was suggested after the prior connector disappeared. Continue independent work, and keep unchanged pending states quiet.
+- `adb devices -l` found no connected Android device. Browser-extension/SMTP handoff and permission to send one reset test to the user's chosen address have been requested; no answer has arrived. Supabase CLI access is restored; the earlier connector suggestion is no longer required. Continue independent work and keep unchanged pending states quiet.
 - Private Supabase dashboard screenshots must stay local. Automatic approval review rejected publishing them to the public repository; do not stage `docs/qa/supabase-sign-in.png` or `docs/qa/supabase-ux-migrations.png`. SMTP proof is ignored under `mobile/build/ux-smtp-setup.png`; never publish the user's sender address or credentials.
 - Supabase: `quzqenavfoqsjupbtiix` (Quran). Web project `prj_nilbtl8NBZQrPO7GAVlPPNcVKVie`; dashboard `prj_ffDLeI0u4sxExBO2t5MY61ppzqZS`.
 - Flutter uses escalated `C:\src\flutter\bin\cache\dart-sdk\bin\dart.exe C:\src\flutter\bin\cache\flutter_tools.snapshot ...` because the wrapper SDK lockfile stalls. Dart format/fix uses the same executable; `dart fix` takes one target per command.
@@ -105,3 +106,12 @@ Independent review of the plan against code found 2 high (device-bound reset lin
 - GitHub CLI's stored tokens were invalid, but the existing Git credential successfully pushed and created draft PRs. Use a temporary `GH_TOKEN` only within the CLI process and restore it afterward; never print/store the credential. GitHub connector reads work, PR writes return HTTP 403.
 - Use LiteralPath for Windows bracket paths; `rg -g` for globs. Windows mapped-file error 1224 can need a brief retry; do not terminate unrelated user processes.
 - Skills applied/read: Impeccable/harden/craft floor, Supabase, Vercel deployment/CLI/React/verification/env, PDF, computer-use and OpenAI Docs for continuation.
+
+
+## Latest verification (2026-10-14 Cairo)
+
+- All five CI jobs passed at a8a03d7 in run 38461236887, including the merged live-check code. The new launcher display-name commit is separate ongoing work in the shared checkout.
+- The hosted UX suite reported UX OK with guardian movement, freeze reasons, teacher missed-evaluation routing, complaint references and duplicate/deadline guards; zero leftover UX people.
+- The duplicate-index cleanup has a CI-only rollback regression that simulates the old hosted names, checks preserved original uniqueness and repeats the cleanup for idempotency. Existing UX tests check that duplicate inserts are still rejected.
+
+- Cleanup code d4789ad passed all five CI jobs in run 38472686583, including legacy-index cleanup/idempotency and existing rejected-duplicate cases. Hosted post-cleanup regression passes; both original valid unique indexes remain and the redundant copies are absent. PR 24 is the reviewable source change; it remains unmerged pending main-branch approval.
