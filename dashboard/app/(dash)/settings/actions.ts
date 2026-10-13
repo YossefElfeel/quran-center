@@ -3,7 +3,7 @@ import { normalizeNumber, validationError } from "@/lib/validation";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { guardedAction, type FormResult } from "@/lib/guard";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SETTINGS } from "./meta";
 
 export async function updateSettings(_previous: FormResult | null, formData: FormData): Promise<FormResult> {
@@ -30,8 +30,8 @@ export async function updateSettings(_previous: FormResult | null, formData: For
   values.center_name = String(formData.get("center_name") ?? "").trim();
   values.center_address = String(formData.get("center_address") ?? "").trim();
   if (!values.center_name) return { ok: false, error: "اسم الدار مطلوب." };
-  const result = await guardedAction({ action: "settings_updated", reason: String(formData.get("reason") ?? ""), targetTable: "system_settings", run: async () => {
-    const supabase = await getDataClient();
+  const result = await guardedAction({ asOperator: true, action: "settings_updated", reason: String(formData.get("reason") ?? ""), targetTable: "system_settings", run: async () => {
+    const supabase = await createSupabaseServerClient();
     const { error } = await supabase.rpc("update_center_settings", { p_values: values });
     return { error: error ? "تعذّر حفظ الإعدادات — راجع الاتصال وصلاحيات الحساب." : null };
   }});

@@ -40,7 +40,7 @@ export default async function LoginPage({
         </label>
 
         {error ? (
-          <p className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-red-600">
             {error === "network" ? "تعذّر الاتصال — جرّب تاني." : error === "suspended" ? "الحساب موقوف — تواصل مع الإدارة." : "الإيميل أو كلمة السر مش صحيحين."}
           </p>
         ) : null}

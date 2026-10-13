@@ -26,3 +26,6 @@ export function currentCairoMonth() {
   const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit'}).formatToParts(new Date());
   return `${parts.find(p=>p.type==='year')!.value}-${parts.find(p=>p.type==='month')!.value}-01`;
 }
+// A billing month (YYYY-MM-01 date, no time): month + year only, never shifted by timezone.
+const MONTH_FMT=new Intl.DateTimeFormat("ar-EG",{timeZone:"UTC",year:"numeric",month:"long"});
+export function formatMonth(value:string|null|undefined){if(!value)return "—";const match=/^(\d{4})-(\d{2})/.exec(value);if(!match)return "—";return MONTH_FMT.format(new Date(Date.UTC(Number(match[1]),Number(match[2])-1,1)));}

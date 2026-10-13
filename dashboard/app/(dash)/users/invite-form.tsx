@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import { FieldInput, FieldSelect } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 
@@ -29,7 +30,6 @@ export function InviteForm() {
         <FieldInput feedback={state}
           name="full_name"
           required
-          className="rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -38,7 +38,6 @@ export function InviteForm() {
           name="email"
           type="email"
           required
-          className="rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -47,7 +46,6 @@ export function InviteForm() {
           name="role"
           required
           defaultValue="teacher"
-          className="rounded-lg border border-border bg-white px-3 py-2 outline-none focus:border-primary"
         >
           {ROLES.map((r) => (
             <option key={r.value} value={r.value}>
@@ -58,13 +56,14 @@ export function InviteForm() {
       </label>
 
       <p className="text-sm text-foreground/60">لأولياء الأمور استخدم «إضافة ولي أمر» من بطاقة الطالب في التطبيق، عشان تربط الأسرة والطفل.</p>
-      <button
+      <Button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-primary px-4 py-2 font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        aria-busy={pending}
+        className="self-start"
       >
         {pending ? "جاري إنشاء الرابط…" : "إنشاء رابط دعوة"}
-      </button>
+      </Button>
 
       {state?.ok === false ? (
         <p role="alert" className="text-sm text-red-600">{state.error}</p>

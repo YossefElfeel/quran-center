@@ -1,3 +1,4 @@
+import { PersonLink } from "@/components/person-link";
 import { RowActions } from "@/components/ui/row-actions";
 import { formatDateTime } from "@/lib/format";
 import { getDataClient } from "@/lib/supabase/data-client";
@@ -12,14 +13,14 @@ type MediaRow = {
   type: string;
   retained: boolean;
   created_at: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
 };
 type ConsentRow = {
   id: string;
   scope: string;
   revoked_at: string | null;
   granted_at: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
 };
 
 export default async function MediaPage() {
@@ -27,12 +28,12 @@ export default async function MediaPage() {
   const [mediaRes, consentRes] = await Promise.all([
     supabase
       .from("media")
-      .select("id, type, retained, created_at, student:student_person_id(full_name)")
+      .select("id, type, retained, created_at, student:student_person_id(id, full_name)")
       .order("created_at", { ascending: false })
       .limit(100),
     supabase
       .from("consent_record")
-      .select("id, scope, revoked_at, granted_at, student:student_person_id(full_name)")
+      .select("id, scope, revoked_at, granted_at, student:student_person_id(id, full_name)")
       .order("granted_at", { ascending: false })
       .limit(50),
   ]);
@@ -72,7 +73,7 @@ export default async function MediaPage() {
               ) : (
                 media.map((m) => (
                   <tr key={m.id} className="border-b border-border/60">
-                    <td className="px-4 py-2">{m.student?.full_name ?? "—"}</td>
+                    <td className="px-4 py-2"><PersonLink person={m.student} /></td>
                     <td className="px-4 py-2">{TYPE_LABEL[m.type] ?? m.type}</td>
                     <td className="px-4 py-2">
                       {m.retained ? (
@@ -124,7 +125,7 @@ export default async function MediaPage() {
               ) : (
                 consents.map((c) => (
                   <tr key={c.id} className="border-b border-border/60">
-                    <td className="px-4 py-2">{c.student?.full_name ?? "—"}</td>
+                    <td className="px-4 py-2"><PersonLink person={c.student} /></td>
                     <td className="px-4 py-2">
                       {TYPE_LABEL[c.scope] ?? c.scope}
                     </td>

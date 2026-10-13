@@ -1,3 +1,4 @@
+import { PersonLink } from "@/components/person-link";
 import { RowActions } from "@/components/ui/row-actions";
 import { formatDateTime } from "@/lib/format";
 import { getDataClient } from "@/lib/supabase/data-client";
@@ -10,14 +11,14 @@ type Row = {
   type: string;
   title: string;
   created_at: string;
-  recipient: { full_name: string } | null;
+  recipient: { id: string; full_name: string } | null;
 };
 
 export default async function NotificationsPage() {
   const supabase = await getDataClient();
   const { data, error: loadError1 } = await supabase
     .from("notification")
-    .select("id, type, title, created_at, recipient:recipient_person_id(full_name)")
+    .select("id, type, title, created_at, recipient:recipient_person_id(id, full_name)")
     .order("created_at", { ascending: false })
     .limit(50);
   if (loadError1) throw new Error('data_load_failed');
@@ -58,7 +59,7 @@ export default async function NotificationsPage() {
                   <tr key={n.id} className="border-b border-border/60">
                     <td className="px-4 py-2">{n.title}</td>
                     <td className="px-4 py-2 text-foreground/60">
-                      {n.recipient?.full_name ?? "—"}
+                      <PersonLink person={n.recipient} />
                     </td>
                     <td className="px-4 py-2 text-foreground/50">
                       {formatDateTime(n.created_at)}

@@ -1,5 +1,5 @@
 import { getSuperAdmin } from "@/lib/auth";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { auditQuery,parseAuditFilters } from "@/lib/audit-query";
 import { actionLabel } from "@/lib/action-labels";
 import { formatDateTime } from "@/lib/format";
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   if(!await getSuperAdmin())return new Response("Forbidden",{status:403});
   try {
     const values=parseAuditFilters(Object.fromEntries(new URL(request.url).searchParams));
-    const client=await getDataClient();const snapshot=new Date().toISOString();
+    const client=await createSupabaseServerClient();const snapshot=new Date().toISOString();
     const first=await auditQuery(client,values).lte("at",snapshot).limit(500);
     if(first.error)throw first.error;
     let rows=(first.data??[]) as unknown as Row[];const encoder=new TextEncoder();

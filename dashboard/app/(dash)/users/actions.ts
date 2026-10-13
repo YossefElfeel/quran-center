@@ -4,7 +4,7 @@ import { validateAction } from "@/lib/action-schemas";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type InviteResult =
   | { ok: true; actionLink: string | null }
@@ -33,7 +33,7 @@ export async function inviteUser(
     return { ok: false, error: "كل الحقول مطلوبة." };
   }
 
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.functions.invoke("invite-user", {
     body: { email, full_name: fullName, role },
   });
@@ -98,7 +98,7 @@ async function invokeAdmin(
   fn: string,
   body: Record<string, unknown>,
 ): Promise<ActionResult> {
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.functions.invoke(fn, { body });
 
   if (error) {
@@ -187,7 +187,7 @@ export async function forceLogout(
   const reason = String(formData.get("reason") ?? "").trim();
   if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
   if (!reason) return { ok: false, error: "السبب مطلوب." };
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("admin_force_logout", {
     p_person: targetPersonId,
     p_reason: reason,
@@ -209,7 +209,7 @@ export async function resetPassword(
   const reason = String(formData.get("reason") ?? "").trim();
   if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
   if (!reason) return { ok: false, error: "السبب مطلوب." };
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.functions.invoke("reset-password", {
     body: { target_person_id: targetPersonId, reason },
   });

@@ -14,6 +14,7 @@ export async function guardedAction(opts: {
   targetTable?: string;
   targetId?: string;
   meta?: Record<string, unknown>;
+  asOperator?: boolean;
   run: (
     admin: SuperAdmin,
   ) => Promise<{ error?: { message?: string } | string | null } | void>;
@@ -41,6 +42,7 @@ export async function guardedAction(opts: {
     targetTable: opts.targetTable,
     targetId: opts.targetId,
     meta: { ...(opts.meta ?? {}), reason },
+    asOperator: opts.asOperator,
   });
   return { ok: true };
 }

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
 export default async function PersonPage({params}:{params:Promise<{personId:string}>}){
   const {personId}=await params;
   if(!/^[0-9a-f-]{36}$/i.test(personId))notFound();
-  const client=await getDataClient();
+  const client=await createSupabaseServerClient();
   const [{data:person,error},{data:enrollments,error:enrollmentError},{data:members,error:memberError},{data:roles,error:roleError}]=await Promise.all([
     client.from('person').select('id,full_name,phone,lifecycle_status').eq('id',personId).maybeSingle(),
     client.from('enrollment').select('id,status,enrolled_at,circle:circle_id(id,name)').eq('student_person_id',personId).order('enrolled_at',{ascending:false}).limit(50),

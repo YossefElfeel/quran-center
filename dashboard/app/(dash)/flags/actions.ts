@@ -4,7 +4,7 @@ import { validateAction } from "@/lib/action-schemas";
 import { revalidatePath } from "next/cache";
 
 import { guardedAction, type FormResult } from "@/lib/guard";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 // تبديل حالة مفتاح. كتابة محمية بـ RLS (سوبر أدمن بس) + سبب مطلوب + تسجيل تدقيق
 // (اللي بيشغّل التنبيه الفوري في M7). enabled = الحالة الجديدة المطلوبة.
@@ -20,14 +20,14 @@ export async function toggleFlag(
   const reason = String(fd.get("reason") ?? "");
   if (!key) return { ok: false, error: "المفتاح مطلوب." };
 
-  const result = await guardedAction({
+  const result = await guardedAction({ asOperator: true,
     action: "flag_toggle",
     targetTable: "feature_flag",
     targetId: key,
     reason,
     meta: { key, enabled },
     run: async (admin) => {
-      const supabase = await getDataClient();
+      const supabase = await createSupabaseServerClient();
       return supabase
         .from("feature_flag")
         .update({ enabled, updated_by: admin.personId })

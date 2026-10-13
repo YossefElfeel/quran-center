@@ -1,6 +1,7 @@
 import { RowActions } from "@/components/ui/row-actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { isUuid } from "@/lib/validation";
 
 import { getDataClient } from "@/lib/supabase/data-client";
 
@@ -15,6 +16,7 @@ export default async function LevelsPage({
   params: Promise<{ curriculumId: string }>;
 }) {
   const { curriculumId } = await params;
+  if (!isUuid(curriculumId)) notFound();
   const supabase = await getDataClient();
   const { data: curriculum, error: loadError1 } = await supabase
     .from("curriculum")

@@ -1,4 +1,5 @@
-import { getDataClient } from "@/lib/supabase/data-client";
+import { OperatorScopeNote } from "@/components/operator-scope-note";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { DeleteRowButton, TableSelect, WriteForm } from "./forms";
 
@@ -67,7 +68,7 @@ export default async function DataPage({
   const { table: raw } = await searchParams;
   const table = TABLES.includes(raw ?? "") ? (raw as string) : TABLES[0];
 
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.from(table).select("*").limit(50);
   const rows = (data ?? []) as Record<string, unknown>[];
   const cols = rows.length
@@ -77,7 +78,7 @@ export default async function DataPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">وحدة التحكّم بالبيانات</h1>
+        <h1 className="text-2xl font-bold">وحدة التحكّم بالبيانات</h1><OperatorScopeNote />
         <p className="text-sm text-foreground/60">
           تصفّح أي جدول وعدّله مباشرة. الكتابة بتمرّ عبر دالة محروسة (تمنع جداول
           حسّاسة وأعمدة الرقم القومي، وتطلب سبب، وتسجّل كل عملية). ⚠️ أداة قوية —

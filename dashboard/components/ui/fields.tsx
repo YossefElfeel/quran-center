@@ -14,6 +14,7 @@ const fieldNames: Record<string,string> = {
   audience: 'الجمهور', title: 'العنوان', body: 'الرسالة', response: 'الرد',
   kind: 'نوع الشهادة', op: 'العملية', payload: 'قيم JSON', match: 'شرط JSON',
   center_name: 'اسم الدار', center_phone: 'رقم الإدارة', center_address: 'عنوان الدار',
+  rules: 'الشروط', deadline: 'آخر موعد', prize: 'الجائزة',
 };
 function fieldFeedback(feedback: FormFeedback | undefined, name: string | undefined) {
   return name && feedback?.ok === false ? feedback.fieldErrors?.[name]?.[0] : undefined;

@@ -18,6 +18,8 @@ export const ACTION_LABEL: Record<string, string> = {
   data_console_update: "تعديل بيانات",
   data_console_delete: "حذف بيانات",
   cron_run_now: "تشغيل مهمّة",
+  complaint_responded: "رد على شكوى",
+  competition_updated: "تعديل مسابقة",
   cron_set_active: "تبديل مهمّة",
   cron_purge_public_registrations: "تنظيف التسجيلات القديمة",
   cron_nominate_certificate_candidates: "ترشيح المستحقين للشهادات",

@@ -2,6 +2,7 @@
 import { FieldTextarea, FieldInput } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 import { Dialog } from "@/components/ui/dialog";
+import { Button, SubmitButton } from "@/components/ui/button";
 
 import { useActionState, useEffect, useState } from "react";
 
@@ -32,11 +33,6 @@ type AdminAction = (
   fd: FormData,
 ) => Promise<ActionResult>;
 
-const btn =
-  "rounded-md border border-border px-2 py-1 text-xs transition-colors hover:bg-border/40 disabled:opacity-50";
-const btnDanger =
-  "rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50";
-
 export function UserActions({
   personId,
   fullName,
@@ -57,18 +53,18 @@ export function UserActions({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1">
-      <button className={btn} onClick={() => setOpen("roles")}>
+      <Button type="button" size="sm" variant="secondary" onClick={() => setOpen("roles")}>
         الأدوار
-      </button>
+      </Button>
 
       {!isSelf && status === "active" ? (
         <>
-          <button className={btn} onClick={() => setOpen("block")}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => setOpen("block")}>
             حظر
-          </button>
-          <button className={btn} onClick={() => setOpen("deactivate")}>
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => setOpen("deactivate")}>
             إيقاف
-          </button>
+          </Button>
           <ResetPasswordButton personId={personId} fullName={fullName} />
           <DangerAction
             action={forceLogout}
@@ -94,9 +90,9 @@ export function UserActions({
       {isSelf ? (
         <span className="text-xs text-foreground/40">(أنت)</span>
       ) : (
-        <button className={btnDanger} onClick={() => setOpen("delete")}>
+        <Button type="button" size="sm" variant="danger" onClick={() => setOpen("delete")}>
           حذف نهائي
-        </button>
+        </Button>
       )}
 
       {open === "block" ? (
@@ -158,7 +154,7 @@ function ReasonForm({
   submitLabel: string;
   placeholder: string;
 }) {
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ActionResult | null,
     FormData
   >(action, null);
@@ -177,15 +173,9 @@ function ReasonForm({
         required
         rows={3}
         placeholder={placeholder}
-        className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+        className="text-sm"
       />
-      <button
-        type="submit"
-        disabled={pending}
-        className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-      >
-        {pending ? "…" : submitLabel}
-      </button>
+      <SubmitButton className="self-start text-sm">{submitLabel}</SubmitButton>
       {state?.ok === false ? (
         <p className="text-sm text-red-600">{state.error}</p>
       ) : null}
@@ -202,7 +192,7 @@ function DeleteForm({
   fullName: string;
   onDone: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ActionResult | null,
     FormData
   >(deleteUser, null);
@@ -225,7 +215,7 @@ function DeleteForm({
         required
         rows={2}
         placeholder="سبب الحذف (مطلوب)"
-        className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+        className="text-sm"
       />
       <FieldInput feedback={state}
         name="confirm"
@@ -233,15 +223,15 @@ function DeleteForm({
         onChange={(e) => setConfirm(e.target.value)}
         placeholder={fullName}
         autoComplete="off"
-        className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-red-400"
+        className="text-sm focus:border-red-400"
       />
-      <button
-        type="submit"
-        disabled={pending || confirm.trim() !== fullName}
-        className="self-start rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      <SubmitButton
+        variant="danger"
+        disabled={confirm.trim() !== fullName}
+        className="self-start text-sm"
       >
-        {pending ? "…" : "احذف نهائيًا"}
-      </button>
+        احذف نهائيًا
+      </SubmitButton>
       {state?.ok === false ? (
         <p className="text-sm text-red-600">{state.error}</p>
       ) : null}
@@ -287,13 +277,13 @@ function RoleToggle({
   has: boolean;
   isSelf: boolean;
 }) {
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ActionResult | null,
     FormData
   >(manageRole, null);
   useActionFeedback(state);
   // الواجهة بتمنع سحب السوبر أدمن من نفسك (السيرفر بيمنع برضه).
-  const disabled = pending || (isSelf && role.value === "super_admin" && has);
+  const disabled = isSelf && role.value === "super_admin" && has;
 
   return (
     <form action={formAction} className="flex items-center justify-between gap-2">
@@ -305,24 +295,20 @@ function RoleToggle({
         {state?.ok === false ? (
           <span className="text-xs text-red-600">{state.error}</span>
         ) : null}
-        <button
-          type="submit"
+        <SubmitButton
+          size="sm"
+          variant={has ? "primary" : "secondary"}
           disabled={disabled}
-          className={
-            has
-              ? "rounded-md bg-primary/10 px-3 py-1 text-xs text-primary disabled:opacity-50"
-              : "rounded-md border border-border px-3 py-1 text-xs disabled:opacity-50"
-          }
         >
-          {pending ? "…" : has ? "مفعّل ✓ (للسحب)" : "امنح"}
-        </button>
+          {has ? "مفعّل ✓ (للسحب)" : "امنح"}
+        </SubmitButton>
       </div>
     </form>
   );
 }
 
 function UnblockForm({ personId }: { personId: string }) {
-  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(
     blockUser,
     null,
   );
@@ -331,15 +317,13 @@ function UnblockForm({ personId }: { personId: string }) {
     <form action={formAction} className="inline">
       <input type="hidden" name="target_person_id" value={personId} />
       <input type="hidden" name="block" value="false" />
-      <button type="submit" disabled={pending} className={btn}>
-        {pending ? "…" : "فك الحظر"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">فك الحظر</SubmitButton>
     </form>
   );
 }
 
 function RestoreForm({ personId }: { personId: string }) {
-  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(
     deleteUser,
     null,
   );
@@ -348,9 +332,7 @@ function RestoreForm({ personId }: { personId: string }) {
     <form action={formAction} className="inline">
       <input type="hidden" name="target_person_id" value={personId} />
       <input type="hidden" name="mode" value="restore" />
-      <button type="submit" disabled={pending} className={btn}>
-        {pending ? "…" : "استرجاع"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">استرجاع</SubmitButton>
     </form>
   );
 }
@@ -363,7 +345,7 @@ function ResetPasswordButton({
   fullName: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ResetResult | null,
     FormData
   >(resetPassword, null);
@@ -371,9 +353,9 @@ function ResetPasswordButton({
 
   return (
     <>
-      <button className={btn} onClick={() => setOpen(true)}>
+      <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(true)}>
         كلمة السر
-      </button>
+      </Button>
       {open ? (
         <Modal title={`إعادة كلمة سر «${fullName}»`} onClose={() => setOpen(false)}>
           <form action={formAction} className="flex flex-col gap-3">
@@ -386,15 +368,9 @@ function ResetPasswordButton({
               required
               rows={2}
               placeholder="السبب (مطلوب)"
-              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+              className="text-sm"
             />
-            <button
-              type="submit"
-              disabled={pending}
-              className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {pending ? "…" : "ولّد الرابط"}
-            </button>
+            <SubmitButton className="self-start text-sm">ولّد الرابط</SubmitButton>
             {state?.ok === false ? (
               <p className="text-sm text-red-600">{state.error}</p>
             ) : null}

@@ -1,5 +1,5 @@
 "use client";
-import { FieldSelect, FieldInput, FieldTextarea } from "@/components/ui/fields";
+import { SubmitButton } from "@/components/ui/button";import { FieldSelect, FieldInput, FieldTextarea } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useRouter } from "next/navigation";
@@ -8,13 +8,6 @@ import { useActionState } from "react";
 import { DangerAction } from "@/components/danger-action";
 
 import { deleteRow, writeJson, type FormResult } from "./actions";
-
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const mono =
-  "rounded-lg border border-border px-3 py-2 font-mono text-xs outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
 
 export function TableSelect({
   tables,
@@ -25,17 +18,18 @@ export function TableSelect({
 }) {
   const router = useRouter();
   return (
-    <select
+    <FieldSelect
+      aria-label="الجدول"
       value={current}
       onChange={(e) => router.push(`/data?table=${e.target.value}`)}
-      className={input}
+      className="max-w-xs text-sm"
     >
       {tables.map((t) => (
         <option key={t} value={t}>
           {t}
         </option>
       ))}
-    </select>
+    </FieldSelect>
   );
 }
 
@@ -53,7 +47,7 @@ export function DeleteRowButton({ table, id }: { table: string; id: string }) {
 }
 
 export function WriteForm({ table }: { table: string }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     writeJson,
     null,
   );
@@ -67,7 +61,7 @@ export function WriteForm({ table }: { table: string }) {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
           العملية
-          <FieldSelect feedback={state} name="op" defaultValue="insert" className={input}>
+          <FieldSelect feedback={state} name="op" defaultValue="insert" className="text-sm">
             <option value="insert">إضافة صف</option>
             <option value="update">تعديل صفوف</option>
             <option value="delete">حذف صفوف</option>
@@ -75,20 +69,18 @@ export function WriteForm({ table }: { table: string }) {
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           السبب (مطلوب — للتدقيق)
-          <FieldInput feedback={state} name="reason" required className={input} />
+          <FieldInput feedback={state} name="reason" required className="text-sm" />
         </label>
       </div>
       <label className="flex flex-col gap-1 text-sm">
         القيم (JSON) — مثال {`{"name":"...","status":"active"}`}
-        <FieldTextarea feedback={state} name="payload" rows={3} className={mono} dir="ltr" />
+        <FieldTextarea feedback={state} name="payload" rows={3} className="font-mono text-xs" dir="ltr" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الشرط للتعديل (JSON) — مثال {`{"id":"..."}`}
-        <FieldTextarea feedback={state} name="match" rows={2} className={mono} dir="ltr" />
+        <FieldTextarea feedback={state} name="match" rows={2} className="font-mono text-xs" dir="ltr" />
       </label>
-      <button className={`${btn} self-start`} disabled={pending}>
-        {pending ? "…" : "نفّذ"}
-      </button>
+      <SubmitButton className="self-start text-sm">نفّذ</SubmitButton>
       {state?.ok === false ? (
         <span className="text-sm text-red-600">{state.error}</span>
       ) : null}

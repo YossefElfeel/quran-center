@@ -1,6 +1,8 @@
+import { PersonLink } from "@/components/person-link";
 import { RowActions } from "@/components/ui/row-actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { isUuid } from "@/lib/validation";
 
 import { DeleteButton } from "@/components/admin-controls";
 import { getDataClient } from "@/lib/supabase/data-client";
@@ -20,7 +22,7 @@ const VIS_LABEL: Record<string, string> = {
 
 type Circle = {
   name: string;
-  teacher: { full_name: string } | null;
+  teacher: { id: string; full_name: string } | null;
   level: { name: string } | null;
 };
 type EnrRow = { student: { id: string; full_name: string } | null };
@@ -38,11 +40,12 @@ export default async function CircleDetailPage({
   params: Promise<{ circleId: string }>;
 }) {
   const { circleId } = await params;
+  if (!isUuid(circleId)) notFound();
   const supabase = await getDataClient();
 
   const { data: circle, error: loadError1 } = await supabase
     .from("circle")
-    .select("name, teacher:teacher_id(full_name), level:level_id(name)")
+    .select("name, teacher:teacher_id(id, full_name), level:level_id(name)")
     .eq("id", circleId)
     .maybeSingle();
   if (loadError1) throw new Error('data_load_failed');
@@ -111,7 +114,7 @@ export default async function CircleDetailPage({
         </Link>
         <h1 className="text-2xl font-bold">{c?.name ?? "الحلقة"}</h1>
         <p className="text-sm text-foreground/50">
-          {c?.level?.name ?? "—"} · معلّم: {c?.teacher?.full_name ?? "—"}
+          {c?.level?.name ?? "—"} · معلّم: <PersonLink person={c?.teacher} />
         </p>
       </div>
 
@@ -141,7 +144,7 @@ export default async function CircleDetailPage({
                   const cur = ledger.get(s.id) ?? "assigned";
                   return (
                     <tr key={s.id} className="border-b border-border/60">
-                      <td className="px-4 py-2">{s.name}</td>
+                      <td className="px-4 py-2"><PersonLink person={{ id: s.id, full_name: s.name }} /></td>
                       <td className="px-4 py-2">{LEDGER_LABEL[cur] ?? cur}</td>
                       <td className="px-4 py-2"><RowActions>
                         {portionId ? (
@@ -185,7 +188,7 @@ export default async function CircleDetailPage({
                 <div className="flex flex-col gap-0.5">
                   <span>
                     <span className="font-bold">
-                      {studentName(n.student_person_id)}
+                      <PersonLink person={{ id: n.student_person_id, full_name: studentName(n.student_person_id) }} />
                     </span>{" "}
                     — {n.text}
                   </span>

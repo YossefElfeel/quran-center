@@ -3,7 +3,7 @@ import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
@@ -27,7 +27,7 @@ export async function setCronActive(
   const reason = String(fd.get("reason") ?? "").trim();
   if (!jobname) return { ok: false, error: "المهمّة مطلوبة." };
   if (!reason) return { ok: false, error: "السبب مطلوب." };
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("cron_set_active", {
     p_jobname: jobname,
     p_active: active,
@@ -50,7 +50,7 @@ export async function runCronNow(
   const reason = String(fd.get("reason") ?? "").trim();
   if (!jobname) return { ok: false, error: "المهمّة مطلوبة." };
   if (!reason) return { ok: false, error: "السبب مطلوب." };
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("cron_run_now", {
     p_jobname: jobname,
     p_reason: reason,

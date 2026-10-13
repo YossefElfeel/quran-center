@@ -1,6 +1,7 @@
+import { OperatorScopeNote } from "@/components/operator-scope-note";
 import { DangerAction } from "@/components/danger-action";
 import { DangerZone } from "@/components/danger-zone";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { toggleFlag } from "./actions";
 import { flagIsDanger, flagLabel } from "./meta";
@@ -13,7 +14,7 @@ type Flag = {
 };
 
 export default async function FlagsPage() {
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error: loadError1 } = await supabase
     .from("feature_flag")
     .select("key, enabled, description, updated_at")
@@ -27,7 +28,7 @@ export default async function FlagsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">المفاتيح ووضع الصيانة</h1>
+        <h1 className="text-2xl font-bold">المفاتيح ووضع الصيانة</h1><OperatorScopeNote />
         <p className="text-sm text-foreground/60">
           المفاتيح بتتفرض على مستوى قاعدة البيانات — تجميد الجلسات/المدفوعات بيمنع
           التطبيق نفسه من الكتابة، مش بس اللوحة. السوبر أدمن مستثنى دايمًا.

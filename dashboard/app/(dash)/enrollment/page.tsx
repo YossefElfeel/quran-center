@@ -1,3 +1,4 @@
+import { PersonLink } from "@/components/person-link";
 import { DeleteButton } from "@/components/admin-controls";
 import { Pager, SearchForm } from "@/components/list-controls";
 import { getDataClient } from "@/lib/supabase/data-client";
@@ -27,7 +28,7 @@ type CircleRow = {
 type EnrollRow = {
   id: string;
   status: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
   circle: { id: string; name: string } | null;
 };
 
@@ -60,7 +61,7 @@ export default async function EnrollmentPage({
   let enrollQuery = supabase
     .from("enrollment")
     .select(
-      "id, status, student:student_person_id!inner(full_name), circle:circle_id(id, name)",
+      "id, status, student:student_person_id!inner(id, full_name), circle:circle_id(id, name)",
       { count: "exact" },
     )
     .in("status", ["active", "paused"])
@@ -118,7 +119,7 @@ export default async function EnrollmentPage({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold">
-                    {e.student?.full_name ?? "—"}
+                    <PersonLink person={e.student} />
                   </span>
                   <span className="text-xs text-foreground/50">
                     {e.circle?.name ?? "—"} ·{" "}

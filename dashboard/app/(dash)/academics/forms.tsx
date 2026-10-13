@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/ui/button";
 import { FieldInput, FieldSelect } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 
@@ -25,14 +26,8 @@ export type Circle = {
 // DeleteButton مشترك لكل أقسام اللوحة.
 export { DeleteButton } from "@/components/admin-controls";
 
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
-const btnSm =
-  "rounded-md border border-border px-2 py-1 text-xs hover:bg-border/40 disabled:opacity-50";
 export function CurriculumForm() {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     createCurriculum,
     null,
   );
@@ -49,18 +44,16 @@ export function CurriculumForm() {
     >
       <label className="flex flex-col gap-1 text-sm">
         اسم المنهج
-        <FieldInput feedback={state} name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className="text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <FieldSelect feedback={state} name="type" defaultValue="quran" className={input}>
+        <FieldSelect feedback={state} name="type" defaultValue="quran" className="text-sm">
           <option value="quran">قرآن</option>
           <option value="arabic_foundation">تأسيس عربي</option>
         </FieldSelect>
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "أضف منهج"}
-      </button>
+      <SubmitButton className="text-sm">أضف منهج</SubmitButton>
       {state?.ok === false ? (
         <span className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}
@@ -69,7 +62,7 @@ export function CurriculumForm() {
 }
 
 export function LevelForm({ curriculumId }: { curriculumId: string }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     createLevel,
     null,
   );
@@ -87,11 +80,9 @@ export function LevelForm({ curriculumId }: { curriculumId: string }) {
       <input type="hidden" name="curriculum_id" value={curriculumId} />
       <label className="flex flex-col gap-1 text-sm">
         اسم المستوى
-        <FieldInput feedback={state} name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className="text-sm" />
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "أضف مستوى"}
-      </button>
+      <SubmitButton className="text-sm">أضف مستوى</SubmitButton>
       {state?.ok === false ? (
         <span className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}
@@ -108,7 +99,7 @@ export function CircleForm({
   curriculumId: string;
   teachers: Teacher[];
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     createCircle,
     null,
   );
@@ -127,11 +118,11 @@ export function CircleForm({
       <input type="hidden" name="curriculum_id" value={curriculumId} />
       <label className="flex flex-col gap-1 text-sm">
         اسم الحلقة
-        <FieldInput feedback={state} name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className="text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         المعلّم
-        <FieldSelect feedback={state} name="teacher_id" defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="teacher_id" defaultValue="" className="text-sm">
           <option value="">— بدون معلّم —</option>
           {teachers.map((t) => (
             <option key={t.id} value={t.id}>
@@ -147,12 +138,10 @@ export function CircleForm({
           type="number"
           min={1}
           defaultValue={30}
-          className={`${input} w-24`}
+          className="w-24 text-sm"
         />
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "أضف حلقة"}
-      </button>
+      <SubmitButton className="text-sm">أضف حلقة</SubmitButton>
       {state?.ok === false ? (
         <span className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}
@@ -170,7 +159,7 @@ export function CircleControls({
   curriculumId: string;
   teachers: Teacher[];
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     updateCircle,
     null,
   );
@@ -183,7 +172,7 @@ export function CircleControls({
       <FieldSelect feedback={state}
         name="teacher_id"
         defaultValue={circle.teacher_id ?? ""}
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       >
         <option value="">— بدون معلّم —</option>
         {teachers.map((t) => (
@@ -195,7 +184,7 @@ export function CircleControls({
       <FieldSelect feedback={state}
         name="status"
         defaultValue={circle.status}
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       >
         <option value="forming">قيد التكوين</option>
         <option value="active">نشطة</option>
@@ -206,11 +195,9 @@ export function CircleControls({
         type="number"
         min={1}
         defaultValue={circle.max_size}
-        className={`${input} w-20 py-1`}
+        className="w-20 py-1 text-sm"
       />
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "حفظ"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">حفظ</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}

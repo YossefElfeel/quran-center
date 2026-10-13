@@ -1,3 +1,4 @@
+import { PersonLink } from "@/components/person-link";
 import { DeleteButton } from "@/components/admin-controls";
 import { getDataClient } from "@/lib/supabase/data-client";
 
@@ -98,7 +99,7 @@ export default async function IntakePage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold">
-                    {w.student?.full_name ?? "—"}
+                    <PersonLink person={w.student} />
                   </span>
                   <span className="text-xs text-foreground/50">
                     المستوى: {w.level?.name ?? "—"}

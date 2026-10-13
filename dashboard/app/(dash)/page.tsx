@@ -30,11 +30,13 @@ export default async function DashHome() {
       .limit(30),
   ]);
 
-  if (metricsRes.error) throw new Error('metrics_load_failed');
-  if (payments.error || enrolledRows.error || activity.error) throw new Error('overview_load_failed');
-  const {data:thresholdRow,error:thresholdError}=await supabase.from('system_settings').select('value').eq('key','struggle_failed_attempts').maybeSingle();
-  if(thresholdError)throw new Error('threshold_load_failed');
-  const threshold=Number(thresholdRow?.value??3);
+  // A failed section shows an inline notice; the rest of the overview stays usable.
+  const metricsFailed = Boolean(metricsRes.error);
+  const chartsFailed = Boolean(payments.error || enrolledRows.error);
+  const activityFailed = Boolean(activity.error);
+  const failedParts = [metricsFailed && "المؤشرات والتنبيهات", chartsFailed && "الرسوم البيانية", activityFailed && "النشاط المباشر"].filter(Boolean) as string[];
+  const {data:thresholdRow}=await supabase.from('system_settings').select('value').eq('key','struggle_failed_attempts').maybeSingle();
+  const threshold=Number(thresholdRow?.value??3)||3;
   const m = (metricsRes.data ?? {}) as Record<string, number | boolean>;
   const num = (k: string) => Number(m[k] ?? 0);
   const bool = (k: string) => m[k] === true;
@@ -107,7 +109,14 @@ export default async function DashHome() {
         <span className="text-xs text-foreground/40">يتحدّث تلقائيًا</span>
       </div>
 
-      {anomalies.length ? (
+      {failedParts.length ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span>تعذّر تحميل: {failedParts.join("، ")}. باقي الصفحة شغّال.</span>
+          <Link href="/" className="font-bold underline">حاول تاني</Link>
+        </div>
+      ) : null}
+
+      {!metricsFailed && anomalies.length ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-bold text-red-700">إشارات تستدعي تدخّلك</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -129,6 +138,7 @@ export default async function DashHome() {
         </section>
       ) : null}
 
+      {!metricsFailed ? <>
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {kpis.map((k) => (
           <div key={k.label} className="rounded-xl border border-border bg-white p-4">
@@ -150,8 +160,9 @@ export default async function DashHome() {
           ))}
         </div>
       </section>
+      </> : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      {!chartsFailed ? <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-white p-5">
           <h2 className="mb-4 font-bold">إيراد الاشتراكات بالشهر (ج.م)</h2>
           <RevenueChart data={chart} />
@@ -160,7 +171,7 @@ export default async function DashHome() {
           <h2 className="mb-4 font-bold">الالتحاق الجديد بالشهر</h2>
           <TrendChart data={enrollChart} />
         </div>
-      </div>
+      </div> : null}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">النشاط المباشر</h2>

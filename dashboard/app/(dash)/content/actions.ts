@@ -80,6 +80,34 @@ export async function createCompetition(
   return { ok: true };
 }
 
+const competitionEditSchema=z.object({id:idSchema,name:nameSchema,rules:z.string().max(10000,"الشروط أطول من اللازم"),prize:z.string().max(2000,"الجائزة أطول من اللازم"),deadline:z.string().nullable()});
+export async function updateCompetition(
+  _p: FormResult | null,
+  fd: FormData,
+): Promise<FormResult> {
+  const id = String(fd.get("id") ?? "");
+  const name = String(fd.get("name") ?? "").trim();
+  const rules = String(fd.get("rules") ?? "").trim();
+  const prize = String(fd.get("prize") ?? "").trim();
+  const rawDeadline=String(fd.get("deadline")??"").trim();const deadline=rawDeadline?cairoDateTime(rawDeadline):null;
+  const parsed=competitionEditSchema.extend({deadline:competitionEditSchema.shape.deadline.refine(v=>!rawDeadline||!!v,"اكتب موعدًا صحيحًا بتوقيت القاهرة")}).safeParse({id,name,rules,prize,deadline});const invalid=validationError(parsed);if(invalid)return invalid;
+  const supabase = await getDataClient();
+  const { error } = await supabase
+    .from("competition")
+    .update({ name, rules: rules || null, prize: prize || null, deadline })
+    .eq("id", id).select("id").single();
+  if (error) return { ok: false, error: "فشل تعديل المسابقة." };
+  await logAudit({
+    action: "competition_updated",
+    targetTable: "competition",
+    targetId: id,
+    meta: { name },
+  });
+  revalidatePath("/content");
+  revalidatePath(`/content/${id}`);
+  return { ok: true };
+}
+
 export async function setCompetitionStatus(
   _p: FormResult | null,
   fd: FormData,

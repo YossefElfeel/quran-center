@@ -1,7 +1,8 @@
+import { OperatorScopeNote } from "@/components/operator-scope-note";
 import { RowActions } from "@/components/ui/row-actions";
 import { DangerAction } from "@/components/danger-action";
 import { formatDateTime } from "@/lib/format";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { runCronNow, setCronActive } from "./actions";
 
@@ -28,7 +29,7 @@ type AuditRow = {
 };
 
 export default async function AutomationPage() {
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const [jobsRes, recentRes] = await Promise.all([
     supabase.rpc("cron_jobs"),
     supabase
@@ -51,7 +52,7 @@ export default async function AutomationPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">الأتمتة والمجدولات</h1>
+        <h1 className="text-2xl font-bold">الأتمتة والمجدولات</h1><OperatorScopeNote />
         <p className="text-sm text-foreground/60">
           تحكّم كامل في مهام pg_cron — تفعيل/تعطيل أو تشغيل فوري. كل عملية بتتسجّل في
           التدقيق وبتطلّع تنبيه فوري.

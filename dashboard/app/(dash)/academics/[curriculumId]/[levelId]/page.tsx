@@ -1,5 +1,8 @@
+import { PersonLink } from "@/components/person-link";
+import { formatNumber } from "@/lib/format";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { isUuid } from "@/lib/validation";
 
 import { getDataClient } from "@/lib/supabase/data-client";
 
@@ -26,6 +29,7 @@ export default async function CirclesPage({
   params: Promise<{ curriculumId: string; levelId: string }>;
 }) {
   const { curriculumId, levelId } = await params;
+  if (!isUuid(curriculumId) || !isUuid(levelId)) notFound();
   const supabase = await getDataClient();
   const { data: level, error: loadError1 } = await supabase
     .from("level")
@@ -88,12 +92,12 @@ export default async function CirclesPage({
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold">{c.name}</span>
+                  <Link href={`/circles/${c.id}`} className="font-bold text-primary hover:underline">{c.name}</Link>
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
                     {STATUS_LABEL[c.status] ?? c.status}
                   </span>
                   <span className="text-xs text-foreground/50">
-                    معلّم: {teacherName(c.teacher_id)} · حد {c.max_size}
+                    معلّم: <PersonLink person={c.teacher_id ? { id: c.teacher_id, full_name: teacherName(c.teacher_id) } : null} /> · حد {formatNumber(c.max_size)}
                   </span>
                 </div>
                 <DeleteButton

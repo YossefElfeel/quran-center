@@ -1,3 +1,4 @@
+import { PersonLink } from "@/components/person-link";
 import { RowActions } from "@/components/ui/row-actions";
 import Link from "next/link";
 import { formatDate } from "@/lib/format";
@@ -19,7 +20,7 @@ type Cert = {
   id: string;
   kind: string;
   issued_at: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
 };
 
 export default async function CertificatesPage({searchParams}:{searchParams:Promise<{student?:string}>}) {
@@ -49,7 +50,7 @@ export default async function CertificatesPage({searchParams}:{searchParams:Prom
 
   const { data: certData, error: loadError3 } = await supabase
     .from("certificate")
-    .select("id, kind, issued_at, student:student_person_id(full_name)")
+    .select("id, kind, issued_at, student:student_person_id(id, full_name)")
     .order("issued_at", { ascending: false })
     .limit(50);
   if (loadError3) throw new Error('data_load_failed');
@@ -95,7 +96,7 @@ export default async function CertificatesPage({searchParams}:{searchParams:Prom
               ) : (
                 certs.map((c) => (
                   <tr key={c.id} className="border-b border-border/60">
-                    <td className="px-4 py-2">{c.student?.full_name ?? "—"}</td>
+                    <td className="px-4 py-2"><PersonLink person={c.student} /></td>
                     <td className="px-4 py-2">{KIND_LABEL[c.kind] ?? c.kind}</td>
                     <td className="px-4 py-2 text-foreground/50">
                       {formatDate(c.issued_at)}

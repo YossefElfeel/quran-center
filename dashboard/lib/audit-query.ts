@@ -14,7 +14,7 @@ export function parseAuditFilters(value: unknown): AuditFilters {
   return result.data;
 }
 export function auditQuery(client: SupabaseClient, values: AuditFilters) {
-  let query = client.from("audit_log").select("id,action,target_table,target_id,at,actor:actor_person_id(full_name)",{count:"exact"}).order("at",{ascending:false}).order("id",{ascending:false});
+  let query = client.from("audit_log").select("id,action,target_table,target_id,at,actor:actor_person_id(id,full_name)",{count:"exact"}).order("at",{ascending:false}).order("id",{ascending:false});
   if(values.action) query=query.eq("action",values.action);
   if(values.actor) query=query.eq("actor_person_id",values.actor);
   if(values.from) query=query.gte("at",`${values.from}T00:00:00Z`);

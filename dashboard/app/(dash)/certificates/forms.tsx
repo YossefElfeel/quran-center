@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/ui/button";
 import { FieldSelect } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 
@@ -11,11 +12,6 @@ export { DeleteButton } from "@/components/admin-controls";
 
 export type Student = { id: string; name: string };
 
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
-
 const KINDS = [
   { value: "juz_amma", label: "جزء عمّ" },
   { value: "half", label: "النصف" },
@@ -24,7 +20,7 @@ const KINDS = [
 ];
 
 export function IssueForm({ students,selectedStudent }: { students: Student[];selectedStudent?:string }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     issueCertificate,
     null,
   );
@@ -36,7 +32,7 @@ export function IssueForm({ students,selectedStudent }: { students: Student[];se
     >
       <label className="flex flex-col gap-1 text-sm">
         الطالب
-        <FieldSelect feedback={state} name="student_person_id" required defaultValue={students.some(s=>s.id===selectedStudent)?selectedStudent:""} className={input}>
+        <FieldSelect feedback={state} name="student_person_id" required defaultValue={students.some(s=>s.id===selectedStudent)?selectedStudent:""} className="text-sm">
           <option value="" disabled>
             — اختر طالب —
           </option>
@@ -49,7 +45,7 @@ export function IssueForm({ students,selectedStudent }: { students: Student[];se
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <FieldSelect feedback={state} name="kind" defaultValue="full" className={input}>
+        <FieldSelect feedback={state} name="kind" defaultValue="full" className="text-sm">
           {KINDS.map((k) => (
             <option key={k.value} value={k.value}>
               {k.label}
@@ -57,9 +53,7 @@ export function IssueForm({ students,selectedStudent }: { students: Student[];se
           ))}
         </FieldSelect>
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "أصدِر الشهادة"}
-      </button>
+      <SubmitButton className="text-sm">أصدِر الشهادة</SubmitButton>
       {state?.ok===true?<p role="status" className="w-full text-primary">الشهادة صدرت. {state.certificateId?<Link href={`/certificates/${state.certificateId}`} className="underline">عرض PDF</Link>:null}</p>:null}
       {state?.ok === false ? (
         <span role="alert" className="w-full text-sm text-red-600">{state.error}</span>

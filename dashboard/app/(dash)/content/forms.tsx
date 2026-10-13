@@ -1,9 +1,9 @@
 "use client";
-import { FieldSelect } from "@/components/ui/fields";
+import { FieldInput, FieldSelect, FieldTextarea } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 import { DangerAction } from "@/components/danger-action";
 import { Input,Textarea } from "@/components/ui/fields";
-import { Button } from "@/components/ui/button";
+import { Button, SubmitButton } from "@/components/ui/button";
 import { toast } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
@@ -12,17 +12,13 @@ import {
   addCourse,
   updateCourse,
   createCompetition,
+  updateCompetition,
   setApplicationStatus,
   setCompetitionStatus,
   type FormResult,
 } from "./actions";
 
 export { DeleteButton } from "@/components/admin-controls";
-
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btnSm =
-  "rounded-md border border-border px-2 py-1 text-xs hover:bg-border/40 disabled:opacity-50";
 
 const COMP_STATUS = [
   { value: "draft", label: "مسودّة" },
@@ -59,6 +55,35 @@ export function CompetitionForm(){
  </form>;
 }
 
+export type CompetitionDetails = { id: string; name: string; rules: string | null; prize: string | null; deadlineLocal: string };
+export function CompetitionEditForm({ competition }: { competition: CompetitionDetails }) {
+  const [state, action, pending] = useActionState<FormResult | null, FormData>(updateCompetition, null);
+  useActionFeedback(state, "تعديل المسابقة اتحفظ");
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-4 rounded-xl border border-border bg-white p-4">
+      <input type="hidden" name="id" value={competition.id} />
+      <label className="flex flex-col gap-1 text-sm">
+        اسم المسابقة
+        <FieldInput feedback={state} name="name" aria-label="اسم المسابقة" required maxLength={200} defaultValue={competition.name} />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        الجائزة
+        <FieldInput feedback={state} name="prize" maxLength={2000} defaultValue={competition.prize ?? ""} />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        آخر موعد — بتوقيت القاهرة
+        <FieldInput feedback={state} name="deadline" type="datetime-local" defaultValue={competition.deadlineLocal} />
+      </label>
+      <label className="flex w-full flex-col gap-1 text-sm">
+        الشروط
+        <FieldTextarea feedback={state} name="rules" rows={4} maxLength={10000} defaultValue={competition.rules ?? ""} />
+      </label>
+      <Button type="submit" disabled={pending} aria-busy={pending}>{pending ? "جاري الحفظ…" : "حفظ التعديل"}</Button>
+      {state?.ok === false ? <p role="alert" className="w-full text-sm text-red-700">{state.error}</p> : null}
+    </form>
+  );
+}
+
 export function CompetitionStatus({
   id,
   current,
@@ -66,7 +91,7 @@ export function CompetitionStatus({
   id: string;
   current: string;
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     setCompetitionStatus,
     null,
   );
@@ -74,16 +99,14 @@ export function CompetitionStatus({
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="id" value={id} />
-      <FieldSelect feedback={state} name="status" defaultValue={current} className={`${input} py-1`}>
+      <FieldSelect feedback={state} name="status" defaultValue={current} className="py-1 text-sm">
         {COMP_STATUS.map((s) => (
           <option key={s.value} value={s.value}>
             {s.label}
           </option>
         ))}
       </FieldSelect>
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "حفظ"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">حفظ</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}
@@ -94,7 +117,7 @@ export function CompetitionStatus({
 export function ApplicationDecision({id,competitionId}: {id:string;competitionId:string}) {
   const [state,action,pending]=useActionState(setApplicationStatus,null);
   useActionFeedback(state);
-  return <div className="flex flex-wrap gap-2"><form action={action}><input type="hidden" name="id" value={id}/><input type="hidden" name="competition_id" value={competitionId}/><button className={btnSm} name="status" value="accepted" disabled={pending}>قبول</button></form>
+  return <div className="flex flex-wrap gap-2"><form action={action}><input type="hidden" name="id" value={id}/><input type="hidden" name="competition_id" value={competitionId}/><Button size="sm" variant="secondary" name="status" value="accepted" disabled={pending} aria-busy={pending}>قبول</Button></form>
     <DangerAction action={setApplicationStatus} hidden={{id,competition_id:competitionId,status:'rejected'}} label="رفض" title="رفض طلب المسابقة؟" description="راجع بيانات المتقدّم قبل الرفض." requireReason={false}/>
     {state?.ok===false&&<span role="alert" className="text-red-700">{state.error}</span>}
   </div>;

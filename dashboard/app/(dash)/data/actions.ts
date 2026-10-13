@@ -3,12 +3,12 @@ import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
 async function invoke(body: Record<string, unknown>): Promise<FormResult> {
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.functions.invoke("data-console-write", {
     body,
   });

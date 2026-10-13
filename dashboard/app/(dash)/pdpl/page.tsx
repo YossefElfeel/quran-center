@@ -1,3 +1,4 @@
+import { PersonLink } from "@/components/person-link";
 import { formatDateTime } from "@/lib/format";
 import { getDataClient } from "@/lib/supabase/data-client";
 
@@ -12,14 +13,14 @@ type Consent = {
   scope: string;
   granted_at: string;
   revoked_at: string | null;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
 };
 
 export default async function PdplPage() {
   const supabase = await getDataClient();
   const { data, error: loadError1 } = await supabase
     .from("consent_record")
-    .select("id, scope, granted_at, revoked_at, student:student_person_id(full_name)")
+    .select("id, scope, granted_at, revoked_at, student:student_person_id(id, full_name)")
     .order("granted_at", { ascending: false })
     .limit(200);
   if (loadError1) throw new Error('data_load_failed');
@@ -59,7 +60,7 @@ export default async function PdplPage() {
             ) : (
               rows.map((r) => (
                 <tr key={r.id} className="border-b border-border/60">
-                  <td className="px-4 py-2">{r.student?.full_name ?? "—"}</td>
+                  <td className="px-4 py-2"><PersonLink person={r.student} /></td>
                   <td className="px-4 py-2">{SCOPE[r.scope] ?? r.scope}</td>
                   <td className="px-4 py-2 text-foreground/60">
                     {formatDateTime(r.granted_at)}

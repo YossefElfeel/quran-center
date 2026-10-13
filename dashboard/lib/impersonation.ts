@@ -1,6 +1,5 @@
+import { impersonationOver } from "@/lib/impersonation-timing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-const TIMEBOX_MS = 30 * 60 * 1000; // ٣٠ دقيقة
 
 export type ActiveImpersonation = {
   id: string;
@@ -38,7 +37,7 @@ export async function getActiveImpersonation(
     subject: { full_name: string } | null;
   };
 
-  if (Date.now() - new Date(row.started_at).getTime() >= TIMEBOX_MS) {
+  if (impersonationOver(row.started_at)) {
     const { error: closeError } = await supabase.from('impersonation_session').update({ ended_at: new Date().toISOString() }).eq('id', row.id).is('ended_at', null);
     if (closeError) throw new Error("impersonation_expiry_failed");
     return null;
@@ -49,6 +48,6 @@ export async function getActiveImpersonation(
     subjectName: row.subject?.full_name ?? "—",
     reason: row.reason,
     startedAt: row.started_at,
-    expired: Date.now() - new Date(row.started_at).getTime() > TIMEBOX_MS,
+    expired: false,
   };
 }

@@ -1,3 +1,4 @@
+import { FieldInput, FieldSelect } from "@/components/ui/fields";
 import Link from "next/link";
 import { SubmitButton } from "@/components/ui/button";
 
@@ -109,10 +110,10 @@ export default async function ImpersonationPage({
             ) : null}
             <label className="flex flex-col gap-1 text-sm">
               المستخدم
-              <select
+              <FieldSelect
                 name="subject_person_id"
                 required
-                className="rounded-lg border border-border bg-white px-3 py-2 outline-none focus:border-primary"
+                aria-label="المستخدم"
               >
                 <option value="">— اختر —</option>
                 {options.map(([id, name]) => (
@@ -120,17 +121,17 @@ export default async function ImpersonationPage({
                     {name}
                   </option>
                 ))}
-              </select>
+              </FieldSelect>
             </label>
             <label className="flex flex-col gap-1 text-sm">
               السبب (مطلوب)
-              <input
+              <FieldInput
                 name="reason"
                 required
-                className="rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+                aria-label="السبب"
               />
             </label>
-            <SubmitButton className="bg-red-700 self-start">ابدأ التقمّص</SubmitButton>
+            <SubmitButton variant="danger" className="self-start">ابدأ التقمّص</SubmitButton>
           </form>
         </DangerZone>
       )}

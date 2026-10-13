@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/ui/button";
 import { FieldInput, FieldSelect } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 
@@ -13,15 +14,8 @@ import {
 
 export type Option = { id: string; label: string };
 
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
-const btnSm =
-  "rounded-md border border-border px-2 py-1 text-xs hover:bg-border/40 disabled:opacity-50";
-
 export function ApplicantForm({ levels }: { levels: Option[] }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     addApplicant,
     null,
   );
@@ -38,18 +32,18 @@ export function ApplicantForm({ levels }: { levels: Option[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         اسم المتقدّم
-        <FieldInput feedback={state} name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className="text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <FieldSelect feedback={state} name="gender" defaultValue="male" className={input}>
+        <FieldSelect feedback={state} name="gender" defaultValue="male" className="text-sm">
           <option value="male">ذكر</option>
           <option value="female">أنثى</option>
         </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         المستوى المستهدف
-        <FieldSelect feedback={state} name="level_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="level_id" required defaultValue="" className="text-sm">
           <option value="" disabled>
             — اختر مستوى —
           </option>
@@ -60,9 +54,7 @@ export function ApplicantForm({ levels }: { levels: Option[] }) {
           ))}
         </FieldSelect>
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "أضف لقائمة الانتظار"}
-      </button>
+      <SubmitButton className="text-sm">أضف لقائمة الانتظار</SubmitButton>
       {state?.ok === false ? (
         <span className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}
@@ -81,7 +73,7 @@ export function PlacementForm({
   levels: Option[];
   currentLevelId: string;
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     recordPlacement,
     null,
   );
@@ -94,7 +86,7 @@ export function PlacementForm({
       <FieldSelect feedback={state}
         name="result_level_id"
         defaultValue={currentLevelId}
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       >
         {levels.map((l) => (
           <option key={l.id} value={l.id}>
@@ -105,11 +97,9 @@ export function PlacementForm({
       <FieldInput feedback={state}
         name="notes"
         placeholder="ملاحظات (اختياري)"
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       />
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "سجّل النتيجة"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">سجّل النتيجة</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}
@@ -126,7 +116,7 @@ export function AssignForm({
   studentPersonId: string;
   circles: Option[];
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     enrollFromWaiting,
     null,
   );
@@ -136,7 +126,7 @@ export function AssignForm({
       <input type="hidden" name="waiting_id" value={waitingId} />
       <input type="hidden" name="student_person_id" value={studentPersonId} />
       <span className="text-xs text-foreground/50">إسناد لحلقة:</span>
-      <FieldSelect feedback={state} name="circle_id" required defaultValue="" className={`${input} py-1`}>
+      <FieldSelect feedback={state} name="circle_id" required defaultValue="" className="py-1 text-sm">
         <option value="" disabled>
           — اختر حلقة —
         </option>
@@ -146,9 +136,7 @@ export function AssignForm({
           </option>
         ))}
       </FieldSelect>
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "أسنِد وفعّل"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">أسنِد وفعّل</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}

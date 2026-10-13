@@ -1,6 +1,9 @@
 import { z } from "zod";
 export type ValidationFailure={ok:false;error:string;fieldErrors?:Record<string,string[]|undefined>};
 export const idSchema=z.uuid({error:'المعرّف غير صحيح'});
+// Route-param guard: a malformed id is a 404, not a database error page.
+// Any well-formed UUID text (Postgres accepts all versions), so legacy ids still resolve.
+export const isUuid=(value:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 export const nameSchema=z.string().trim().min(2,'اكتب الاسم كاملًا').max(200,'الاسم أطول من اللازم');
 export const webUrlSchema=z.url({error:'اكتب رابطًا صحيحًا'}).refine(value=>['http:','https:'].includes(new URL(value).protocol),'استخدم رابط HTTP أو HTTPS');
 export function validationError(result:z.ZodSafeParseResult<unknown>):ValidationFailure|null{return result.success?null:{ok:false,error:'راجع الحقول المعلّمة وأعد المحاولة',fieldErrors:z.flattenError(result.error).fieldErrors as Record<string,string[]|undefined>};}

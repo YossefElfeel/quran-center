@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/ui/button";
 import { FieldSelect, FieldInput, FieldTextarea } from "@/components/ui/fields";
 import { useActionFeedback } from "@/components/ui/feedback";
 
@@ -7,11 +8,6 @@ import { useActionState, useEffect, useRef } from "react";
 import { broadcast, type FormResult } from "./actions";
 
 export { DeleteButton } from "@/components/admin-controls";
-
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
 
 const AUDIENCES = [
   { value: "all", label: "كل المستخدمين" },
@@ -22,7 +18,7 @@ const AUDIENCES = [
 ];
 
 export function BroadcastForm() {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     broadcast,
     null,
   );
@@ -40,7 +36,7 @@ export function BroadcastForm() {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
           الجمهور
-          <FieldSelect feedback={state} name="audience" defaultValue="all" className={input}>
+          <FieldSelect feedback={state} name="audience" defaultValue="all" className="text-sm">
             {AUDIENCES.map((a) => (
               <option key={a.value} value={a.value}>
                 {a.label}
@@ -50,16 +46,14 @@ export function BroadcastForm() {
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           العنوان
-          <FieldInput feedback={state} name="title" required className={input} />
+          <FieldInput feedback={state} name="title" required className="text-sm" />
         </label>
       </div>
       <label className="flex flex-col gap-1 text-sm">
         النص (اختياري)
-        <FieldTextarea feedback={state} name="body" rows={2} className={input} />
+        <FieldTextarea feedback={state} name="body" rows={2} className="text-sm" />
       </label>
-      <button className={`${btn} self-start`} disabled={pending}>
-        {pending ? "…" : "ابعت البثّ"}
-      </button>
+      <SubmitButton className="self-start text-sm">ابعت البثّ</SubmitButton>
       {state?.ok === false ? (
         <span className="text-sm text-red-600">{state.error}</span>
       ) : null}

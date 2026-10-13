@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { impersonationOver, impersonationTokenExpired, readImpersonationClaims } from "@/lib/impersonation-timing";
+
 // بوابة الدخول للوحة (Next 16 proxy convention): لازم جلسة صالحة.
 // (Phase D1: نتأكد كمان إن الدور super_admin.) قبل ضبط Supabase بنسيب كله يعدّي.
 export async function proxy(request: NextRequest) {
@@ -14,12 +16,10 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   let clearImpersonation = false;
   const impersonation = request.cookies.get("imp_token")?.value;
+  // Claims here only decide whether to clear a stale cookie; they never grant access.
+  const impersonationClaims = impersonation ? readImpersonationClaims(impersonation) : null;
   if (impersonation) {
-    try {
-      // Expiry metadata only decides whether to clear a cookie; it grants no access.
-      const claims = JSON.parse(Buffer.from(impersonation.split(".")[1], "base64url").toString());
-      clearImpersonation = typeof claims.exp !== "number" || claims.exp * 1000 <= Date.now();
-    } catch { clearImpersonation = true; }
+    clearImpersonation = !impersonationClaims || impersonationTokenExpired(impersonationClaims.exp);
     if (clearImpersonation) request.cookies.delete("imp_token");
   }
   const finish = (result: NextResponse) => {
@@ -50,6 +50,29 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // A leftover cookie from an ended / foreign / timed-out session would otherwise keep every
+  // data page on a dead identity. Server Components cannot delete cookies, so clear it here.
+  if (impersonation && !clearImpersonation) {
+    const sid = impersonationClaims?.act?.sid;
+    if (!user || !sid || impersonationClaims?.act?.sub !== user.id) {
+      clearImpersonation = true;
+    } else {
+      const { data: session, error } = await supabase
+        .from("impersonation_session")
+        .select("ended_at, started_at")
+        .eq("id", sid)
+        .maybeSingle();
+      if (!error && (!session || session.ended_at || impersonationOver(session.started_at))) clearImpersonation = true;
+    }
+  }
+  if (clearImpersonation) {
+    // Rebuild the pass-through so this request's Server Components no longer see the cookie.
+    request.cookies.delete("imp_token");
+    const prior = response;
+    response = NextResponse.next({ request });
+    for (const cookie of prior.cookies.getAll()) response.cookies.set(cookie);
+  }
 
   const isLoginRoute = request.nextUrl.pathname.startsWith("/login");
 

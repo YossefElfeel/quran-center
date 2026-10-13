@@ -1,3 +1,4 @@
+import { PersonLink } from "@/components/person-link";
 import { getDataClient } from "@/lib/supabase/data-client";
 import Link from "next/link";
 import { Pager } from "@/components/list-controls";
@@ -14,7 +15,7 @@ type Row = {
   decided_at: string|null;
   decided_by: string|null;
   enrollment: {
-    student: { full_name: string } | null;
+    student: { id: string; full_name: string } | null;
     circle: { name: string } | null;
   } | null;
   session: { session_date: string } | null;
@@ -26,7 +27,7 @@ export default async function ExcusesPage({searchParams}:{searchParams:Promise<{
   let query = supabase
     .from("excuse_request")
     .select(
-      "id, reason, status, decided_at, decided_by, session_id, enrollment_id, enrollment:enrollment_id(student:student_person_id(full_name), circle:circle_id(name)), session:session_id(session_date)",{count:'exact'},
+      "id, reason, status, decided_at, decided_by, session_id, enrollment_id, enrollment:enrollment_id(student:student_person_id(id, full_name), circle:circle_id(name)), session:session_id(session_date)",{count:'exact'},
     )
     .order("created_at", { ascending: !history }).range((page-1)*pageSize,page*pageSize-1);
   query=history?query.neq('status','pending'):query.eq('status','pending');
@@ -58,7 +59,7 @@ export default async function ExcusesPage({searchParams}:{searchParams:Promise<{
             >
               <div className="flex flex-col gap-0.5">
                 <span className="font-bold">
-                  {r.enrollment?.student?.full_name ?? "—"}
+                  <PersonLink person={r.enrollment?.student} />
                 </span>
                 <span className="text-xs text-foreground/50">
                   {r.enrollment?.circle?.name ?? "—"}

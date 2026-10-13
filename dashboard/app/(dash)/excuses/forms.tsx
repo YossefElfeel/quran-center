@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState } from "react";
@@ -24,22 +25,30 @@ export function ExcuseDecision({
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="enrollment_id" value={enrollmentId} />
       <input type="hidden" name="session_id" value={sessionId} />
-      <button
+      <Button
+        type="submit"
+        size="sm"
+        variant="secondary"
         name="decision"
         value="approved"
         disabled={pending}
-        className="rounded-md border border-green-300 px-3 py-1 text-xs text-green-700 hover:bg-green-50 disabled:opacity-50"
+        aria-busy={pending}
+        className="border-green-300 text-green-700 hover:bg-green-50"
       >
         قبول
-      </button>
-      <button
+      </Button>
+      <Button
+        type="submit"
+        size="sm"
+        variant="secondary"
         name="decision"
         value="rejected"
         disabled={pending}
-        className="rounded-md border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+        aria-busy={pending}
+        className="border-red-300 text-red-600 hover:bg-red-50"
       >
         رفض
-      </button>
+      </Button>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}

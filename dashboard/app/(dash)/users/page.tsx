@@ -1,9 +1,12 @@
+import { OperatorScopeNote } from "@/components/operator-scope-note";
 import { RowActions } from "@/components/ui/row-actions";
+import { Button } from "@/components/ui/button";
+import { FieldSelect } from "@/components/ui/fields";
 import Link from "next/link";
 import { formatNumber } from "@/lib/format";
 import { Pager, SearchForm } from "@/components/list-controls";
 import { getSuperAdmin } from "@/lib/auth";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { InviteForm } from "./invite-form";
 import { UserActions } from "./user-actions";
@@ -40,11 +43,13 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<{ q?: string; page?: string; role?: string }>;
 }) {
-  const { q, page: pageRaw,role } = await searchParams;
+  const { q, page: pageRaw, role: roleRaw } = await searchParams;
+  // Only known roles reach the query; anything else means "everyone".
+  const role = roleRaw === "student" || (roleRaw && Object.hasOwn(ROLE_LABEL, roleRaw)) ? roleRaw : undefined;
   const page = Math.max(1, Number(pageRaw) || 1);
   const from = (page - 1) * PAGE_SIZE;
 
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
   const admin = await getSuperAdmin();
   let query = supabase
     .from("person")
@@ -65,12 +70,12 @@ export default async function UsersPage({
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
-        <h1 className="text-2xl font-bold">المستخدمون والأدوار</h1>
+        <h1 className="text-2xl font-bold">المستخدمون والأدوار</h1><OperatorScopeNote />
         <p className="text-sm text-foreground/60">
           تحكّم كامل: منح/سحب الأدوار، الحظر/فك الحظر، الإيقاف والحذف. كل عملية
           بتتسجّل في سجل التدقيق. ({formatNumber(count)} مستخدم)
         </p>
-        <SearchForm q={q} placeholder="ابحث بالاسم…" /><form className="flex flex-wrap gap-3"><input type="hidden" name="q" value={q??""}/><label>الدور<select name="role" defaultValue={role??""} className="ms-3 rounded-lg border border-border p-2"><option value="">كل الناس</option><option value="student">الطلاب</option>{Object.entries(ROLE_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><button className="rounded-lg border border-border px-4 py-2">تصفية</button></form>
+        <SearchForm q={q} placeholder="ابحث بالاسم…" hidden={role ? { role } : undefined} /><form className="flex flex-wrap items-end gap-3"><input type="hidden" name="q" value={q??""}/><label className="flex items-center gap-3">الدور<FieldSelect name="role" defaultValue={role??""} className="w-auto"><option value="">كل الناس</option><option value="student">الطلاب</option>{Object.entries(ROLE_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</FieldSelect></label><Button type="submit" variant="secondary">تصفية</Button></form>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
           <table className="w-full min-w-[640px] text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
@@ -141,7 +146,7 @@ export default async function UsersPage({
             </tbody>
           </table>
         </div>
-        <Pager page={page} totalPages={totalPages} params={q ? { q } : {}} />
+        <Pager page={page} totalPages={totalPages} params={{ ...(q ? { q } : {}), ...(role ? { role } : {}) }} />
       </section>
 
       <section className="flex flex-col gap-3">

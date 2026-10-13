@@ -1,3 +1,7 @@
+import { PersonLink } from "@/components/person-link";
+import { Button } from "@/components/ui/button";
+import { FieldInput, FieldSelect } from "@/components/ui/fields";
+import { OperatorScopeNote } from "@/components/operator-scope-note";
 import Link from "next/link";
 
 import { ExportButton } from "@/components/export-button";
@@ -5,7 +9,7 @@ import { ACTION_LABEL,actionLabel } from "@/lib/action-labels";
 import { auditQuery,parseAuditFilters } from "@/lib/audit-query";
 import { Pager } from "@/components/list-controls";
 import { formatDateTime, formatNumber } from "@/lib/format";
-import { getDataClient } from "@/lib/supabase/data-client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type AuditRow = {
   id: string;
@@ -13,13 +17,11 @@ type AuditRow = {
   target_table: string | null;
   target_id: string | null;
   at: string;
-  actor: { full_name: string } | null;
+  actor: { id: string; full_name: string } | null;
 };
 
 
 const PAGE_SIZE = 50;
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
 
 export default async function AuditPage({
   searchParams,
@@ -30,7 +32,7 @@ export default async function AuditPage({
   const page = Math.max(1, Number(pageRaw) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  const supabase = await getDataClient();
+  const supabase = await createSupabaseServerClient();
 
   const now = new Date();
   const startToday = new Date(
@@ -75,7 +77,7 @@ export default async function AuditPage({
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">سجل التدقيق وحالة النظام</h1>
+          <h1 className="text-2xl font-bold">سجل التدقيق وحالة النظام</h1><OperatorScopeNote />
           <p className="mt-1 text-sm text-foreground/60">
             استكشف الأحداث (مين عمل إيه وامتى) مع فلاتر وتصدير.
           </p>
@@ -97,20 +99,20 @@ export default async function AuditPage({
       <form className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-white p-3">
         <label className="flex flex-col gap-1 text-xs text-foreground/60">
           الإجراء
-          <select name="action" defaultValue={action??""} className={input}><option value="">كل الإجراءات</option>{Object.entries(ACTION_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select>
+          <FieldSelect name="action" defaultValue={action??""} aria-label="الإجراء" className="text-sm"><option value="">كل الإجراءات</option>{Object.entries(ACTION_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</FieldSelect>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-foreground/60">الفاعل<select name="actor" defaultValue={actor??""} className={input}><option value="">كل الأشخاص</option>{(actors??[]).map(a=><option key={a.id} value={a.id}>{a.full_name}</option>)}</select></label>
+        <label className="flex flex-col gap-1 text-xs text-foreground/60">الفاعل<FieldSelect name="actor" defaultValue={actor??""} aria-label="الفاعل" className="text-sm"><option value="">كل الأشخاص</option>{(actors??[]).map(a=><option key={a.id} value={a.id}>{a.full_name}</option>)}</FieldSelect></label>
         <label className="flex flex-col gap-1 text-xs text-foreground/60">
           من
-          <input type="date" name="from" defaultValue={from ?? ""} className={input} />
+          <FieldInput type="date" name="from" defaultValue={from ?? ""} aria-label="من" className="text-sm" />
         </label>
         <label className="flex flex-col gap-1 text-xs text-foreground/60">
           إلى
-          <input type="date" name="to" defaultValue={to ?? ""} className={input} />
+          <FieldInput type="date" name="to" defaultValue={to ?? ""} aria-label="إلى" className="text-sm" />
         </label>
-        <button className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:opacity-90">
+        <Button type="submit" className="text-sm">
           فلترة
-        </button>
+        </Button>
         <Link href="/audit" className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-border/40">
           مسح
         </Link>
@@ -142,7 +144,7 @@ export default async function AuditPage({
                   <td className="whitespace-nowrap px-4 py-2 text-foreground/70">
                     {formatDateTime(r.at)}
                   </td>
-                  <td className="px-4 py-2">{r.actor?.full_name ?? "—"}</td>
+                  <td className="px-4 py-2"><PersonLink person={r.actor} /></td>
                   <td className="px-4 py-2">
                     <span className="rounded bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
                       {actionLabel(r.action)}
