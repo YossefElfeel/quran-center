@@ -7,6 +7,8 @@ import { Button, SubmitButton } from "@/components/ui/button";
 import { useActionState, useEffect, useState } from "react";
 
 import { DangerAction } from "@/components/danger-action";
+import { isolateLtr } from "@/lib/format";
+import { ROLE_LABEL } from "@/lib/action-labels";
 
 import {
   blockUser,
@@ -18,13 +20,7 @@ import {
   type ResetResult,
 } from "./actions";
 
-const ALL_ROLES: { value: string; label: string }[] = [
-  { value: "super_admin", label: "سوبر أدمن" },
-  { value: "admin", label: "أدمن" },
-  { value: "supervisor", label: "مشرف" },
-  { value: "teacher", label: "معلّم" },
-  { value: "parent", label: "ولي أمر" },
-];
+const ALL_ROLES: { value: string; label: string }[] = Object.entries(ROLE_LABEL).map(([value, label]) => ({ value, label }));
 
 type Status = "active" | "blocked" | "deactivated";
 
@@ -36,12 +32,15 @@ type AdminAction = (
 export function UserActions({
   personId,
   fullName,
+  tag,
   status,
   roles,
   isSelf,
 }: {
   personId: string;
   fullName: string;
+  /** مميّز ثانوي (موبايل أو #XXXX) يظهر في عناوين النوافذ عشان الأسماء المتكررة. */
+  tag?: string;
   status: Status;
   roles: string[];
   isSelf: boolean;
@@ -50,6 +49,8 @@ export function UserActions({
     null | "block" | "deactivate" | "delete" | "roles"
   >(null);
   const close = () => setOpen(null);
+  // «الاسم» (01xxxxxxxxx) — يفرّق بين الأسماء المتكررة في عناوين التأكيد.
+  const who = `«${fullName}»${tag ? ` (${isolateLtr(tag)})` : ""}`;
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1">
@@ -65,12 +66,12 @@ export function UserActions({
           <Button type="button" size="sm" variant="secondary" onClick={() => setOpen("deactivate")}>
             إيقاف
           </Button>
-          <ResetPasswordButton personId={personId} fullName={fullName} />
+          <ResetPasswordButton personId={personId} who={who} />
           <DangerAction
             action={forceLogout}
             tone="warn"
             label="خروج"
-            title={`تسجيل خروج «${fullName}»`}
+            title={`تسجيل خروج ${who}`}
             description="هيتم إنهاء كل جلسات المستخدم — هيحتاج يسجّل دخول تاني."
             submitLabel="سجّل خروجه"
             reasonPlaceholder="سبب تسجيل الخروج (مطلوب)"
@@ -96,7 +97,7 @@ export function UserActions({
       )}
 
       {open === "block" ? (
-        <Modal title={`حظر «${fullName}»`} onClose={close}>
+        <Modal title={`حظر ${who}`} onClose={close}>
           <ReasonForm
             action={blockUser}
             onDone={close}
@@ -108,7 +109,7 @@ export function UserActions({
       ) : null}
 
       {open === "deactivate" ? (
-        <Modal title={`إيقاف «${fullName}»`} onClose={close}>
+        <Modal title={`إيقاف ${who}`} onClose={close}>
           <p className="text-xs text-foreground/60">
             الإيقاف بيمنع الدخول بس بيحفظ كل السجلّ — قابل للاسترجاع.
           </p>
@@ -123,13 +124,13 @@ export function UserActions({
       ) : null}
 
       {open === "delete" ? (
-        <Modal title={`حذف «${fullName}» نهائيًا`} onClose={close}>
+        <Modal title={`حذف ${who} نهائيًا`} onClose={close}>
           <DeleteForm personId={personId} fullName={fullName} onDone={close} />
         </Modal>
       ) : null}
 
       {open === "roles" ? (
-        <Modal title={`أدوار «${fullName}»`} onClose={close}>
+        <Modal title={`أدوار ${who}`} onClose={close}>
           <RolesForm personId={personId} roles={roles} isSelf={isSelf} />
         </Modal>
       ) : null}
@@ -339,10 +340,10 @@ function RestoreForm({ personId }: { personId: string }) {
 
 function ResetPasswordButton({
   personId,
-  fullName,
+  who,
 }: {
   personId: string;
-  fullName: string;
+  who: string;
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState<
@@ -357,7 +358,7 @@ function ResetPasswordButton({
         كلمة السر
       </Button>
       {open ? (
-        <Modal title={`إعادة كلمة سر «${fullName}»`} onClose={() => setOpen(false)}>
+        <Modal title={`إعادة كلمة سر ${who}`} onClose={() => setOpen(false)}>
           <form action={formAction} className="flex flex-col gap-3">
             <input type="hidden" name="target_person_id" value={personId} />
             <p className="text-xs text-foreground/60">

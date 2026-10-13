@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Users, Settings, MessageSquare, CalendarCheck, LayoutDashboard, ClipboardList, Circle, Award, Bell, Image, Wallet, Flag, Activity, Database, Shield, UserRoundCog, ScrollText, BarChart3 } from "lucide-react";
+import { BookOpen, Users, Settings, MessageSquare, LayoutDashboard, Hourglass, UserPlus, CalendarX, ClipboardCheck, Library, Trophy, Award, Bell, Image, Wallet, Flag, CalendarClock, Database, Shield, UserRoundCog, ScrollText, BarChart3 } from "lucide-react";
+// كل عنصر ليه أيقونة مميّزة (من غير تكرار) — مهم في الوضع المطوي اللي بيبان فيه الأيقونات بس.
 const groups = [
-  {name:'التشغيل اليومي',items:[['/','نظرة عامة',LayoutDashboard],['/intake','قائمة الانتظار',ClipboardList],['/enrollment','تسجيل الطلاب',CalendarCheck],['/circles','الحلقات والمتابعة',Circle],['/excuses','أعذار الغياب',CalendarCheck],['/evaluations','التقييمات والاعتمادات',ClipboardList],['/complaints','الشكاوى',MessageSquare]]},
-  {name:'الإعداد الأكاديمي',items:[['/academics','المناهج والمستويات',BookOpen],['/certificates','الشهادات',Award],['/content','الكورسات والمسابقات',BookOpen]]},
+  {name:'التشغيل اليومي',items:[['/','نظرة عامة',LayoutDashboard],['/intake','قائمة الانتظار',Hourglass],['/enrollment','تسجيل الطلاب',UserPlus],['/circles','الحلقات والمتابعة',BookOpen],['/excuses','أعذار الغياب',CalendarX],['/evaluations','التقييمات والاعتمادات',ClipboardCheck],['/complaints','الشكاوى',MessageSquare]]},
+  {name:'الإعداد الأكاديمي',items:[['/academics','المناهج والمستويات',Library],['/certificates','الشهادات',Award],['/content','الكورسات والمسابقات',Trophy]]},
   {name:'الناس والمالية',items:[['/users','المستخدمون والأدوار',Users],['/subscriptions','الاشتراكات',Wallet],['/analytics','التحليلات',BarChart3]]},
   {name:'التواصل',items:[['/notifications','الإشعارات والبث',Bell],['/media','الوسائط والموافقات',Image]]},
-  {name:'النظام',items:[['/settings','إعدادات النظام',Settings],['/flags','المفاتيح والصيانة',Flag],['/automation','الأتمتة والمجدولات',Activity],['/data','التحكّم بالبيانات',Database],['/impersonation','تقمّص الدور',UserRoundCog],['/audit','سجل التدقيق',ScrollText],['/pdpl','الخصوصية',Shield]]},
+  {name:'النظام',items:[['/settings','إعدادات النظام',Settings],['/flags','المفاتيح والصيانة',Flag],['/automation','الأتمتة والمجدولات',CalendarClock],['/data','التحكّم بالبيانات',Database],['/impersonation','تقمّص الدور',UserRoundCog],['/audit','سجل التدقيق',ScrollText],['/pdpl','الخصوصية',Shield]]},
 ] as const;
 export function Sidebar({collapsed=false,onNavigate}: {collapsed?: boolean;onNavigate?:()=>void}) {
   const pathname=usePathname();
