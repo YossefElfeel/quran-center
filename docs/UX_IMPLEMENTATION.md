@@ -14,7 +14,7 @@ Supabase `apply_migration` returned `Invalid or expired requestState` twice with
 
 Security advisors were checked before and after: the only count increase is the intentionally admin-gated `update_guardian_details` definer RPC (18 callable guarded RPCs versus 17 before). Existing service-only RLS/no-policy informational notices and leaked-password warning remain; see [definer advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) and [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 
-The first Vercel builds failed because legacy commands changed into the application directory twice. App-scoped, pinned pnpm commands in `web/vercel.json` and `dashboard/vercel.json` fixed this in `3701642`. Both production deployments are READY with their canonical aliases: web `dpl_FnwBKvSDYLc6rRXCrw9GrTrA6Y4Z`, dashboard `dpl_ERNLMbnBfg7p4eQ5u1F73WqezRGF`. The public homepage and authenticated super-admin overview were verified in the browser. The next dependency/formatting patch still needs its exact-commit CI and deployment verification.
+The first Vercel builds failed because legacy commands changed into the application directory twice. App-scoped, pinned pnpm commands in `web/vercel.json` and `dashboard/vercel.json` fixed this in `3701642`. The dependency/formatting patch `8bdb40d` is now READY in production with canonical aliases: web `dpl_2AAQF6xktPygsLcdbEC5eF3T6cax`, dashboard `dpl_7h6Eoj7vgiFMePrszczFuuNLe8dx`. The previous public homepage and authenticated super-admin overview were verified in the browser. Updated browser checks wait for the required Brave extension update.
 
 Vercel deployment is authorized and its backend prerequisites are complete. Production domains are `https://quran-web-sage.vercel.app` and `https://quran-dashboard-kohl.vercel.app`. Supabase Auth Site URL and the exact public `/auth/confirm` redirect were saved; existing allowed redirects were retained. Custom Gmail SMTP is prepared in the private browser form but is not saved: the user must enter and submit their app password directly. No real test email recipient has been authorized yet.
 
@@ -68,7 +68,7 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 
 ## Remaining release work
 
-1. Verify CI and patched production deployments at the new dependency/formatting commit; update the draft PR descriptions. The original seven phase heads already passed. Draft PRs remain unmerged.
+1. Run `8bdb40d` passed both frontends, mobile and Linux goldens, but its expanded database test exposed missing public-registration uniqueness in a fresh repository database (production already has it and passed). Additive migration `20261013065851_ux_public_submission_indexes.sql` records both existing production uniqueness guards for new installations; verify its CI and reconcile hosted migration history when access is available. Update the draft PR descriptions. Draft PRs remain unmerged.
 2. Backend migration, rollback smoke/advisor and three Edge deployments are complete. Finish endpoint validation and actual account workflows when account/device access is available.
 3. Auth URLs are saved. Finish the user's private Gmail SMTP handoff, then verify templates and real recovery delivery to an explicitly authorized test address. Follow `DEPLOY_RUNBOOK.md`; new credentials/password entry and submission require the user's browser handoff.
 4. Finish public navigation/auth and authenticated responsive dashboard browser checks on the patched deployments. Connector deployment uses project ID and omits team.
@@ -78,6 +78,7 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 ## Tools
 
 - Hourly continuation remains active. Both release actions and sign-in as `YossefElfeel` are explicitly approved. Check usage on resume; do not consume reset credits without a request.
+- The current session no longer exposes the Supabase/Vercel/GitHub connectors. Existing GitHub and Vercel CLI credentials work; Supabase CLI is not linked. Browser automation requires a ChatGPT Brave extension update, already requested. Do not retry unchanged browser state or enter new SMTP credentials.
 - Private Supabase dashboard screenshots must stay local. Automatic approval review rejected publishing them to the public repository; do not stage `docs/qa/supabase-sign-in.png` or `docs/qa/supabase-ux-migrations.png`. SMTP proof is ignored under `mobile/build/ux-smtp-setup.png`; never publish the user's sender address or credentials.
 - Supabase: `quzqenavfoqsjupbtiix` (Quran). Web project `prj_nilbtl8NBZQrPO7GAVlPPNcVKVie`; dashboard `prj_ffDLeI0u4sxExBO2t5MY61ppzqZS`.
 - Flutter uses escalated `C:\src\flutter\bin\cache\dart-sdk\bin\dart.exe C:\src\flutter\bin\cache\flutter_tools.snapshot ...` because the wrapper SDK lockfile stalls. Dart format/fix uses the same executable; `dart fix` takes one target per command.
