@@ -1,9 +1,11 @@
 import Link from "next/link";
 
-import { CsvButton } from "@/components/csv-button";
+import { ExportButton } from "@/components/export-button";
+import { ACTION_LABEL,actionLabel } from "@/lib/action-labels";
+import { auditQuery,parseAuditFilters } from "@/lib/audit-query";
 import { Pager } from "@/components/list-controls";
 import { formatDateTime, formatNumber } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 type AuditRow = {
   id: string;
@@ -14,13 +16,6 @@ type AuditRow = {
   actor: { full_name: string } | null;
 };
 
-const CSV_COLS = [
-  { key: "at", label: "التاريخ" },
-  { key: "actor", label: "الفاعل" },
-  { key: "action", label: "الإجراء" },
-  { key: "target", label: "الجدول" },
-  { key: "target_id", label: "المعرّف" },
-];
 
 const PAGE_SIZE = 50;
 const input =
@@ -29,13 +24,13 @@ const input =
 export default async function AuditPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; from?: string; to?: string; page?: string }>;
+  searchParams: Promise<{ action?:string; actor?:string; from?: string; to?: string; page?: string }>;
 }) {
-  const { q, from, to, page: pageRaw } = await searchParams;
+  const { action,actor,from, to, page: pageRaw } = await searchParams;
   const page = Math.max(1, Number(pageRaw) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
 
   const now = new Date();
   const startToday = new Date(
@@ -51,32 +46,21 @@ export default async function AuditPage({
     supabase.from("person").select("*", HEAD).not("deactivated_at", "is", null),
   ]);
 
+  const readErrors=[totalEvents,eventsToday,blocked,deactivated].some(r=>r.error);
+  if(readErrors)throw new Error("data_load_failed");
+  const {data:actors,error:actorError}=await supabase.from("person").select("id,full_name").eq("is_minor",false).order("full_name");
+  if(actorError)throw new Error("data_load_failed");
+  const filters=parseAuditFilters({action,actor,from,to});
   // الاستكشاف (فلاتر + ترقيم).
-  let query = supabase
-    .from("audit_log")
-    .select(
-      "id, action, target_table, target_id, at, actor:actor_person_id(full_name)",
-      { count: "exact" },
-    )
-    .order("at", { ascending: false })
-    .range(offset, offset + PAGE_SIZE - 1);
-  if (q) query = query.ilike("action", `%${q}%`);
-  if (from) query = query.gte("at", from);
-  if (to) query = query.lte("at", `${to}T23:59:59.999Z`);
-  const { data, count } = await query;
+  const {data,count,error:loadError1}=await auditQuery(supabase,filters).range(offset,offset+PAGE_SIZE-1);
+  if (loadError1) throw new Error('data_load_failed');
   const rows = (data ?? []) as unknown as AuditRow[];
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
-  const csvRows = rows.map((r) => ({
-    at: formatDateTime(r.at),
-    actor: r.actor?.full_name ?? "—",
-    action: r.action,
-    target: r.target_table ?? "",
-    target_id: r.target_id ?? "",
-  }));
 
   const params: Record<string, string> = {};
-  if (q) params.q = q;
+  if (action) params.action = action;
+  if (actor) params.actor=actor;
   if (from) params.from = from;
   if (to) params.to = to;
 
@@ -96,7 +80,7 @@ export default async function AuditPage({
             استكشف الأحداث (مين عمل إيه وامتى) مع فلاتر وتصدير.
           </p>
         </div>
-        <CsvButton rows={csvRows} columns={CSV_COLS} filename="audit_log.csv" />
+        <ExportButton href={`/audit/export?${new URLSearchParams(params)}`} filename="audit_log.csv" />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -113,8 +97,9 @@ export default async function AuditPage({
       <form className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-white p-3">
         <label className="flex flex-col gap-1 text-xs text-foreground/60">
           الإجراء
-          <input name="q" defaultValue={q ?? ""} placeholder="مثال: user_blocked" className={input} />
+          <select name="action" defaultValue={action??""} className={input}><option value="">كل الإجراءات</option>{Object.entries(ACTION_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select>
         </label>
+        <label className="flex flex-col gap-1 text-xs text-foreground/60">الفاعل<select name="actor" defaultValue={actor??""} className={input}><option value="">كل الأشخاص</option>{(actors??[]).map(a=><option key={a.id} value={a.id}>{a.full_name}</option>)}</select></label>
         <label className="flex flex-col gap-1 text-xs text-foreground/60">
           من
           <input type="date" name="from" defaultValue={from ?? ""} className={input} />
@@ -129,13 +114,13 @@ export default async function AuditPage({
         <Link href="/audit" className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-border/40">
           مسح
         </Link>
-        <span className="ml-auto self-center text-sm text-foreground/50">
+        <span className="ms-auto self-center text-sm text-foreground/50">
           {formatNumber(count ?? 0)} نتيجة
         </span>
       </form>
 
       <div className="overflow-x-auto rounded-xl border border-border bg-white">
-        <table className="w-full text-right text-sm">
+        <table className="w-full text-start text-sm">
           <thead className="border-b border-border bg-background/50 text-foreground/60">
             <tr>
               <th className="px-4 py-2 font-medium">التاريخ</th>
@@ -160,7 +145,7 @@ export default async function AuditPage({
                   <td className="px-4 py-2">{r.actor?.full_name ?? "—"}</td>
                   <td className="px-4 py-2">
                     <span className="rounded bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
-                      {r.action}
+                      {actionLabel(r.action)}
                     </span>
                   </td>
                   <td className="px-4 py-2 text-foreground/60">

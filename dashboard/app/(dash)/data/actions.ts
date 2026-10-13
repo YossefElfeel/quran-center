@@ -1,13 +1,14 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
 async function invoke(body: Record<string, unknown>): Promise<FormResult> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { error } = await supabase.functions.invoke("data-console-write", {
     body,
   });
@@ -31,6 +32,9 @@ export async function deleteRow(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("deleteRow", fd);
+  if (formError) return formError;
+
   const table = String(fd.get("table") ?? "");
   const id = String(fd.get("id") ?? "");
   const reason = String(fd.get("reason") ?? "").trim();
@@ -45,6 +49,9 @@ export async function writeJson(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("writeJson", fd);
+  if (formError) return formError;
+
   const table = String(fd.get("table") ?? "");
   const op = String(fd.get("op") ?? "");
   const reason = String(fd.get("reason") ?? "").trim();

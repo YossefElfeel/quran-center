@@ -1,6 +1,7 @@
+import { RowActions } from "@/components/ui/row-actions";
 import { DangerAction } from "@/components/danger-action";
 import { formatDateTime } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { runCronNow, setCronActive } from "./actions";
 
@@ -27,7 +28,7 @@ type AuditRow = {
 };
 
 export default async function AutomationPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const [jobsRes, recentRes] = await Promise.all([
     supabase.rpc("cron_jobs"),
     supabase
@@ -38,6 +39,7 @@ export default async function AutomationPage() {
       .limit(50),
   ]);
 
+  if (jobsRes.error || recentRes.error) throw new Error("automation_load_failed");
   const jobs = (jobsRes.data ?? []) as Job[];
   const recent = (recentRes.data ?? []) as AuditRow[];
   const lastRun = new Map<string, string>();
@@ -57,7 +59,7 @@ export default async function AutomationPage() {
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border bg-white">
-        <table className="w-full min-w-[720px] text-right text-sm">
+        <table className="w-full min-w-[720px] text-start text-sm">
           <thead className="border-b border-border bg-background/50 text-foreground/60">
             <tr>
               <th className="px-4 py-2 font-medium">المهمّة</th>
@@ -104,7 +106,7 @@ export default async function AutomationPage() {
                       ? formatDateTime(lastRun.get(j.jobname)!)
                       : "—"}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2"><RowActions>
                     <div className="flex flex-wrap items-center justify-end gap-1">
                       <DangerAction
                         action={runCronNow}
@@ -131,7 +133,7 @@ export default async function AutomationPage() {
                         hidden={{ jobname: j.jobname, active: String(!j.active) }}
                       />
                     </div>
-                  </td>
+                  </RowActions></td>
                 </tr>
               ))
             )}

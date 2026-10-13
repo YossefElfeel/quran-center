@@ -1,4 +1,6 @@
 "use client";
+import { FieldSelect, FieldInput } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
@@ -30,16 +32,17 @@ export function LedgerControl({
     correctLedger,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="student_person_id" value={studentPersonId} />
       <input type="hidden" name="portion_id" value={portionId} />
       <input type="hidden" name="circle_id" value={circleId} />
-      <select name="state" defaultValue={current} className={`${input} py-1`}>
+      <FieldSelect feedback={state} name="state" defaultValue={current} className={`${input} py-1`}>
         <option value="assigned">مُسنَد</option>
         <option value="failed_retry">رسب/إعادة</option>
         <option value="passed">عدّى</option>
-      </select>
+      </FieldSelect>
       <button className={btnSm} disabled={pending}>
         {pending ? "…" : "صحّح"}
       </button>
@@ -61,6 +64,7 @@ export function NoteForm({
     addBehavioralNote,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -74,7 +78,7 @@ export function NoteForm({
       <input type="hidden" name="circle_id" value={circleId} />
       <label className="flex flex-col gap-1 text-sm">
         الطالب
-        <select name="student_person_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="student_person_id" required defaultValue="" className={input}>
           <option value="" disabled>
             — اختر طالب —
           </option>
@@ -83,18 +87,18 @@ export function NoteForm({
               {s.name}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-1 flex-col gap-1 text-sm">
         الملاحظة
-        <input name="text" required className={input} />
+        <FieldInput feedback={state} name="text" required className={input} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الظهور
-        <select name="visibility" defaultValue="internal" className={input}>
+        <FieldSelect feedback={state} name="visibility" defaultValue="internal" className={input}>
           <option value="internal">داخلي</option>
           <option value="parent">لولي الأمر</option>
-        </select>
+        </FieldSelect>
       </label>
       <button className={btn} disabled={pending}>
         {pending ? "…" : "أضف ملاحظة"}

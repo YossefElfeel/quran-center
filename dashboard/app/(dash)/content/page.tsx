@@ -1,6 +1,7 @@
+import { RowActions } from "@/components/ui/row-actions";
 import Link from "next/link";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { deleteCompetition, deleteCourse } from "./actions";
 import {
@@ -17,7 +18,7 @@ const COMP_STATUS_LABEL: Record<string, string> = {
   closed: "مقفولة",
 };
 
-type Course = { id: string; title: string; is_free: boolean };
+type Course = { id: string; title: string; is_free: boolean;description:string|null;video_url:string };
 type Competition = {
   id: string;
   name: string;
@@ -26,11 +27,11 @@ type Competition = {
 };
 
 export default async function ContentPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const [coursesRes, competitionsRes] = await Promise.all([
     supabase
       .from("course")
-      .select("id, title, is_free")
+      .select("id, title, is_free, description, video_url")
       .order("created_at", { ascending: false }),
     supabase
       .from("competition")
@@ -38,6 +39,7 @@ export default async function ContentPage() {
       .order("created_at", { ascending: false }),
   ]);
 
+  if (coursesRes.error || competitionsRes.error) throw new Error("content_load_failed");
   const courses = (coursesRes.data ?? []) as Course[];
   const competitions = (competitionsRes.data ?? []) as Competition[];
 
@@ -46,8 +48,8 @@ export default async function ContentPage() {
       <section className="flex flex-col gap-3">
         <h1 className="text-2xl font-bold">الكورسات</h1>
         <CourseForm />
-        <div className="overflow-hidden rounded-xl border border-border bg-white">
-          <table className="w-full text-right text-sm">
+        <div className="overflow-x-auto rounded-xl border border-border bg-white">
+          <table className="w-full text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">العنوان</th>
@@ -65,16 +67,16 @@ export default async function ContentPage() {
               ) : (
                 courses.map((c) => (
                   <tr key={c.id} className="border-b border-border/60">
-                    <td className="px-4 py-2">{c.title}</td>
+                    <td className="px-4 py-2"><details><summary className="cursor-pointer font-medium text-primary">{c.title} — تعديل</summary><CourseForm course={c}/></details></td>
                     <td className="px-4 py-2">{c.is_free ? "نعم" : "لا"}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2"><RowActions>
                       <DeleteButton
                         action={deleteCourse}
                         hidden={{ id: c.id }}
                         label="حذف"
                         confirmMessage={`حذف كورس «${c.title}»؟`}
                       />
-                    </td>
+                    </RowActions></td>
                   </tr>
                 ))
               )}

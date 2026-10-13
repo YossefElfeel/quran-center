@@ -1,9 +1,11 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
+import { normalizeNumber } from "@/lib/validation";
 
 import { revalidatePath } from "next/cache";
 
 import { logAudit } from "@/lib/audit";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
@@ -22,12 +24,15 @@ export async function enrollStudent(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("enrollStudent", fd);
+  if (formError) return formError;
+
   const circleId = String(fd.get("circle_id") ?? "");
   const name = String(fd.get("name") ?? "").trim();
   const gender = String(fd.get("gender") ?? "male");
-  const nationalId = String(fd.get("national_id") ?? "").trim();
+  const nationalId = normalizeNumber(String(fd.get("national_id") ?? "").trim());
   if (!circleId || !name) return { ok: false, error: "الاسم والحلقة مطلوبين." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { data, error } = await supabase.rpc("enroll_student", {
     p_circle: circleId,
     p_name: name,
@@ -49,6 +54,9 @@ export async function updateEnrollment(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("updateEnrollment", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   if (!id) return { ok: false, error: "التسجيل مطلوب." };
   const patch: Record<string, unknown> = {};
@@ -59,8 +67,8 @@ export async function updateEnrollment(
     patch.left_at = status === "active" ? null : new Date().toISOString();
   }
   if (Object.keys(patch).length === 0) return { ok: true };
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("enrollment").update(patch).eq("id", id);
+  const supabase = await getDataClient();
+  const { error } = await supabase.from("enrollment").update(patch).eq("id", id).select("id").single();
   if (error) return { ok: false, error: pgMessage(error, "فشل تعديل التسجيل.") };
   await logAudit({
     action: "enrollment_updated",
@@ -76,10 +84,13 @@ export async function deleteEnrollment(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("deleteEnrollment", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   if (!id) return { ok: false, error: "التسجيل مطلوب." };
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("enrollment").delete().eq("id", id);
+  const supabase = await getDataClient();
+  const { error } = await supabase.from("enrollment").delete().eq("id", id).select("id").single();
   if (error) return { ok: false, error: pgMessage(error, "فشل حذف التسجيل.") };
   await logAudit({
     action: "enrollment_deleted",
@@ -99,6 +110,9 @@ export async function bulkEnroll(
   _p: BulkResult | null,
   fd: FormData,
 ): Promise<BulkResult> {
+  const formError = validateAction("bulkEnroll", fd);
+  if (formError) return formError;
+
   const circleId = String(fd.get("circle_id") ?? "");
   const raw = String(fd.get("rows") ?? "").trim();
   if (!circleId || !raw) return { ok: false, error: "اختر حلقة واكتب الأسماء." };
@@ -119,7 +133,7 @@ export async function bulkEnroll(
   if (parsed.length > 100)
     return { ok: false, error: "الحد الأقصى ١٠٠ اسم في المرة." };
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const settled = await Promise.all(
     parsed.map(async (p) => {
       const { error } = await supabase.rpc("enroll_student", {

@@ -1,4 +1,6 @@
 "use client";
+import { FieldSelect, FieldInput, FieldTextarea } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
@@ -55,6 +57,7 @@ export function WriteForm({ table }: { table: string }) {
     writeJson,
     null,
   );
+  useActionFeedback(state);
   return (
     <form
       action={action}
@@ -64,24 +67,24 @@ export function WriteForm({ table }: { table: string }) {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
           العملية
-          <select name="op" defaultValue="insert" className={input}>
+          <FieldSelect feedback={state} name="op" defaultValue="insert" className={input}>
             <option value="insert">إضافة صف</option>
             <option value="update">تعديل صفوف</option>
             <option value="delete">حذف صفوف</option>
-          </select>
+          </FieldSelect>
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           السبب (مطلوب — للتدقيق)
-          <input name="reason" required className={input} />
+          <FieldInput feedback={state} name="reason" required className={input} />
         </label>
       </div>
       <label className="flex flex-col gap-1 text-sm">
         القيم (JSON) — مثال {`{"name":"...","status":"active"}`}
-        <textarea name="payload" rows={3} className={mono} dir="ltr" />
+        <FieldTextarea feedback={state} name="payload" rows={3} className={mono} dir="ltr" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الشرط للتعديل (JSON) — مثال {`{"id":"..."}`}
-        <textarea name="match" rows={2} className={mono} dir="ltr" />
+        <FieldTextarea feedback={state} name="match" rows={2} className={mono} dir="ltr" />
       </label>
       <button className={`${btn} self-start`} disabled={pending}>
         {pending ? "…" : "نفّذ"}

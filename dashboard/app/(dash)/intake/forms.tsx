@@ -1,4 +1,6 @@
 "use client";
+import { FieldInput, FieldSelect } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
@@ -23,6 +25,7 @@ export function ApplicantForm({ levels }: { levels: Option[] }) {
     addApplicant,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -35,18 +38,18 @@ export function ApplicantForm({ levels }: { levels: Option[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         اسم المتقدّم
-        <input name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className={input} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <select name="gender" defaultValue="male" className={input}>
+        <FieldSelect feedback={state} name="gender" defaultValue="male" className={input}>
           <option value="male">ذكر</option>
           <option value="female">أنثى</option>
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         المستوى المستهدف
-        <select name="level_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="level_id" required defaultValue="" className={input}>
           <option value="" disabled>
             — اختر مستوى —
           </option>
@@ -55,7 +58,7 @@ export function ApplicantForm({ levels }: { levels: Option[] }) {
               {l.label}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <button className={btn} disabled={pending}>
         {pending ? "…" : "أضف لقائمة الانتظار"}
@@ -82,12 +85,13 @@ export function PlacementForm({
     recordPlacement,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="waiting_id" value={waitingId} />
       <input type="hidden" name="student_person_id" value={studentPersonId} />
       <span className="text-xs text-foreground/50">اختبار تحديد:</span>
-      <select
+      <FieldSelect feedback={state}
         name="result_level_id"
         defaultValue={currentLevelId}
         className={`${input} py-1`}
@@ -97,8 +101,8 @@ export function PlacementForm({
             {l.label}
           </option>
         ))}
-      </select>
-      <input
+      </FieldSelect>
+      <FieldInput feedback={state}
         name="notes"
         placeholder="ملاحظات (اختياري)"
         className={`${input} py-1`}
@@ -126,12 +130,13 @@ export function AssignForm({
     enrollFromWaiting,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="waiting_id" value={waitingId} />
       <input type="hidden" name="student_person_id" value={studentPersonId} />
       <span className="text-xs text-foreground/50">إسناد لحلقة:</span>
-      <select name="circle_id" required defaultValue="" className={`${input} py-1`}>
+      <FieldSelect feedback={state} name="circle_id" required defaultValue="" className={`${input} py-1`}>
         <option value="" disabled>
           — اختر حلقة —
         </option>
@@ -140,7 +145,7 @@ export function AssignForm({
             {c.label}
           </option>
         ))}
-      </select>
+      </FieldSelect>
       <button className={btnSm} disabled={pending}>
         {pending ? "…" : "أسنِد وفعّل"}
       </button>

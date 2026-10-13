@@ -1,4 +1,5 @@
 "use client";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState } from "react";
 
@@ -17,6 +18,7 @@ export function ExcuseDecision({
     decideExcuse,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="id" value={id} />

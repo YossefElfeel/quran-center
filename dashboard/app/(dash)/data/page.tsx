@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { DeleteRowButton, TableSelect, WriteForm } from "./forms";
 
@@ -67,7 +67,7 @@ export default async function DataPage({
   const { table: raw } = await searchParams;
   const table = TABLES.includes(raw ?? "") ? (raw as string) : TABLES[0];
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { data, error } = await supabase.from(table).select("*").limit(50);
   const rows = (data ?? []) as Record<string, unknown>[];
   const cols = rows.length
@@ -98,7 +98,7 @@ export default async function DataPage({
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full min-w-[640px] text-right text-xs">
+          <table className="w-full min-w-[640px] text-start text-xs">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 {cols.map((c) => (

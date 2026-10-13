@@ -1,8 +1,9 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
@@ -18,12 +19,15 @@ export async function setCronActive(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("setCronActive", fd);
+  if (formError) return formError;
+
   const jobname = String(fd.get("jobname") ?? "");
   const active = String(fd.get("active") ?? "") === "true";
   const reason = String(fd.get("reason") ?? "").trim();
   if (!jobname) return { ok: false, error: "المهمّة مطلوبة." };
   if (!reason) return { ok: false, error: "السبب مطلوب." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { error } = await supabase.rpc("cron_set_active", {
     p_jobname: jobname,
     p_active: active,
@@ -39,11 +43,14 @@ export async function runCronNow(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("runCronNow", fd);
+  if (formError) return formError;
+
   const jobname = String(fd.get("jobname") ?? "");
   const reason = String(fd.get("reason") ?? "").trim();
   if (!jobname) return { ok: false, error: "المهمّة مطلوبة." };
   if (!reason) return { ok: false, error: "السبب مطلوب." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { error } = await supabase.rpc("cron_run_now", {
     p_jobname: jobname,
     p_reason: reason,

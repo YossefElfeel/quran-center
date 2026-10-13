@@ -1,6 +1,9 @@
+import { RowActions } from "@/components/ui/row-actions";
+import Link from "next/link";
+import { formatNumber } from "@/lib/format";
 import { Pager, SearchForm } from "@/components/list-controls";
 import { getSuperAdmin } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { InviteForm } from "./invite-form";
 import { UserActions } from "./user-actions";
@@ -35,24 +38,27 @@ const PAGE_SIZE = 25;
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; role?: string }>;
 }) {
-  const { q, page: pageRaw } = await searchParams;
+  const { q, page: pageRaw,role } = await searchParams;
   const page = Math.max(1, Number(pageRaw) || 1);
   const from = (page - 1) * PAGE_SIZE;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const admin = await getSuperAdmin();
   let query = supabase
     .from("person")
     .select(
-      "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment!inner(role)",
+      role === "student" ? "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment(role),enrollment!inner(id,status)" : role ? "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment!inner(role)" : "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment(role)",
       { count: "exact" },
     )
     .order("full_name")
     .range(from, from + PAGE_SIZE - 1);
+  if(role === "student") query=query.eq("enrollment.status","active");
+  else if(role) query=query.eq("role_assignment.role",role);
   if (q) query = query.ilike("full_name", `%${q}%`);
-  const { data, count } = await query;
+  const { data, count, error: loadError1 } = await query;
+  if (loadError1) throw new Error('data_load_failed');
   const rows = (data ?? []) as unknown as PersonRow[];
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
@@ -62,11 +68,11 @@ export default async function UsersPage({
         <h1 className="text-2xl font-bold">المستخدمون والأدوار</h1>
         <p className="text-sm text-foreground/60">
           تحكّم كامل: منح/سحب الأدوار، الحظر/فك الحظر، الإيقاف والحذف. كل عملية
-          بتتسجّل في سجل التدقيق. ({count ?? 0} مستخدم)
+          بتتسجّل في سجل التدقيق. ({formatNumber(count)} مستخدم)
         </p>
-        <SearchForm q={q} placeholder="ابحث بالاسم…" />
+        <SearchForm q={q} placeholder="ابحث بالاسم…" /><form className="flex flex-wrap gap-3"><input type="hidden" name="q" value={q??""}/><label>الدور<select name="role" defaultValue={role??""} className="ms-3 rounded-lg border border-border p-2"><option value="">كل الناس</option><option value="student">الطلاب</option>{Object.entries(ROLE_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><button className="rounded-lg border border-border px-4 py-2">تصفية</button></form>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full min-w-[640px] text-right text-sm">
+          <table className="w-full min-w-[640px] text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">الاسم</th>
@@ -94,7 +100,7 @@ export default async function UsersPage({
                   const roles = (r.role_assignment ?? []).map((x) => x.role);
                   return (
                     <tr key={r.id} className="border-b border-border/60">
-                      <td className="px-4 py-2">{r.full_name}</td>
+                      <td className="px-4 py-2"><Link href={`/users/${r.id}`} className="text-primary underline">{r.full_name}</Link></td>
                       <td className="px-4 py-2">
                         <div className="flex flex-wrap gap-1">
                           {roles.length === 0 ? (
@@ -119,7 +125,7 @@ export default async function UsersPage({
                           {badge.label}
                         </span>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2"><RowActions>
                         <UserActions
                           personId={r.id}
                           fullName={r.full_name}
@@ -127,7 +133,7 @@ export default async function UsersPage({
                           roles={roles}
                           isSelf={r.id === admin?.personId}
                         />
-                      </td>
+                      </RowActions></td>
                     </tr>
                   );
                 })

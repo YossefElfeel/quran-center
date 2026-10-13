@@ -1,5 +1,6 @@
+import { RowActions } from "@/components/ui/row-actions";
 import { formatDateTime } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { deleteMedia } from "./actions";
 import { DeleteButton, RetainToggle } from "./forms";
@@ -22,7 +23,7 @@ type ConsentRow = {
 };
 
 export default async function MediaPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const [mediaRes, consentRes] = await Promise.all([
     supabase
       .from("media")
@@ -35,6 +36,7 @@ export default async function MediaPage() {
       .order("granted_at", { ascending: false })
       .limit(50),
   ]);
+  if (mediaRes.error || consentRes.error) throw new Error("media_load_failed");
   const media = (mediaRes.data ?? []) as unknown as MediaRow[];
   const consents = (consentRes.data ?? []) as unknown as ConsentRow[];
 
@@ -50,7 +52,7 @@ export default async function MediaPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">الوسائط</h2>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full min-w-[640px] text-right text-sm">
+          <table className="w-full min-w-[640px] text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">الطالب</th>
@@ -82,7 +84,7 @@ export default async function MediaPage() {
                     <td className="px-4 py-2 text-foreground/50">
                       {formatDateTime(m.created_at)}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2"><RowActions>
                       <div className="flex flex-wrap items-center gap-2">
                         <RetainToggle id={m.id} retained={m.retained} />
                         <DeleteButton
@@ -92,7 +94,7 @@ export default async function MediaPage() {
                           confirmMessage="حذف الوسيط نهائيًا؟"
                         />
                       </div>
-                    </td>
+                    </RowActions></td>
                   </tr>
                 ))
               )}
@@ -104,7 +106,7 @@ export default async function MediaPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">الموافقات</h2>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full text-right text-sm">
+          <table className="w-full text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">الطالب</th>

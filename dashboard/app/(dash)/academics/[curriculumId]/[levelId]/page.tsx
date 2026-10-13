@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { deleteCircle } from "../../actions";
 import {
@@ -25,23 +26,27 @@ export default async function CirclesPage({
   params: Promise<{ curriculumId: string; levelId: string }>;
 }) {
   const { curriculumId, levelId } = await params;
-  const supabase = await createSupabaseServerClient();
-  const { data: level } = await supabase
+  const supabase = await getDataClient();
+  const { data: level, error: loadError1 } = await supabase
     .from("level")
     .select("name")
     .eq("id", levelId)
     .maybeSingle();
-  const { data: circleData } = await supabase
+  if (loadError1) throw new Error('data_load_failed');
+  if (!level) notFound();
+  const { data: circleData, error: loadError2 } = await supabase
     .from("circle")
     .select("id, level_id, name, max_size, status, teacher_id")
     .eq("level_id", levelId)
     .order("created_at");
+  if (loadError2) throw new Error('data_load_failed');
   const circles = (circleData ?? []) as Circle[];
 
-  const { data: teacherData } = await supabase
+  const { data: teacherData, error: loadError3 } = await supabase
     .from("role_assignment")
     .select("person:person_id(id, full_name)")
     .eq("role", "teacher");
+  if (loadError3) throw new Error('data_load_failed');
   const teachers: Teacher[] = ((teacherData ?? []) as unknown as TeacherRow[])
     .map((r) => r.person)
     .filter((p): p is { id: string; full_name: string } => !!p)
@@ -57,7 +62,7 @@ export default async function CirclesPage({
           href={`/academics/${curriculumId}`}
           className="text-sm text-primary hover:underline"
         >
-          ← المستويات
+          → المستويات
         </Link>
         <h1 className="text-2xl font-bold">
           حلقات «{(level?.name as string) ?? "المستوى"}»

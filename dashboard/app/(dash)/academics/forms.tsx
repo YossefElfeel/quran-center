@@ -1,4 +1,6 @@
 "use client";
+import { FieldInput, FieldSelect } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
@@ -34,6 +36,7 @@ export function CurriculumForm() {
     createCurriculum,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -46,14 +49,14 @@ export function CurriculumForm() {
     >
       <label className="flex flex-col gap-1 text-sm">
         اسم المنهج
-        <input name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className={input} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <select name="type" defaultValue="quran" className={input}>
+        <FieldSelect feedback={state} name="type" defaultValue="quran" className={input}>
           <option value="quran">قرآن</option>
           <option value="arabic_foundation">تأسيس عربي</option>
-        </select>
+        </FieldSelect>
       </label>
       <button className={btn} disabled={pending}>
         {pending ? "…" : "أضف منهج"}
@@ -70,6 +73,7 @@ export function LevelForm({ curriculumId }: { curriculumId: string }) {
     createLevel,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -83,7 +87,7 @@ export function LevelForm({ curriculumId }: { curriculumId: string }) {
       <input type="hidden" name="curriculum_id" value={curriculumId} />
       <label className="flex flex-col gap-1 text-sm">
         اسم المستوى
-        <input name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className={input} />
       </label>
       <button className={btn} disabled={pending}>
         {pending ? "…" : "أضف مستوى"}
@@ -108,6 +112,7 @@ export function CircleForm({
     createCircle,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -122,22 +127,22 @@ export function CircleForm({
       <input type="hidden" name="curriculum_id" value={curriculumId} />
       <label className="flex flex-col gap-1 text-sm">
         اسم الحلقة
-        <input name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className={input} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         المعلّم
-        <select name="teacher_id" defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="teacher_id" defaultValue="" className={input}>
           <option value="">— بدون معلّم —</option>
           {teachers.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الحد الأقصى
-        <input
+        <FieldInput feedback={state}
           name="max_size"
           type="number"
           min={1}
@@ -169,12 +174,13 @@ export function CircleControls({
     updateCircle,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="id" value={circle.id} />
       <input type="hidden" name="level_id" value={circle.level_id} />
       <input type="hidden" name="curriculum_id" value={curriculumId} />
-      <select
+      <FieldSelect feedback={state}
         name="teacher_id"
         defaultValue={circle.teacher_id ?? ""}
         className={`${input} py-1`}
@@ -185,8 +191,8 @@ export function CircleControls({
             {t.name}
           </option>
         ))}
-      </select>
-      <select
+      </FieldSelect>
+      <FieldSelect feedback={state}
         name="status"
         defaultValue={circle.status}
         className={`${input} py-1`}
@@ -194,8 +200,8 @@ export function CircleControls({
         <option value="forming">قيد التكوين</option>
         <option value="active">نشطة</option>
         <option value="graduated">متخرّجة</option>
-      </select>
-      <input
+      </FieldSelect>
+      <FieldInput feedback={state}
         name="max_size"
         type="number"
         min={1}

@@ -1,5 +1,8 @@
 "use client";
+import { FieldSelect } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
+import Link from "next/link";
 import { useActionState } from "react";
 
 import { issueCertificate, type FormResult } from "./actions";
@@ -20,11 +23,12 @@ const KINDS = [
   { value: "honor", label: "تكريم (يتخطّى الأهلية)" },
 ];
 
-export function IssueForm({ students }: { students: Student[] }) {
+export function IssueForm({ students,selectedStudent }: { students: Student[];selectedStudent?:string }) {
   const [state, action, pending] = useActionState<FormResult | null, FormData>(
     issueCertificate,
     null,
   );
+  useActionFeedback(state);
   return (
     <form
       action={action}
@@ -32,7 +36,7 @@ export function IssueForm({ students }: { students: Student[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         الطالب
-        <select name="student_person_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="student_person_id" required defaultValue={students.some(s=>s.id===selectedStudent)?selectedStudent:""} className={input}>
           <option value="" disabled>
             — اختر طالب —
           </option>
@@ -41,23 +45,24 @@ export function IssueForm({ students }: { students: Student[] }) {
               {s.name}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <select name="kind" defaultValue="full" className={input}>
+        <FieldSelect feedback={state} name="kind" defaultValue="full" className={input}>
           {KINDS.map((k) => (
             <option key={k.value} value={k.value}>
               {k.label}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <button className={btn} disabled={pending}>
         {pending ? "…" : "أصدِر الشهادة"}
       </button>
+      {state?.ok===true?<p role="status" className="w-full text-primary">الشهادة صدرت. {state.certificateId?<Link href={`/certificates/${state.certificateId}`} className="underline">عرض PDF</Link>:null}</p>:null}
       {state?.ok === false ? (
-        <span className="w-full text-sm text-red-600">{state.error}</span>
+        <span role="alert" className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}
     </form>
   );

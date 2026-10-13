@@ -1,6 +1,6 @@
 import { DangerAction } from "@/components/danger-action";
 import { DangerZone } from "@/components/danger-zone";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { toggleFlag } from "./actions";
 import { flagIsDanger, flagLabel } from "./meta";
@@ -13,11 +13,12 @@ type Flag = {
 };
 
 export default async function FlagsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const supabase = await getDataClient();
+  const { data, error: loadError1 } = await supabase
     .from("feature_flag")
     .select("key, enabled, description, updated_at")
     .order("key");
+  if (loadError1) throw new Error('data_load_failed');
   const flags = (data ?? []) as Flag[];
 
   const danger = flags.filter((f) => flagIsDanger(f.key));

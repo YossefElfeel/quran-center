@@ -1,4 +1,6 @@
 "use client";
+import { FieldSelect, FieldInput, FieldTextarea } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
@@ -24,6 +26,7 @@ export function BroadcastForm() {
     broadcast,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -37,22 +40,22 @@ export function BroadcastForm() {
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
           الجمهور
-          <select name="audience" defaultValue="all" className={input}>
+          <FieldSelect feedback={state} name="audience" defaultValue="all" className={input}>
             {AUDIENCES.map((a) => (
               <option key={a.value} value={a.value}>
                 {a.label}
               </option>
             ))}
-          </select>
+          </FieldSelect>
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
           العنوان
-          <input name="title" required className={input} />
+          <FieldInput feedback={state} name="title" required className={input} />
         </label>
       </div>
       <label className="flex flex-col gap-1 text-sm">
         النص (اختياري)
-        <textarea name="body" rows={2} className={input} />
+        <FieldTextarea feedback={state} name="body" rows={2} className={input} />
       </label>
       <button className={`${btn} self-start`} disabled={pending}>
         {pending ? "…" : "ابعت البثّ"}

@@ -1,10 +1,11 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
-import { getSuperAdmin } from "@/lib/auth";
+
 import { logAudit } from "@/lib/audit";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient, getDataIdentity } from "@/lib/supabase/data-client";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
@@ -13,6 +14,9 @@ export async function decideExcuse(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("decideExcuse", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   const decision = String(fd.get("decision") ?? "");
   const enrollmentId = String(fd.get("enrollment_id") ?? "");
@@ -20,16 +24,16 @@ export async function decideExcuse(
   if (!id || (decision !== "approved" && decision !== "rejected"))
     return { ok: false, error: "بيانات ناقصة." };
 
-  const supabase = await createSupabaseServerClient();
-  const admin = await getSuperAdmin();
+  const supabase = await getDataClient();
+  const actor = await getDataIdentity();
   const { error } = await supabase
     .from("excuse_request")
     .update({
       status: decision,
-      decided_by: admin?.personId ?? null,
+      decided_by: actor.personId,
       decided_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id).select("id").single();
   if (error) return { ok: false, error: "فشل تنفيذ القرار." };
 
   if (decision === "approved" && sessionId && enrollmentId) {
@@ -38,7 +42,7 @@ export async function decideExcuse(
         session_id: sessionId,
         enrollment_id: enrollmentId,
         status: "absent_excused",
-        excuse_approved_by: admin?.personId ?? null,
+        excuse_approved_by: actor.personId,
       },
       { onConflict: "session_id,enrollment_id" },
     );

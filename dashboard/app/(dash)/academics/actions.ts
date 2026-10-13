@@ -1,9 +1,11 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
+import { normalizeNumber } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 
 import { logAudit } from "@/lib/audit";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
@@ -21,10 +23,13 @@ export async function createCurriculum(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("createCurriculum", fd);
+  if (formError) return formError;
+
   const name = String(fd.get("name") ?? "").trim();
   const type = String(fd.get("type") ?? "quran");
   if (!name) return { ok: false, error: "الاسم مطلوب." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { data, error } = await supabase
     .from("curriculum")
     .insert({ name, type })
@@ -45,10 +50,13 @@ export async function deleteCurriculum(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("deleteCurriculum", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   if (!id) return { ok: false, error: "المنهج مطلوب." };
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("curriculum").delete().eq("id", id);
+  const supabase = await getDataClient();
+  const { error } = await supabase.from("curriculum").delete().eq("id", id).select("id").single();
   if (error) return { ok: false, error: pgMessage(error, "فشل حذف المنهج.") };
   await logAudit({
     action: "curriculum_deleted",
@@ -64,10 +72,13 @@ export async function createLevel(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("createLevel", fd);
+  if (formError) return formError;
+
   const curriculumId = String(fd.get("curriculum_id") ?? "");
   const name = String(fd.get("name") ?? "").trim();
   if (!curriculumId || !name) return { ok: false, error: "البيانات ناقصة." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   // ترتيب تلقائي: أعلى ord + 1 داخل المنهج.
   const { data: maxRow } = await supabase
     .from("level")
@@ -97,11 +108,14 @@ export async function deleteLevel(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("deleteLevel", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   const curriculumId = String(fd.get("curriculum_id") ?? "");
   if (!id) return { ok: false, error: "المستوى مطلوب." };
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("level").delete().eq("id", id);
+  const supabase = await getDataClient();
+  const { error } = await supabase.from("level").delete().eq("id", id).select("id").single();
   if (error) return { ok: false, error: pgMessage(error, "فشل حذف المستوى.") };
   await logAudit({ action: "level_deleted", targetTable: "level", targetId: id });
   revalidatePath(`/academics/${curriculumId}`);
@@ -113,15 +127,18 @@ export async function createCircle(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("createCircle", fd);
+  if (formError) return formError;
+
   const levelId = String(fd.get("level_id") ?? "");
   const curriculumId = String(fd.get("curriculum_id") ?? "");
   const name = String(fd.get("name") ?? "").trim();
-  const maxSize = Number(fd.get("max_size") ?? 30);
+  const maxSize = Number(normalizeNumber(String(fd.get("max_size")??30)));
   const teacherId = String(fd.get("teacher_id") ?? "");
   if (!levelId || !name) return { ok: false, error: "البيانات ناقصة." };
   if (!Number.isFinite(maxSize) || maxSize < 1)
     return { ok: false, error: "الحد الأقصى لازم يكون رقم موجب." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { data, error } = await supabase
     .from("circle")
     .insert({
@@ -147,6 +164,9 @@ export async function updateCircle(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("updateCircle", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   const levelId = String(fd.get("level_id") ?? "");
   const curriculumId = String(fd.get("curriculum_id") ?? "");
@@ -156,14 +176,14 @@ export async function updateCircle(
     patch.teacher_id = String(fd.get("teacher_id") ?? "") || null;
   if (fd.has("status")) patch.status = String(fd.get("status") ?? "");
   if (fd.has("max_size")) {
-    const m = Number(fd.get("max_size"));
+    const m = Number(normalizeNumber(String(fd.get("max_size")??"")));
     if (!Number.isFinite(m) || m < 1)
       return { ok: false, error: "الحد الأقصى لازم يكون رقم موجب." };
     patch.max_size = m;
   }
   if (Object.keys(patch).length === 0) return { ok: true };
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("circle").update(patch).eq("id", id);
+  const supabase = await getDataClient();
+  const { error } = await supabase.from("circle").update(patch).eq("id", id).select("id").single();
   if (error) return { ok: false, error: pgMessage(error, "فشل تعديل الحلقة.") };
   await logAudit({
     action: "circle_updated",
@@ -179,11 +199,14 @@ export async function deleteCircle(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("deleteCircle", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   const levelId = String(fd.get("level_id") ?? "");
   const curriculumId = String(fd.get("curriculum_id") ?? "");
   if (!id) return { ok: false, error: "الحلقة مطلوبة." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   // حذف الحلقة بيعمل cascade للتسجيلات ← التسميع ← الدفتر (مسح تاريخ أكاديمي لا رجعة فيه).
   // فبنمنع الحذف لو فيها أي تسجيل، ونوجّه لتخريج الحلقة (status='graduated') بدلًا منه.
   const { count } = await supabase
@@ -196,7 +219,7 @@ export async function deleteCircle(
       error: "الحلقة فيها تسجيلات — خرّجها (الحالة) أو انقل الطلاب الأول. الحذف بيمسح سجلّ التسميع.",
     };
   }
-  const { error } = await supabase.from("circle").delete().eq("id", id);
+  const { error } = await supabase.from("circle").delete().eq("id", id).select("id").single();
   if (error) return { ok: false, error: pgMessage(error, "فشل حذف الحلقة.") };
   await logAudit({
     action: "circle_deleted",

@@ -1,4 +1,7 @@
 "use client";
+import { FieldTextarea, FieldInput } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
+import { Dialog } from "@/components/ui/dialog";
 
 import { useActionState, useEffect, useState } from "react";
 
@@ -138,38 +141,8 @@ export function UserActions({
   );
 }
 
-function Modal({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-xl border border-border bg-white p-5 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h3 className="font-bold">{title}</h3>
-          <button
-            className="text-foreground/50 hover:text-foreground"
-            onClick={onClose}
-            aria-label="إغلاق"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex flex-col gap-3">{children}</div>
-      </div>
-    </div>
-  );
+function Modal({title,onClose,children}: {title:string;onClose:()=>void;children:React.ReactNode}) {
+  return <Dialog title={title} onClose={onClose}><div className="space-y-3">{children}</div></Dialog>;
 }
 
 function ReasonForm({
@@ -189,6 +162,7 @@ function ReasonForm({
     ActionResult | null,
     FormData
   >(action, null);
+  useActionFeedback(state);
   useEffect(() => {
     if (state?.ok) onDone();
   }, [state, onDone]);
@@ -198,7 +172,7 @@ function ReasonForm({
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
-      <textarea
+      <FieldTextarea feedback={state}
         name="reason"
         required
         rows={3}
@@ -232,6 +206,7 @@ function DeleteForm({
     ActionResult | null,
     FormData
   >(deleteUser, null);
+  useActionFeedback(state);
   const [confirm, setConfirm] = useState("");
   useEffect(() => {
     if (state?.ok) onDone();
@@ -245,14 +220,14 @@ function DeleteForm({
         ⚠️ حذف نهائي لا رجعة فيه. لو فيه سجلّ مرتبط استخدم الإيقاف. اكتب الاسم
         الكامل للتأكيد.
       </p>
-      <textarea
+      <FieldTextarea feedback={state}
         name="reason"
         required
         rows={2}
         placeholder="سبب الحذف (مطلوب)"
         className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
       />
-      <input
+      <FieldInput feedback={state}
         name="confirm"
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
@@ -316,6 +291,7 @@ function RoleToggle({
     ActionResult | null,
     FormData
   >(manageRole, null);
+  useActionFeedback(state);
   // الواجهة بتمنع سحب السوبر أدمن من نفسك (السيرفر بيمنع برضه).
   const disabled = pending || (isSelf && role.value === "super_admin" && has);
 
@@ -346,10 +322,11 @@ function RoleToggle({
 }
 
 function UnblockForm({ personId }: { personId: string }) {
-  const [, formAction, pending] = useActionState<ActionResult | null, FormData>(
+  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
     blockUser,
     null,
   );
+  useActionFeedback(state, "الحظر اتفك");
   return (
     <form action={formAction} className="inline">
       <input type="hidden" name="target_person_id" value={personId} />
@@ -362,10 +339,11 @@ function UnblockForm({ personId }: { personId: string }) {
 }
 
 function RestoreForm({ personId }: { personId: string }) {
-  const [, formAction, pending] = useActionState<ActionResult | null, FormData>(
+  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
     deleteUser,
     null,
   );
+  useActionFeedback(state, "الحساب اتفعّل");
   return (
     <form action={formAction} className="inline">
       <input type="hidden" name="target_person_id" value={personId} />
@@ -389,6 +367,7 @@ function ResetPasswordButton({
     ResetResult | null,
     FormData
   >(resetPassword, null);
+  useActionFeedback(state);
 
   return (
     <>
@@ -402,7 +381,7 @@ function ResetPasswordButton({
             <p className="text-xs text-foreground/60">
               بيتولّد رابط استرجاع — انسخه وابعته للمستخدم بنفسك (مش بيتبعت تلقائيًا).
             </p>
-            <textarea
+            <FieldTextarea feedback={state}
               name="reason"
               required
               rows={2}

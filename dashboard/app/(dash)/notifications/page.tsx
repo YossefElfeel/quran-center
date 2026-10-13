@@ -1,5 +1,6 @@
+import { RowActions } from "@/components/ui/row-actions";
 import { formatDateTime } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { retractNotification } from "./actions";
 import { BroadcastForm, DeleteButton } from "./forms";
@@ -13,12 +14,13 @@ type Row = {
 };
 
 export default async function NotificationsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const supabase = await getDataClient();
+  const { data, error: loadError1 } = await supabase
     .from("notification")
     .select("id, type, title, created_at, recipient:recipient_person_id(full_name)")
     .order("created_at", { ascending: false })
     .limit(50);
+  if (loadError1) throw new Error('data_load_failed');
   const rows = (data ?? []) as unknown as Row[];
 
   return (
@@ -35,7 +37,7 @@ export default async function NotificationsPage() {
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">آخر الإشعارات</h2>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full text-right text-sm">
+          <table className="w-full text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">العنوان</th>
@@ -61,14 +63,14 @@ export default async function NotificationsPage() {
                     <td className="px-4 py-2 text-foreground/50">
                       {formatDateTime(n.created_at)}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2"><RowActions>
                       <DeleteButton
                         action={retractNotification}
                         hidden={{ id: n.id }}
                         label="سحب"
                         confirmMessage="سحب الإشعار ده؟"
                       />
-                    </td>
+                    </RowActions></td>
                   </tr>
                 ))
               )}

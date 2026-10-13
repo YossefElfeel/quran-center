@@ -1,5 +1,5 @@
 import { formatDateTime } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 const SCOPE: Record<string, string> = {
   id: "الرقم القومي",
@@ -16,12 +16,13 @@ type Consent = {
 };
 
 export default async function PdplPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const supabase = await getDataClient();
+  const { data, error: loadError1 } = await supabase
     .from("consent_record")
     .select("id, scope, granted_at, revoked_at, student:student_person_id(full_name)")
     .order("granted_at", { ascending: false })
     .limit(200);
+  if (loadError1) throw new Error('data_load_failed');
 
   const rows = (data ?? []) as unknown as Consent[];
 
@@ -36,7 +37,7 @@ export default async function PdplPage() {
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border bg-white">
-        <table className="w-full text-right text-sm">
+        <table className="w-full text-start text-sm">
           <thead className="border-b border-border bg-background/50 text-foreground/60">
             <tr>
               <th className="px-4 py-2 font-medium">الطالب</th>

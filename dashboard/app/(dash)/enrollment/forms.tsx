@@ -1,4 +1,6 @@
 "use client";
+import { FieldInput, FieldSelect, FieldTextarea } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
@@ -24,6 +26,7 @@ export function EnrollForm({ circles }: { circles: CircleOption[] }) {
     enrollStudent,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -36,18 +39,18 @@ export function EnrollForm({ circles }: { circles: CircleOption[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         اسم الطالب
-        <input name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className={input} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <select name="gender" defaultValue="male" className={input}>
+        <FieldSelect feedback={state} name="gender" defaultValue="male" className={input}>
           <option value="male">ذكر</option>
           <option value="female">أنثى</option>
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الحلقة
-        <select name="circle_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="circle_id" required defaultValue="" className={input}>
           <option value="" disabled>
             — اختر حلقة —
           </option>
@@ -56,11 +59,11 @@ export function EnrollForm({ circles }: { circles: CircleOption[] }) {
               {c.label}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الرقم القومي (اختياري)
-        <input
+        <FieldInput feedback={state}
           name="national_id"
           inputMode="numeric"
           dir="ltr"
@@ -92,10 +95,11 @@ export function EnrollmentControls({
     updateEnrollment,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="id" value={enrollmentId} />
-      <select
+      <FieldSelect feedback={state}
         name="circle_id"
         defaultValue={currentCircleId}
         className={`${input} py-1`}
@@ -105,8 +109,8 @@ export function EnrollmentControls({
             {c.label}
           </option>
         ))}
-      </select>
-      <select
+      </FieldSelect>
+      <FieldSelect feedback={state}
         name="status"
         defaultValue={currentStatus}
         className={`${input} py-1`}
@@ -116,7 +120,7 @@ export function EnrollmentControls({
         <option value="graduated">متخرّج</option>
         <option value="dropped">منسحب</option>
         <option value="transferred">منقول</option>
-      </select>
+      </FieldSelect>
       <button className={btnSm} disabled={pending}>
         {pending ? "…" : "حفظ"}
       </button>
@@ -132,6 +136,7 @@ export function BulkEnrollForm({ circles }: { circles: CircleOption[] }) {
     bulkEnroll,
     null,
   );
+  useActionFeedback(state);
   return (
     <form
       action={action}
@@ -139,7 +144,7 @@ export function BulkEnrollForm({ circles }: { circles: CircleOption[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         الحلقة
-        <select name="circle_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="circle_id" required defaultValue="" className={input}>
           <option value="" disabled>
             — اختر حلقة —
           </option>
@@ -148,11 +153,11 @@ export function BulkEnrollForm({ circles }: { circles: CircleOption[] }) {
               {c.label}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الأسماء (كل سطر: الاسم[,ذكر/أنثى]) — حتى ١٠٠
-        <textarea
+        <FieldTextarea feedback={state}
           name="rows"
           rows={5}
           placeholder={"محمد علي\nسارة أحمد,أنثى"}
