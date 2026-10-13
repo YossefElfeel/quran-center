@@ -25,9 +25,7 @@ void main() {
     ProviderScope(
       overrides: [
         complaintInboxProvider.overrideWith(_FakeComplaintInbox.new),
-        pendingExcusesControllerProvider.overrideWith(
-          _FakePendingExcuses.new,
-        ),
+        pendingExcusesControllerProvider.overrideWith(_FakePendingExcuses.new),
         notificationsControllerProvider.overrideWith(_FakeNotifications.new),
         currentRolesProvider.overrideWith((Ref ref) async => <String>[]),
         myDevelopmentProvider.overrideWith(_FakeMyDevelopment.new),
@@ -59,9 +57,9 @@ class _QaMenu extends StatelessWidget {
   const _QaMenu();
 
   void _open(BuildContext context, Widget child) {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (BuildContext _) => child),
-    );
+    Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute<void>(builder: (BuildContext _) => child));
   }
 
   @override
@@ -248,7 +246,8 @@ class _FakeNotifications extends NotificationsController {
       id: 'notification-1',
       type: 'general',
       title: 'تذكير مهم',
-      body: 'هذا إشعار عام بلا صفحة مصدر، ويجب أن يفتح كاملًا بدل أن يكون طريقًا مسدودًا.',
+      body:
+          'هذا إشعار عام بلا صفحة مصدر، ويجب أن يفتح كاملًا بدل أن يكون طريقًا مسدودًا.',
       createdAt: DateTime(2026, 9, 20, 9),
     ),
   ];
