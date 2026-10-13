@@ -67,7 +67,7 @@ export default async function DashHome() {
     {
       label: "الحلقات النشطة",
       value: num("active_circles"),
-      sub: `من ${num("total_circles")}`,
+      sub: `من ${formatNumber(num("total_circles"))}`,
     },
     { label: "المعلّمون", value: num("teachers") },
     { label: "الأسر", value: num("households") },

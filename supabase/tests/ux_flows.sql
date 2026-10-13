@@ -7,6 +7,8 @@ declare
   v_teacher uuid; v_student uuid; v_curr uuid; v_level uuid; v_circle uuid; v_new_circle uuid; v_new_teacher uuid;
   v_guardian uuid; v_guardian_uid uuid := gen_random_uuid(); v_household uuid;
   v_payment uuid; v_eval uuid; v_dev uuid; v_session uuid;
+  v_competition uuid; v_public_application uuid; v_duplicate_application uuid;
+  v_public_phone text := '999' || lpad(floor(random()*1000000000)::bigint::text,9,'0');
   v_month date := date_trunc('month', now() at time zone 'Africa/Cairo')::date;
 begin
   insert into public.person(full_name,is_minor) values ('UX Admin',false) returning id into v_admin;
@@ -88,5 +90,30 @@ begin
     raise exception 'UX FAIL: closed today session not retained';
   end if;
   reset role;
-  raise exception 'UX OK — guardian linkage, payment uniqueness/void, reason guard, returned notifications and close retry (rolled back)';
+  insert into public.competition(name,status,deadline)
+    values('UX Public Competition','open',now()+interval '1 day') returning id into v_competition;
+  if has_function_privilege('authenticated','public.submit_public_competition_application(uuid,text,text,text,text,boolean,uuid)','execute')
+    or has_function_privilege('anon','public.submit_public_competition_application(uuid,text,text,text,text,boolean,uuid)','execute') then
+    raise exception 'UX FAIL: public submission RPC exposed outside trusted Edge role';
+  end if;
+  set local role service_role;
+  v_public_application := public.submit_public_competition_application(
+    v_competition,'UX Applicant',v_public_phone,v_public_phone,null,true,null);
+  v_duplicate_application := public.submit_public_competition_application(
+    v_competition,'UX Applicant',v_public_phone,v_public_phone,null,true,null);
+  reset role;
+  if v_public_application is null or v_public_application <> v_duplicate_application
+    or (select count(*) from public.competition_application where competition_id=v_competition) <> 1 then
+    raise exception 'UX FAIL: public duplicate submission did not retain one reference';
+  end if;
+  update public.competition set deadline=now()-interval '1 minute' where id=v_competition;
+  set local role service_role;
+  begin
+    perform public.submit_public_competition_application(
+      v_competition,'UX Applicant',v_public_phone,v_public_phone,null,true,null);
+    raise exception 'UX FAIL: expired competition accepted a submission';
+  exception when invalid_parameter_value then null;
+  end;
+  reset role;
+  raise exception 'UX OK — guardian linkage, payment uniqueness/void, reason guard, returned notifications, close retry and public duplicate/deadline guards (rolled back)';
 end $$;

@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatDate, formatNumber } from "@/lib/format";
 
 export function RevenueChart({
   data,
@@ -26,10 +27,10 @@ export function RevenueChart({
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e3e3de" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip />
-        <Bar dataKey="total" fill="#1f7a53" radius={[4, 4, 0, 0]} />
+        <XAxis dataKey="month" reversed tickFormatter={value => formatDate(String(value))} tick={{ fontSize: 12 }} />
+        <YAxis orientation="right" tickFormatter={formatNumber} tick={{ fontSize: 12 }} />
+        <Tooltip labelFormatter={value => formatDate(String(value))} formatter={value => [`${formatNumber(Number(value))} ج.م`, "الإيراد"]} />
+        <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

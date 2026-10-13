@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { actionIsDanger, actionLabel } from "@/lib/action-labels";
+import { formatNumber } from "@/lib/format";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type ActivityEntry = {
@@ -17,10 +18,10 @@ function relativeTime(iso: string, nowMs: number): string {
   const s = Math.floor(diff / 1000);
   if (s < 60) return "الآن";
   const m = Math.floor(s / 60);
-  if (m < 60) return `منذ ${m} د`;
+  if (m < 60) return `منذ ${formatNumber(m)} د`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `منذ ${h} س`;
-  return `منذ ${Math.floor(h / 24)} ي`;
+  if (h < 24) return `منذ ${formatNumber(h)} س`;
+  return `منذ ${formatNumber(Math.floor(h / 24))} ي`;
 }
 
 export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {

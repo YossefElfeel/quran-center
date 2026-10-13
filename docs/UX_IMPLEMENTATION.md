@@ -2,7 +2,7 @@
 
 Plan: `C:\Users\yosse\.claude\plans\analyze-this-project-and-foamy-forest.md`
 Branch: `feat/ux-enhancement`
-Updated: 2026-10-13 (Africa/Cairo). Local implementation is ready for release review; the complete plan is not deployed.
+Updated: 2026-10-13 (Africa/Cairo). The backend and both production frontends are deployed. A verified dependency/security and Arabic-formatting patch is being released; live mail and Android walkthroughs remain pending.
 
 ## Release authorization and progress
 
@@ -14,9 +14,9 @@ Supabase `apply_migration` returned `Invalid or expired requestState` twice with
 
 Security advisors were checked before and after: the only count increase is the intentionally admin-gated `update_guardian_details` definer RPC (18 callable guarded RPCs versus 17 before). Existing service-only RLS/no-policy informational notices and leaked-password warning remain; see [definer advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) and [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 
-Vercel production builds started from verified application commit `31d81ee`: web `dpl_DjYNvDMQBwgF8pU3yMRZQx3ut82G`, dashboard `dpl_6LVordYQN7SFekYNDonhnEjjeNgX`. Completion, canonical aliases and live browser verification are still pending.
+The first Vercel builds failed because legacy commands changed into the application directory twice. App-scoped, pinned pnpm commands in `web/vercel.json` and `dashboard/vercel.json` fixed this in `3701642`. Both production deployments are READY with their canonical aliases: web `dpl_FnwBKvSDYLc6rRXCrw9GrTrA6Y4Z`, dashboard `dpl_ERNLMbnBfg7p4eQ5u1F73WqezRGF`. The public homepage and authenticated super-admin overview were verified in the browser. The next dependency/formatting patch still needs its exact-commit CI and deployment verification.
 
-Vercel deployment is already authorized. Production frontend deployment must wait for its required database columns/RPCs and Edge functions. Existing domains are `https://quran-web-sage.vercel.app` and `https://quran-dashboard-kohl.vercel.app`.
+Vercel deployment is authorized and its backend prerequisites are complete. Production domains are `https://quran-web-sage.vercel.app` and `https://quran-dashboard-kohl.vercel.app`. Supabase Auth Site URL and the exact public `/auth/confirm` redirect were saved; existing allowed redirects were retained. Custom Gmail SMTP is prepared in the private browser form but is not saved: the user must enter and submit their app password directly. No real test email recipient has been authorized yet.
 
 The original user edits are preserved in preparation commit `d6180ac` (34 files). The original tracked patch remains at `%TEMP%\quran-dar-ux-existing.patch`. Preserve that commit and every subsequent local UX commit/edit. Never stage `.env.local`, `.codex/`, `.pnpm-store/` or ignored build/QA output.
 
@@ -32,7 +32,7 @@ The original user edits are preserved in preparation commit `d6180ac` (34 files)
 | 6 | `36afc36` | [19](https://github.com/YossefElfeel/quran-center/pull/19) | Public navigation, competitions/applications, course content and SEO |
 | 7 | `e31356b` | [20](https://github.com/YossefElfeel/quran-center/pull/20) | Interim Realtime/unread count and release documentation/check wiring |
 
-All saved commits, including preparation `d6180ac` and checkpoint `31d81ee`, are published without rewriting history. CI found missing early-phase reset/realtime dependencies and the original harness formatting; repair commits were merged forward through the phase stack. Phases 1–3 now pass all five CI jobs. Phase 4's Linux generation run passed; comparison and phases 5–7 are being verified. FCM is not included in phase 7.
+All saved commits, including preparation `d6180ac` and checkpoint `31d81ee`, are published without rewriting history. CI found missing early-phase reset/realtime dependencies and the original harness formatting; repair commits were merged forward through the phase stack. All seven phase heads passed all five CI jobs, including ordinary Linux golden comparison. The assembled branch at `3701642` passed run `38352780775`. FCM is not included in phase 7.
 
 ## Implemented locally
 
@@ -57,26 +57,28 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 - Full non-golden suite: 177 passed (`mobile/build/ux-tests.log`). Focused new tests cover save validation/failure retention/slow double submit, logout/discard/payment confirmations, localized digits, all five palette contrasts, cache states, notification months, RTL, scaling, queue paging/concurrency and failed dependencies.
 - Five Windows snapshots: existing score pad plus four 200% phone text cases. Real Cairo/Material icons loaded; final visual review fixed an invisible filled tasmee icon. Linux CI exposed platform pixel differences, so references now live under `goldens/windows` and `goldens/linux`, selected by the actual host OS. Windows comparison still passes all five; Linux references were generated in CI and visually reviewed. Regeneration requires the explicit `update_goldens=true` dispatch input; ordinary dispatch/PR checks compare the saved references.
 - Web and dashboard lint/build pass. Temporary `/login/ux-check` fixture was removed; confirm it is absent from the final build.
+- Next.js and eslint-config-next were patched to 16.3.8 in both applications. Targeted browserslist, baseline-browser-mapping and source-map-js overrides are recorded in their workspace files and lockfiles. Fresh production dependency audits report zero vulnerabilities for both apps; lint/build and dashboard form/certificate checks pass after the patch. Live QA also corrected chart direction/Arabic tooltips, KPI totals, activity times and cron labels.
 - `pnpm test:forms` passes: financial precision/digits, UUID/role/reason guards, national ID, bounded JSON conditions and Cairo winter/summer timestamps.
 - `pnpm test:certificate` generated a one-page real PDF and passed its byte/header smoke; earlier Arabic shaping/clipping inspection passed. Outputs are ignored under `dashboard/.next/qa/`.
 - Dashboard fixture at 375px verified drawer, no page overflow, row disclosure, Tab/Shift+Tab focus trapping, Escape/focus restoration, inline payment error, preserved failed value and Arabic-digit success. Screenshot: `docs/qa/dashboard-form-375.png`. This was isolated UI QA, not a hosted account walkthrough.
 - Public auth browser showed expired/used-link result and neutral recovery for a disposable `.invalid` address. No real password or mail delivery was tested.
 - Completed Impeccable detector: `docs/ux-design-detect.json` = `[]`. Do not repeat unchanged checks routinely.
 - Read-only hosted schema/function/index preflight completed. Duplicate non-voided household/month payments = 0; registration-phone and application uniqueness indexes already exist. Existing legacy close overload retained for compatibility.
-- `supabase/tests/ux_flows.sql` rolls back guardian/login linkage, payment uniqueness/void, return-reason guard, returned notifications after transfer and retry-safe close. Passed in isolated Linux CI and against the approved hosted release, with zero fixtures remaining afterward. Live invite delivery/login is a separate unverified check.
+- `supabase/tests/ux_flows.sql` rolls back guardian/login linkage, payment uniqueness/void, return-reason guard, returned notifications after transfer and retry-safe close. Passed in isolated Linux CI and against the approved hosted release, with zero fixtures remaining afterward. The expanded suite also passed hosted rollback checks for service-only public submission, duplicate application reuse and deadline rejection; its new CI run is pending. HTTP guards passed: unauthenticated invite/reset 401, invalid public submission 400, allowed-origin preflight 204 and forbidden-origin 403. Live invite delivery/login is a separate unverified check.
 
 ## Remaining release work
 
-1. Finish CI on the seven published draft PRs and fix any failures. Public-source approval, push, PR creation and attachment are complete.
+1. Verify CI and patched production deployments at the new dependency/formatting commit; update the draft PR descriptions. The original seven phase heads already passed. Draft PRs remain unmerged.
 2. Backend migration, rollback smoke/advisor and three Edge deployments are complete. Finish endpoint validation and actual account workflows when account/device access is available.
-3. Hosted Auth site URL/redirect allow-list, templates and SMTP configuration still require verification. Follow `DEPLOY_RUNBOOK.md`; real reset/invite password entry requires the user's browser handoff.
-4. Finish the authorized Vercel web/dashboard builds and verify canonical production aliases and browser flows. Connector deployment uses project ID and omits team.
+3. Auth URLs are saved. Finish the user's private Gmail SMTP handoff, then verify templates and real recovery delivery to an explicitly authorized test address. Follow `DEPLOY_RUNBOOK.md`; new credentials/password entry and submission require the user's browser handoff.
+4. Finish public navigation/auth and authenticated responsive dashboard browser checks on the patched deployments. Connector deployment uses project ID and omits team.
 5. Complete actual Android role flows/TalkBack and authenticated dashboard impersonation/settings/recipient walkthroughs when device/account access permits. These live checks remain unverified.
 6. Disable `resume-quran-dar-ux-plan` only once the complete plan/release is done. Stay quiet while usage/non-actionable external state is unchanged. Both release approvals and the Supabase account choice have arrived.
 
 ## Tools
 
 - Hourly continuation remains active. Both release actions and sign-in as `YossefElfeel` are explicitly approved. Check usage on resume; do not consume reset credits without a request.
+- Private Supabase dashboard screenshots must stay local. Automatic approval review rejected publishing them to the public repository; do not stage `docs/qa/supabase-sign-in.png` or `docs/qa/supabase-ux-migrations.png`. SMTP proof is ignored under `mobile/build/ux-smtp-setup.png`; never publish the user's sender address or credentials.
 - Supabase: `quzqenavfoqsjupbtiix` (Quran). Web project `prj_nilbtl8NBZQrPO7GAVlPPNcVKVie`; dashboard `prj_ffDLeI0u4sxExBO2t5MY61ppzqZS`.
 - Flutter uses escalated `C:\src\flutter\bin\cache\dart-sdk\bin\dart.exe C:\src\flutter\bin\cache\flutter_tools.snapshot ...` because the wrapper SDK lockfile stalls. Dart format/fix uses the same executable; `dart fix` takes one target per command.
 - Next build workers require escalated `pnpm build`. Existing package store is `C:\Users\yosse\AppData\Local\pnpm\store`.
