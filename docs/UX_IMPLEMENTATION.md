@@ -110,7 +110,7 @@ Independent review of the plan against code found 2 high (device-bound reset lin
 
 ## Latest verification (2026-10-14 Cairo)
 
-- All five CI jobs passed at 8a03d7 in run 38461236887, including the merged live-check code. The new launcher display-name commit is separate ongoing work in the shared checkout.
+- All five CI jobs passed at a8a03d7 in run 38461236887, including the merged live-check code. The new launcher display-name commit is separate ongoing work in the shared checkout.
 - The hosted UX suite reported UX OK with guardian movement, freeze reasons, teacher missed-evaluation routing, complaint references and duplicate/deadline guards; zero leftover UX people.
 - The duplicate-index cleanup has a CI-only rollback regression that simulates the old hosted names, checks preserved original uniqueness and repeats the cleanup for idempotency. Existing UX tests check that duplicate inserts are still rejected.
 
