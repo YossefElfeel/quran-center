@@ -7,7 +7,11 @@ import '../../core/sync/outbox_store.dart';
 import '../../core/sync/sync_status_provider.dart';
 import '../../core/utils/arabic_numerals.dart';
 import '../../features/session/data/session_sync.dart';
+import '../../features/session/domain/session_write_block.dart';
+import '../../features/session/presentation/session_write_block_label.dart';
+import '../../shared/theme/tokens.dart';
 import '../../shared/widgets/app_button.dart';
+import '../../shared/widgets/app_card.dart';
 import '../../shared/widgets/app_confirm_sheet.dart';
 import '../../shared/widgets/app_error_view.dart';
 import '../../shared/widgets/app_modal_sheet.dart';
@@ -76,14 +80,13 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
     OutboxOpType.tasmeeRecord => 'تسميع',
     OutboxOpType.attendanceMark => 'حضور',
   };
-  String reason(String? error) {
+  String reason(AppL10n l, String? error) {
     if (error == null) return 'رفض السيرفر السجل';
     if (error.contains('dependent')) {
       return 'راجع السجلات السابقة وأعد محاولة الكل قبل قفل الحصة';
     }
-    if (error.contains('freeze') || error.contains('maintenance')) {
-      return 'تسجيل الحصص متوقف مؤقتًا — جرّب لاحقًا';
-    }
+    if (error.contains('freeze')) return l.sesWritesFrozen;
+    if (error.contains('maintenance')) return l.sesWritesMaintenance;
     if (error.contains('42501') || error.contains('permission')) {
       return 'الصلاحية مرفوضة — راجع الإدارة';
     }
@@ -94,10 +97,15 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
     await ref.read(outboxSyncProvider.notifier).flush();
     final db = ref.read(localDbProvider);
     final pending = await db.pendingCount(), dead = await db.deadLetterCount();
+    final SessionWriteBlock? blocked = ref.read(
+      sessionWritesBlockStateProvider,
+    );
     if (mounted) {
       AppSnackbar.info(
         context,
-        dead > 0
+        blocked != null && pending > 0
+            ? blocked.label(AppL10n.of(context))
+            : dead > 0
             ? 'في سجلات محتاجة مراجعة'
             : pending > 0
             ? 'السجلات لسه محفوظة وفي انتظار الاتصال'
@@ -113,11 +121,31 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
     ref.listen<AsyncValue<SyncStatus>>(syncStatusProvider, (previous, next) {
       if (previous?.value != next.value) _reload();
     });
+    final SessionWriteBlock? blocked = ref.watch(
+      sessionWritesBlockStateProvider,
+    );
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          if (blocked != null) ...<Widget>[
+            AppCard(
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.pause_circle_outline,
+                    color: context.palette.warning,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text('${blocked.label(l)}\n${l.syncBlockedSaved}'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           AppButton(
             label: 'زامن دلوقتي',
             icon: Icons.sync,
@@ -178,7 +206,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                       ListTile(
                         leading: const Icon(Icons.error_outline),
                         title: Text(entry.displayLabel ?? label(entry.type)),
-                        subtitle: Text(reason(entry.lastError)),
+                        subtitle: Text(reason(l, entry.lastError)),
                         trailing: Wrap(
                           children: <Widget>[
                             IconButton(

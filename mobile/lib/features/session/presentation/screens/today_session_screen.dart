@@ -27,7 +27,9 @@ import '../../../documents/domain/attendance_sheet_pdf.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
+import '../../domain/session_write_block.dart';
 import '../controllers/today_session_controller.dart';
+import '../session_write_block_label.dart';
 import '../widgets/advance_confirmation_dialog.dart';
 import '../widgets/advance_suggestion_banner.dart';
 import '../widgets/behavioral_note_sheet.dart';
@@ -213,25 +215,13 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
   ) async {
     if (_requestingExcuses.contains(enrollmentId)) return;
     setState(() => _requestingExcuses.add(enrollmentId));
-    final TextEditingController reason = TextEditingController();
     try {
+      // The sheet owns its text controller, so it is disposed only after the
+      // closing animation finishes (not while the sheet is still building).
       final String? text = await showAppModalSheet<String>(
         context: context,
         title: 'طلب عذر',
-        builder: (BuildContext ctx) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            AppTextField(
-              controller: reason,
-              label: 'السبب (اختياري)',
-              maxLines: 3,
-            ),
-            AppButton(
-              label: 'إرسال الطلب',
-              onPressed: () => Navigator.of(ctx).pop(reason.text.trim()),
-            ),
-          ],
-        ),
+        builder: (BuildContext _) => const _ExcuseReasonSheet(),
       );
       if (text == null) return;
       try {
@@ -249,7 +239,6 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
         AppSnackbar.success(context, AppL10n.of(context).sesExcuseRequestSent);
       }
     } finally {
-      reason.dispose();
       if (mounted) setState(() => _requestingExcuses.remove(enrollmentId));
     }
   }
@@ -392,10 +381,8 @@ class _ClosedViewState extends State<_ClosedView> {
       if (mounted) {
         AppSnackbar.error(
           context,
-          e.toString().contains('freeze')
-              ? 'تسجيل الحصص متوقف مؤقتًا — تواصل مع الإدارة'
-              : e.toString().contains('maintenance')
-              ? 'الدار في وضع الصيانة — جرّب لاحقًا'
+          e is SessionWritesBlockedException
+              ? e.reason.label(AppL10n.of(context))
               : 'تعذّر فتح الحصة — راجع الاتصال وجرّب تاني',
         );
       }
@@ -463,6 +450,37 @@ class _ClosedViewState extends State<_ClosedView> {
       ),
     );
   }
+}
+
+/// شيت سبب طلب العذر — بيملك الـ controller بتاعه عشان يتشال مع الشيت نفسه.
+class _ExcuseReasonSheet extends StatefulWidget {
+  const _ExcuseReasonSheet();
+
+  @override
+  State<_ExcuseReasonSheet> createState() => _ExcuseReasonSheetState();
+}
+
+class _ExcuseReasonSheetState extends State<_ExcuseReasonSheet> {
+  final TextEditingController _reason = TextEditingController();
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      AppTextField(controller: _reason, label: 'السبب (اختياري)', maxLines: 3),
+      const SizedBox(height: AppSpacing.md),
+      AppButton(
+        label: 'إرسال الطلب',
+        onPressed: () => Navigator.of(context).pop(_reason.text.trim()),
+      ),
+    ],
+  );
 }
 
 /// صف مدين في قائمة الدَيْن: اسم الطالب + حالته (متعثّر / لسه ماتسمّعش).

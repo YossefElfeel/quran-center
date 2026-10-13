@@ -15,13 +15,18 @@ class FamilyRepository {
 
   final SupabaseClient _client;
 
-  /// الطلبة المسجّلين (لاختيار الطفل).
-  Future<List<StudentOption>> fetchStudents() async {
+  /// الطلبة المسجّلين (لاختيار الطفل). [limit] سقف آمن للصفحة (الافتراضي
+  /// كبير عشان قايمة الاختيار الحالية تفضل كاملة لحد ما تتحوّل لبحث سيرفر).
+  Future<List<StudentOption>> fetchStudents({
+    int offset = 0,
+    int limit = 1000,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('enrollment')
         .select('student:student_person_id(id, full_name)')
         .eq('status', 'active')
         .order('enrolled_at', ascending: true)
+        .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));
     final Map<String, StudentOption> byId = <String, StudentOption>{};
     for (final Map<String, dynamic> r in rows) {

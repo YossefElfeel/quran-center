@@ -39,13 +39,19 @@ class TeacherRepository {
   }
 
   /// تطوّري أنا (RLS بيرجّع بتاعي بس).
-  Future<List<TeacherDevEntry>> fetchMyDevelopment() async {
+  static const int developmentPageSize = 50;
+
+  Future<List<TeacherDevEntry>> fetchMyDevelopment({
+    int offset = 0,
+    int limit = developmentPageSize,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
         .select(
           'id, month, status, memorization_progress, approved_at, return_reason',
         )
         .order('month', ascending: false)
+        .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
   }

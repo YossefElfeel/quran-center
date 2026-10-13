@@ -24,6 +24,23 @@ class SettingsRepository {
     };
     return AppSettings.fromMap(m);
   }
+
+  /// اسم الدار من الإعدادات العامة (مقروء من غير تسجيل دخول — شاشة الدخول).
+  /// null لو مش متضاف أو القراية فشلت.
+  Future<String?> fetchPublicCenterName() async {
+    try {
+      final Map<String, dynamic>? row = await _client
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'center_name')
+          .maybeSingle()
+          .timeout(const Duration(seconds: 8));
+      final Object? value = row?['value'];
+      return value is String && value.trim().isNotEmpty ? value.trim() : null;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 @riverpod
@@ -34,3 +51,9 @@ SettingsRepository settingsRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 Future<AppSettings> appSettings(Ref ref) =>
     ref.watch(settingsRepositoryProvider).fetch();
+
+/// اسم الدار لشاشة الدخول — منفصل عن [appSettings] (keepAlive) عشان قراية
+/// المجهول (اللي بتشوف المفاتيح العامة بس) ماتتحفظش كإعدادات التطبيق.
+@riverpod
+Future<String?> publicCenterName(Ref ref) =>
+    ref.watch(settingsRepositoryProvider).fetchPublicCenterName();

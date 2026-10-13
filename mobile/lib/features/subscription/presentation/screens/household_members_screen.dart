@@ -67,12 +67,10 @@ class HouseholdMembersScreen extends ConsumerWidget {
           icon: const Icon(Icons.payments_outlined),
           onPressed: () async {
             try {
-              final households = await ref.read(
-                householdsControllerProvider.future,
+              final household = await ref.read(
+                householdByIdProvider(householdId).future,
               );
-              final household = households.firstWhere(
-                (h) => h.id == householdId,
-              );
+              if (household == null) throw StateError('household not found');
               if (!context.mounted) return;
               await showAppModalSheet<void>(
                 context: context,

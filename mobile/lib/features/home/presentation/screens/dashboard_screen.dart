@@ -8,16 +8,21 @@ import '../../../../app/shell/sync_status_sheet.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/settings/settings_repository.dart';
 import '../../../../core/supabase/supabase_providers.dart';
+import '../../../../core/sync/outbox_store.dart';
+import '../../../../core/sync/sync_status_provider.dart';
 import '../../../../core/utils/arabic_date.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
+import '../../../../shared/widgets/app_search_picker.dart';
 import '../../../../shared/widgets/app_section_header.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
 import '../../../admin_setup/domain/circle.dart';
 import '../../../enrollment/presentation/widgets/enroll_student_flow.dart';
 import '../../../excuse/presentation/controllers/pending_excuses_controller.dart';
@@ -30,9 +35,11 @@ import '../../../parent_portal/presentation/controllers/my_children_controller.d
 import '../../../session/domain/roster_entry.dart';
 import '../../../session/presentation/controllers/my_circles_controller.dart';
 import '../../../session/presentation/controllers/today_session_controller.dart';
+import '../../../subscription/data/subscription_repository.dart';
 import '../../../subscription/domain/household_summary.dart';
-import '../../../subscription/domain/subscription_status.dart';
 import '../../../subscription/presentation/controllers/households_controller.dart';
+import '../../../subscription/presentation/controllers/my_subscription_controller.dart';
+import '../../../subscription/presentation/widgets/record_payment_sheet.dart';
 import '../../../supervisor_eval/presentation/controllers/struggling_controller.dart';
 import '../../../teacher/presentation/controllers/teacher_controllers.dart';
 
@@ -71,7 +78,8 @@ class DashboardScreen extends ConsumerWidget {
               ref.invalidate(homeNameProvider);
               ref.invalidate(myCirclesProvider);
               ref.invalidate(myChildrenProvider);
-              ref.invalidate(householdsControllerProvider);
+              ref.invalidate(overdueHouseholdsProvider);
+              ref.invalidate(mySubscriptionActiveProvider);
               ref.invalidate(pendingMonthlyEvalsProvider);
               ref.invalidate(pendingDevelopmentProvider);
               ref.invalidate(pendingExcusesControllerProvider);
@@ -112,11 +120,7 @@ class DashboardScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                  TextButton.icon(
-                    onPressed: () => SyncStatusSheet.show(context),
-                    icon: const Icon(Icons.sync),
-                    label: const Text('حالة المزامنة'),
-                  ),
+                  const _SyncButton(),
                 ],
                 if (roles.contains('parent')) ...<Widget>[
                   const AppSectionHeader(title: 'متابعة ولادك'),
@@ -161,7 +165,7 @@ class DashboardScreen extends ConsumerWidget {
                     label: 'تسجيل دفعة',
                     icon: Icons.payments,
                     variant: AppButtonVariant.outlined,
-                    onPressed: () => context.push(Routes.adminSubscriptions),
+                    onPressed: () => _recordPaymentFlow(context, ref),
                   ),
                   _Queue(
                     state: ref.watch(waitingListControllerProvider),
@@ -171,20 +175,25 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   const AppSectionHeader(title: 'اشتراكات متأخّرة'),
                   ref
-                      .watch(householdsControllerProvider)
+                      .watch(overdueHouseholdsProvider)
                       .when(
                         loading: () => const LinearProgressIndicator(),
                         error: (_, _) => _Retry(
                           message: 'تعذّر تحميل الاشتراكات',
                           onRetry: () =>
-                              ref.invalidate(householdsControllerProvider),
+                              ref.invalidate(overdueHouseholdsProvider),
                         ),
                         data: (List<HouseholdSummary> households) => Column(
                           children: <Widget>[
-                            for (final HouseholdSummary h in households.where(
-                              (HouseholdSummary h) =>
-                                  h.status == SubscriptionStatus.overdue,
-                            ))
+                            if (households.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.xs,
+                                ),
+                                child: Text('مفيش اشتراكات متأخّرة'),
+                              ),
+                            for (final HouseholdSummary h in households)
                               AppListCard(
                                 title: h.name,
                                 subtitle:
@@ -221,9 +230,9 @@ class DashboardScreen extends ConsumerWidget {
                     route: Routes.supervisorDevApproval,
                   ),
                 ],
+                // `/supervisor/attention` بيستدعي RPC للمشرف — مش للمعلّم لوحده.
                 if (roles.any(
                   (String r) => <String>[
-                    'teacher',
                     'supervisor',
                     'admin',
                     'super_admin',
@@ -281,6 +290,62 @@ class _Retry extends StatelessWidget {
   );
 }
 
+/// "تسجيل دفعة" من الهوم: اختيار الأسرة (بحث) ← شيت الدفعة.
+Future<void> _recordPaymentFlow(BuildContext context, WidgetRef ref) async {
+  final SubscriptionRepository repo = ref.read(subscriptionRepositoryProvider);
+  final HouseholdSummary? household =
+      await showAppServerSearchPicker<HouseholdSummary>(
+        context: context,
+        title: 'اختار الأسرة',
+        searchLabel: 'بحث باسم الأسرة',
+        search: (String q) => repo.fetchHouseholds(query: q),
+        label: (HouseholdSummary h) => h.name,
+      );
+  if (household == null || !context.mounted) return;
+  await showAppModalSheet<void>(
+    context: context,
+    title: 'تسجيل دفعة',
+    builder: (_) =>
+        RecordPaymentSheet(household: household, feedbackContext: context),
+  );
+  if (context.mounted) ref.invalidate(overdueHouseholdsProvider);
+}
+
+/// زرار حالة المزامنة للمعلّم + عدد العمليات المعلّقة (لو فيه).
+class _SyncButton extends ConsumerWidget {
+  const _SyncButton();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final SyncStatus? status = ref.watch(syncStatusProvider).asData?.value;
+    final int pending = status?.pending ?? 0;
+    final bool failed = status?.hasFailures ?? false;
+    final String label = pending > 0
+        ? 'حالة المزامنة — ${arabicNumber(pending)} مستني الإرسال'
+        : failed
+        ? 'حالة المزامنة — فيه عمليات فشلت'
+        : 'حالة المزامنة';
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: TextButton.icon(
+        onPressed: () => SyncStatusSheet.show(context),
+        icon: Badge(
+          isLabelVisible: pending > 0 || failed,
+          backgroundColor: failed ? context.palette.error : null,
+          label: Text(pending > 0 ? arabicNumber(pending) : '!'),
+          child: const Icon(Icons.sync),
+        ),
+        label: Text(
+          pending > 0
+              ? 'حالة المزامنة (${arabicNumber(pending)} معلّق)'
+              : 'حالة المزامنة',
+        ),
+      ),
+    );
+  }
+}
+
 class _HomeChild extends ConsumerWidget {
   const _HomeChild({required this.child});
   final ChildSummary child;
@@ -289,6 +354,11 @@ class _HomeChild extends ConsumerWidget {
     final AsyncValue<ChildCard> state = ref.watch(
       childCardProvider(child.studentPersonId),
     );
+    // الاشتراك على مستوى الأسرة — نفس الحالة لكل طفل في نفس الحساب.
+    final bool? subscribed = ref
+        .watch(mySubscriptionActiveProvider)
+        .asData
+        ?.value;
     return AppListCard(
       title: child.fullName,
       leadingIcon: Icons.child_care,
@@ -296,10 +366,27 @@ class _HomeChild extends ConsumerWidget {
         loading: () => 'جاري تحميل التقدّم…',
         error: (_, _) => 'تعذّر تحميل التقدّم — افتح البطاقة لإعادة المحاولة',
         data: (ChildCard card) {
-          final LatestTasmee? last = card.latestTasmee;
-          return '${last == null ? 'لسه مفيش تسميع' : 'آخر تسميع: ${arabicNumber(last.score)}/١٠ — ${last.portionName}'}\nحضور الشهر: ${arabicNumber(card.present + card.late)}/${arabicNumber(card.present + card.late + card.absent + card.excused)}';
+          final String? portion = card.currentPortion;
+          final String portionLine = portion == null || portion.trim().isEmpty
+              ? 'لسه مفيش ورد محدّد'
+              : 'الورد الحالي: $portion';
+          return '$portionLine\nحضور الشهر: ${arabicNumber(card.present + card.late)}/${arabicNumber(card.present + card.late + card.absent + card.excused)}';
         },
       ),
+      trailing: subscribed == null
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                AppStatusBadge(
+                  label: subscribed ? 'الاشتراك ساري' : 'الاشتراك متأخّر',
+                  kind: subscribed
+                      ? AppStatusKind.success
+                      : AppStatusKind.warning,
+                ),
+                Icon(AppIcons.drillIn, color: context.palette.textSecondary),
+              ],
+            ),
       onTap: () => context.push(
         Routes.parentChild(child.studentPersonId, child.fullName),
       ),
@@ -307,66 +394,29 @@ class _HomeChild extends ConsumerWidget {
   }
 }
 
-class _TeacherCircle extends ConsumerStatefulWidget {
+/// كارت حلقة في الهوم — بيودّي لشاشة الحصة بس؛ فتح الحصة نفسه قرار المعلّم
+/// من جوّه الشاشة (مش side effect للنقر هنا).
+class _TeacherCircle extends ConsumerWidget {
   const _TeacherCircle({required this.circle});
   final Circle circle;
   @override
-  ConsumerState<_TeacherCircle> createState() => _TeacherCircleState();
-}
-
-class _TeacherCircleState extends ConsumerState<_TeacherCircle> {
-  bool _busy = false;
-  Circle get circle => widget.circle;
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<TodaySession> state = ref.watch(
       todaySessionControllerProvider(circle.id),
     );
     return AppListCard(
       title: circle.name,
       leadingIcon: Icons.menu_book,
-      subtitle: _busy
-          ? 'جاري فتح الحصة…'
-          : state.when(
-              loading: () => 'جاري تحميل الحصة…',
-              error: (_, _) =>
-                  'تعذّر تحميل الحصة — افتح الحلقة لإعادة المحاولة',
-              data: (TodaySession s) => s.isOpen
-                  ? 'كمّل الحصة'
-                  : s.closedToday
-                  ? 'الحصة اتقفلت — ${arabicNumber(s.presentCount)} حضور، ${arabicNumber(s.tasmeeCount)} تسميع'
-                  : 'افتح حصة النهارده',
-            ),
-      onTap: _busy
-          ? null
-          : () async {
-              setState(() => _busy = true);
-              try {
-                final current = state.asData?.value;
-                if (current != null &&
-                    !current.isOpen &&
-                    !current.closedToday &&
-                    current.roster.isNotEmpty) {
-                  await ref
-                      .read(todaySessionControllerProvider(circle.id).notifier)
-                      .openSession();
-                }
-                if (context.mounted) {
-                  await context.push<void>(
-                    Routes.session(circle.id, circle.name),
-                  );
-                }
-              } catch (_) {
-                if (context.mounted) {
-                  AppSnackbar.error(
-                    context,
-                    'تعذّر فتح الحصة — راجع الاتصال وجرّب تاني',
-                  );
-                }
-              } finally {
-                if (mounted) setState(() => _busy = false);
-              }
-            },
+      subtitle: state.when(
+        loading: () => 'جاري تحميل الحصة…',
+        error: (_, _) => 'تعذّر تحميل الحصة — افتح الحلقة لإعادة المحاولة',
+        data: (TodaySession s) => s.isOpen
+            ? 'الحصة مفتوحة — كمّل'
+            : s.closedToday
+            ? 'الحصة اتقفلت — ${arabicNumber(s.presentCount)} حضور، ${arabicNumber(s.tasmeeCount)} تسميع'
+            : 'حصة النهارده لسه ما اتفتحتش',
+      ),
+      onTap: () => context.push<void>(Routes.session(circle.id, circle.name)),
     );
   }
 }

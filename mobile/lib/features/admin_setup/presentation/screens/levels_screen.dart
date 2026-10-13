@@ -39,6 +39,7 @@ class LevelsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showAppModalSheet<void>(
           context: context,
+          title: l.admNewLevel,
           isScrollControlled: true,
           builder: (BuildContext _) =>
               AddLevelSheet(curriculumId: curriculumId),
@@ -59,6 +60,7 @@ class LevelsScreen extends ConsumerWidget {
                   label: l.admNewLevel,
                   onPressed: () => showAppModalSheet<void>(
                     context: context,
+                    title: l.admNewLevel,
                     builder: (_) => AddLevelSheet(curriculumId: curriculumId),
                   ),
                 ),

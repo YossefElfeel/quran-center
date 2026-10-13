@@ -48,26 +48,25 @@ class _PrimaryTabScreenState extends ConsumerState<PrimaryTabScreen> {
       ),
       data: (List<String> roles) {
         if (roles.contains('teacher') && roles.any(_supervisorRoles.contains)) {
-          return Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: AppSegmentedControl<bool>(
-                  segments: const [
-                    (value: false, label: 'حلقاتي'),
-                    (value: true, label: 'المراجعات'),
-                  ],
-                  selected: _review,
-                  onChanged: (bool v) => setState(() => _review = v),
-                ),
+          // السويتش جوّه الـ AppBar.bottom للشاشة الداخلية (تحت الـ status
+          // bar) بدل ما يكون فوق الـ Scaffold برّه الـ SafeArea.
+          final PreferredSizeWidget toggle = PreferredSize(
+            preferredSize: const Size.fromHeight(64),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: AppSegmentedControl<bool>(
+                segments: const [
+                  (value: false, label: 'حلقاتي'),
+                  (value: true, label: 'المراجعات'),
+                ],
+                selected: _review,
+                onChanged: (bool v) => setState(() => _review = v),
               ),
-              Expanded(
-                child: _review
-                    ? const EvalCirclesScreen()
-                    : const MyCirclesScreen(),
-              ),
-            ],
+            ),
           );
+          return _review
+              ? EvalCirclesScreen(appBarBottom: toggle)
+              : MyCirclesScreen(appBarBottom: toggle);
         }
         if (roles.contains('teacher')) return const MyCirclesScreen();
         if (roles.contains('parent')) return const ChildrenScreen();

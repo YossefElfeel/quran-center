@@ -50,6 +50,7 @@ import '../../features/user_invite/presentation/screens/invite_user_screen.dart'
 import '../../shared/widgets/app_scaffold.dart';
 import '../shell/app_shell.dart';
 import '../shell/primary_tab_screen.dart';
+import 'parent_gate.dart';
 import 'routes.dart';
 
 part 'app_router.g.dart';
@@ -70,24 +71,11 @@ GoRouter appRouter(Ref ref) {
       if (!loggedIn) return loggingIn ? null : Routes.login;
       if (loggingIn) return Routes.home;
       if (state.matchedLocation.startsWith('/parent/child/')) {
-        final List<String> roles = await ref.read(currentRolesProvider.future);
-        if (roles.contains('parent') &&
-            !roles.any(
-              (String r) => <String>[
-                'admin',
-                'super_admin',
-                'teacher',
-                'supervisor',
-              ].contains(r),
-            )) {
-          try {
-            if (!await ref.read(mySubscriptionActiveProvider.future)) {
-              return '/parent/subscription';
-            }
-          } catch (_) {
-            return '/parent/subscription';
-          }
-        }
+        return parentChildGateRedirect(
+          roles: () => ref.read(currentRolesProvider.future),
+          subscriptionActive: () =>
+              ref.read(mySubscriptionActiveProvider.future),
+        );
       }
       return null;
     },

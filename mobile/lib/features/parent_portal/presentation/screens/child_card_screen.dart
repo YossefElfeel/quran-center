@@ -8,6 +8,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_avatar.dart';
@@ -18,16 +19,20 @@ import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_segmented_control.dart';
+import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/progress_card_pdf.dart';
 import '../../../feedback/presentation/widgets/rate_teacher_sheet.dart';
 import '../../../media/presentation/widgets/child_media_section.dart';
 import '../../domain/child_card.dart';
+import '../../domain/child_history.dart';
 import '../controllers/child_card_controller.dart';
+import '../controllers/child_history_controllers.dart';
 import '../widgets/child_certificates_section.dart';
 import '../widgets/child_comments_section.dart';
 import '../widgets/child_consent_section.dart';
 import '../widgets/child_journey_section.dart';
 import '../widgets/child_monthly_plan_section.dart';
+import 'child_history_screen.dart';
 
 /// كارت متابعة الطفل: الحلقة + آخر تسميع + ملخّص الحضور.
 class ChildCardScreen extends ConsumerStatefulWidget {
@@ -124,26 +129,18 @@ class _ChildCardScreenState extends ConsumerState<ChildCardScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: AppSegmentedControl<int>(
-                  segments: const [
-                    (value: 0, label: 'التقدّم'),
-                    (value: 1, label: 'الحضور'),
-                    (value: 2, label: 'الشهادات'),
-                    (value: 3, label: 'الوسائط والموافقة'),
-                    (value: 4, label: 'الملاحظات'),
-                  ],
-                  selected: _tab,
-                  onChanged: (int v) => setState(() => _tab = v),
-                ),
-              ),
-              const SizedBox(height: 16),
+              // الملخّص مرّة واحدة فوق التبويبات (مش جوّه كل تبويب).
               _InfoCard(
                 icon: Icons.groups,
                 title: l.ppCircle,
                 value: card.circleName ?? l.ppNotInCircle,
               ),
+              if (card.currentPortion != null)
+                _InfoCard(
+                  icon: Icons.menu_book,
+                  title: 'المقطع الحالي',
+                  value: card.currentPortion!,
+                ),
               if (lt != null)
                 _InfoCard(
                   icon: Icons.record_voice_over,
@@ -161,18 +158,35 @@ class _ChildCardScreenState extends ConsumerState<ChildCardScreen> {
                     Routes.parentChildHistory(studentPersonId, childName),
                   ),
                 ),
-              if (card.currentPortion != null)
-                _InfoCard(
-                  icon: Icons.menu_book,
-                  title: 'المقطع الحالي',
-                  value: card.currentPortion!,
-                ),
-              _AttendanceCard(
-                card: card,
-                onTap: () => context.push(
-                  Routes.parentChildHistory(studentPersonId, childName, tab: 1),
+              const SizedBox(height: AppSpacing.md),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: AppSegmentedControl<int>(
+                  segments: const [
+                    (value: 0, label: 'التقدّم'),
+                    (value: 1, label: 'الحضور'),
+                    (value: 2, label: 'الشهادات'),
+                    (value: 3, label: 'الوسائط والموافقة'),
+                    (value: 4, label: 'الملاحظات'),
+                  ],
+                  selected: _tab,
+                  onChanged: (int v) => setState(() => _tab = v),
                 ),
               ),
+              const SizedBox(height: AppSpacing.md),
+              if (_tab == 1) ...<Widget>[
+                _AttendanceCard(card: card),
+                _AttendanceHistoryList(
+                  studentPersonId: studentPersonId,
+                  onViewAll: () => context.push(
+                    Routes.parentChildHistory(
+                      studentPersonId,
+                      childName,
+                      tab: 1,
+                    ),
+                  ),
+                ),
+              ],
               if (_tab == 2)
                 ChildCertificatesSection(
                   studentPersonId: studentPersonId,
@@ -253,7 +267,7 @@ class _InfoCard extends StatelessWidget {
                   hint,
                   style: AppTextStyles.labelSm.copyWith(color: p.primary),
                 ),
-              Icon(Icons.chevron_right, color: p.textSecondary),
+              Icon(AppIcons.drillIn, color: p.textSecondary),
             ],
           ],
         ),
@@ -263,10 +277,9 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _AttendanceCard extends StatelessWidget {
-  const _AttendanceCard({required this.card, this.onTap});
+  const _AttendanceCard({required this.card});
 
   final ChildCard card;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +288,6 @@ class _AttendanceCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: AppCard(
-        onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -289,13 +301,6 @@ class _AttendanceCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (onTap != null) ...<Widget>[
-                  Text(
-                    l.ppViewAttendanceLog,
-                    style: AppTextStyles.labelSm.copyWith(color: p.primary),
-                  ),
-                  Icon(Icons.chevron_right, size: 18, color: p.textSecondary),
-                ],
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -320,6 +325,55 @@ class _AttendanceCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// آخر تسجيلات الحضور (من نفس بيانات شاشة السجل) + رابط للسجل الكامل.
+class _AttendanceHistoryList extends ConsumerWidget {
+  const _AttendanceHistoryList({
+    required this.studentPersonId,
+    required this.onViewAll,
+  });
+
+  final String studentPersonId;
+  final VoidCallback onViewAll;
+
+  static const int _maxRows = 20;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
+    final AsyncValue<List<AttendanceHistoryEntry>> state = ref.watch(
+      childAttendanceHistoryProvider(studentPersonId),
+    );
+    return state.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: LinearProgressIndicator(),
+      ),
+      error: (Object e, StackTrace _) => AppErrorView(
+        message: l.ppHistoryLoadError,
+        onRetry: () =>
+            ref.invalidate(childAttendanceHistoryProvider(studentPersonId)),
+      ),
+      data: (List<AttendanceHistoryEntry> items) => items.isEmpty
+          ? EmptyState(
+              message: l.ppNoAttendanceYet,
+              icon: Icons.event_available,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                for (final AttendanceHistoryEntry e in items.take(_maxRows))
+                  AttendanceHistoryRow(entry: e),
+                if (items.length > _maxRows)
+                  TextButton(
+                    onPressed: onViewAll,
+                    child: Text(l.ppViewAttendanceLog),
+                  ),
+              ],
+            ),
     );
   }
 }

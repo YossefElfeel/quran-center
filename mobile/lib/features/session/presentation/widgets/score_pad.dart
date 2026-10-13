@@ -57,6 +57,9 @@ class _ScoreCell extends StatelessWidget {
       selected: isSelected,
       button: true,
       label: 'درجة ${arabicNumber(value)} من عشرة',
+      // الرقم المرسوم جوّه مكرّر للّيبل — نخفيه عن قارئ الشاشة ونحط النقر هنا.
+      excludeSemantics: true,
+      onTap: onTap,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.md),

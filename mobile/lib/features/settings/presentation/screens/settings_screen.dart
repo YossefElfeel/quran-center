@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -22,6 +21,7 @@ import '../../../../shared/widgets/app_segmented_control.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../home/presentation/screens/dashboard_screen.dart'
     show homeNameProvider;
+import '../controllers/app_version_provider.dart';
 import '../widgets/change_password_sheet.dart';
 
 /// شاشة الإعدادات — المظهر + سهولة الوصول + الخروج.
@@ -213,13 +213,17 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => SyncStatusSheet.show(context),
           ),
           const AppSectionHeader(title: 'عن التطبيق'),
-          FutureBuilder<PackageInfo>(
-            future: PackageInfo.fromPlatform(),
-            builder: (BuildContext context, AsyncSnapshot<PackageInfo> info) =>
-                ListTile(
-                  title: const Text('نسخة التطبيق'),
-                  subtitle: Text(info.data?.version ?? 'جاري التحميل…'),
-                ),
+          ListTile(
+            title: const Text('نسخة التطبيق'),
+            subtitle: Text(
+              ref
+                  .watch(appVersionProvider)
+                  .when(
+                    data: (String v) => v,
+                    loading: () => 'جاري التحميل…',
+                    error: (_, _) => '—',
+                  ),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.phone),

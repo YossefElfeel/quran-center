@@ -90,71 +90,57 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: AppSpacing.lg,
-      ),
-      child: Form(
-        key: _form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              l.enrEnrollStudent,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              controller: _name,
-              label: l.enrStudentNameLabel,
-              validator: (String? v) =>
-                  v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            TextField(
-              controller: _natId,
-              keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩۰-۹]')),
-                LengthLimitingTextInputFormatter(14),
-              ],
-              decoration: InputDecoration(
-                labelText: l.enrNationalIdLabel,
-                suffixIcon: IconButton(
-                  tooltip: l.enrScanWithCamera,
-                  icon: const Icon(Icons.document_scanner),
-                  onPressed: _openScanner,
-                ),
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppTextField(
+            controller: _name,
+            label: l.enrStudentNameLabel,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          TextField(
+            controller: _natId,
+            keyboardType: TextInputType.number,
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩۰-۹]')),
+              LengthLimitingTextInputFormatter(14),
+            ],
+            decoration: InputDecoration(
+              labelText: l.enrNationalIdLabel,
+              suffixIcon: IconButton(
+                tooltip: l.enrScanWithCamera,
+                icon: const Icon(Icons.document_scanner),
+                onPressed: _openScanner,
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            SegmentedButton<Gender>(
-              segments: <ButtonSegment<Gender>>[
-                ButtonSegment<Gender>(
-                  value: Gender.male,
-                  label: Text(l.enrGenderBoy),
-                ),
-                ButtonSegment<Gender>(
-                  value: Gender.female,
-                  label: Text(l.enrGenderGirl),
-                ),
-              ],
-              selected: <Gender>{_gender},
-              onSelectionChanged: (Set<Gender> s) =>
-                  setState(() => _gender = s.first),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: _saving ? l.enrSaving : l.enrSave,
-              onPressed: _saving ? null : _save,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          SegmentedButton<Gender>(
+            segments: <ButtonSegment<Gender>>[
+              ButtonSegment<Gender>(
+                value: Gender.male,
+                label: Text(l.enrGenderBoy),
+              ),
+              ButtonSegment<Gender>(
+                value: Gender.female,
+                label: Text(l.enrGenderGirl),
+              ),
+            ],
+            selected: <Gender>{_gender},
+            onSelectionChanged: (Set<Gender> s) =>
+                setState(() => _gender = s.first),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: _saving ? l.enrSaving : l.enrSave,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
       ),
     );
   }

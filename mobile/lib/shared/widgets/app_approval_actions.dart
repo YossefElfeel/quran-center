@@ -9,10 +9,14 @@ class AppApprovalActions extends StatefulWidget {
   const AppApprovalActions({
     required this.onApprove,
     required this.onReturn,
+    this.subject = 'التقييم',
     super.key,
   });
   final Future<void> Function() onApprove;
   final Future<void> Function(String) onReturn;
+
+  /// اسم اللي بيتعتمد في النصوص (معرّف بـ "ال"): "التقييم"، "بند التطوّر"…
+  final String subject;
   @override
   State<AppApprovalActions> createState() => _AppApprovalActionsState();
 }
@@ -26,7 +30,7 @@ class _AppApprovalActionsState extends State<AppApprovalActions> {
       if (approve) {
         if (!await showAppConfirmSheet(
           context: context,
-          title: 'اعتماد التقييم؟',
+          title: 'اعتماد ${widget.subject}؟',
           message: 'راجع المحتوى قبل الاعتماد',
           confirmLabel: 'اعتماد',
           destructive: false,
@@ -38,7 +42,7 @@ class _AppApprovalActionsState extends State<AppApprovalActions> {
         final String? reason = await showAppModalSheet<String>(
           context: context,
           title: 'رجّعه للمعلّم',
-          builder: (_) => const _ReturnReasonForm(),
+          builder: (_) => _ReturnReasonForm(subject: widget.subject),
         );
         if (reason == null) return;
         await widget.onReturn(reason);
@@ -46,7 +50,9 @@ class _AppApprovalActionsState extends State<AppApprovalActions> {
       if (mounted) {
         AppSnackbar.success(
           context,
-          approve ? 'التقييم اتعتمد' : 'التقييم رجع للمعلّم مع السبب',
+          approve
+              ? '${widget.subject} اتعتمد'
+              : '${widget.subject} رجع للمعلّم مع السبب',
         );
       }
     } catch (_) {
@@ -77,7 +83,8 @@ class _AppApprovalActionsState extends State<AppApprovalActions> {
 }
 
 class _ReturnReasonForm extends StatefulWidget {
-  const _ReturnReasonForm();
+  const _ReturnReasonForm({required this.subject});
+  final String subject;
   @override
   State<_ReturnReasonForm> createState() => _ReturnReasonFormState();
 }
@@ -104,8 +111,9 @@ class _ReturnReasonFormState extends State<_ReturnReasonForm> {
           validator: (String? v) =>
               v == null || v.trim().isEmpty ? 'اكتب المطلوب تعديله' : null,
         ),
+        const SizedBox(height: 16),
         AppButton(
-          label: 'إرجاع التقييم',
+          label: 'إرجاع ${widget.subject}',
           onPressed: () {
             if (_form.currentState!.validate()) {
               Navigator.of(context).pop(_reason.text.trim());

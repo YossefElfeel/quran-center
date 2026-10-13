@@ -53,52 +53,38 @@ class _AddCurriculumSheetState extends ConsumerState<AddCurriculumSheet> {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: AppSpacing.lg,
-      ),
-      child: Form(
-        key: _form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              l.admNewCurriculum,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              controller: _name,
-              label: l.admCurriculumNameLabel,
-              validator: (String? v) =>
-                  v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SegmentedButton<CurriculumType>(
-              segments: CurriculumType.values
-                  .map(
-                    (CurriculumType t) => ButtonSegment<CurriculumType>(
-                      value: t,
-                      label: Text(t.label(AppL10n.of(context))),
-                    ),
-                  )
-                  .toList(),
-              selected: <CurriculumType>{_type},
-              onSelectionChanged: (Set<CurriculumType> s) =>
-                  setState(() => _type = s.first),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: _saving ? l.admSaving : l.admSave,
-              onPressed: _saving ? null : _save,
-            ),
-          ],
-        ),
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppTextField(
+            controller: _name,
+            label: l.admCurriculumNameLabel,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          SegmentedButton<CurriculumType>(
+            segments: CurriculumType.values
+                .map(
+                  (CurriculumType t) => ButtonSegment<CurriculumType>(
+                    value: t,
+                    label: Text(t.label(AppL10n.of(context))),
+                  ),
+                )
+                .toList(),
+            selected: <CurriculumType>{_type},
+            onSelectionChanged: (Set<CurriculumType> s) =>
+                setState(() => _type = s.first),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: _saving ? l.admSaving : l.admSave,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
       ),
     );
   }

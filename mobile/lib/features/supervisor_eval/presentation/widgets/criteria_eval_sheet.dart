@@ -52,7 +52,10 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
             widget.studentPersonId,
             Map<EvalCriterion, int>.of(_scores),
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(context, 'التقييم اتحفظ');
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);

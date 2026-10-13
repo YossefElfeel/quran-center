@@ -171,15 +171,16 @@ class _AttendanceTab extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 itemCount: items.length,
                 itemBuilder: (BuildContext context, int i) =>
-                    _AttendanceRow(entry: items[i]),
+                    AttendanceHistoryRow(entry: items[i]),
               ),
             ),
     );
   }
 }
 
-class _AttendanceRow extends StatelessWidget {
-  const _AttendanceRow({required this.entry});
+/// صف حضور واحد (مشترك مع تبويب الحضور في كارت الطفل).
+class AttendanceHistoryRow extends StatelessWidget {
+  const AttendanceHistoryRow({required this.entry, super.key});
 
   final AttendanceHistoryEntry entry;
 

@@ -19,7 +19,10 @@ import '../controllers/my_circles_controller.dart';
 
 /// حلقات المعلّم — يختار حلقة يفتح حصتها.
 class MyCirclesScreen extends ConsumerWidget {
-  const MyCirclesScreen({super.key});
+  const MyCirclesScreen({this.appBarBottom, super.key});
+
+  /// شريط اختياري تحت العنوان (سويتش الدورين في التبويب الأساسي).
+  final PreferredSizeWidget? appBarBottom;
 
   AppStatusKind _statusKind(CircleStatus s) {
     switch (s) {
@@ -38,6 +41,7 @@ class MyCirclesScreen extends ConsumerWidget {
     final AsyncValue<List<Circle>> state = ref.watch(myCirclesProvider);
     return AppScaffold(
       title: l.sesMyCirclesTitle,
+      bottom: appBarBottom,
       body: state.when(
         loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(

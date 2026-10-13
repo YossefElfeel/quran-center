@@ -3,6 +3,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/presentation/domain_labels.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -55,7 +56,7 @@ class HouseholdTile extends StatelessWidget {
                   kind: _kind(household.status),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                Icon(Icons.chevron_right, color: p.textSecondary),
+                Icon(AppIcons.drillIn, color: p.textSecondary),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),

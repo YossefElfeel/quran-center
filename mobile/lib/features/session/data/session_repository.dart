@@ -5,6 +5,7 @@ import '../../../core/supabase/supabase_providers.dart';
 import '../../admin_setup/domain/circle.dart';
 import '../../progress_engine/domain/ledger_state.dart';
 import '../domain/portion.dart';
+import '../domain/session_write_block.dart';
 import '../domain/tasmee_kind.dart';
 import 'current_cycle.dart';
 import 'surah_option.dart';
@@ -36,6 +37,19 @@ class SessionRepository {
         .eq('status', 'open')
         .maybeSingle();
     return row?['id'] as String?;
+  }
+
+  /// سبب إيقاف تسجيل الحصص (تجميد/صيانة) أو null. أفضل-جهد: لو الـ RPC مش
+  /// موجودة أو فشلت بنرجّع null عشان المستدعي يكمّل بالتعامل العادي مع الخطأ.
+  Future<SessionWriteBlock?> sessionWritesBlocked() async {
+    try {
+      final dynamic result = await _client
+          .rpc<dynamic>('session_writes_blocked')
+          .timeout(const Duration(seconds: 8));
+      return SessionWriteBlock.fromDb(result);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>?> todaySessionStatus(String circleId) async {

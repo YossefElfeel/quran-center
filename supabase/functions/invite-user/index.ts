@@ -81,6 +81,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     email: body.email.trim(),
     options: { redirectTo: `${webUrl}/auth/confirm` },
   });
+  if (linkErr?.code === 'email_exists' || linkErr?.status === 422) {
+    return new Response('email already registered', { status: 409 });
+  }
   if (linkErr || !linkData?.user) return new Response('invite link failed', { status: 500 });
 
   if (!linkData.properties?.action_link) {await admin.auth.admin.deleteUser(linkData.user.id);return new Response('invite link missing',{status:500});}

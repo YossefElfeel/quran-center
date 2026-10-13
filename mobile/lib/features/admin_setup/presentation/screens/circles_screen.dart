@@ -39,6 +39,7 @@ class CirclesScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showAppModalSheet<void>(
           context: context,
+          title: l.admNewCircle,
           isScrollControlled: true,
           builder: (BuildContext _) => AddCircleSheet(levelId: levelId),
         ),
@@ -58,6 +59,7 @@ class CirclesScreen extends ConsumerWidget {
                   label: l.admNewCircle,
                   onPressed: () => showAppModalSheet<void>(
                     context: context,
+                    title: l.admNewCircle,
                     builder: (_) => AddCircleSheet(levelId: levelId),
                   ),
                 ),

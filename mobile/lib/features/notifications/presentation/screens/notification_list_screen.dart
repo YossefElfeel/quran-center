@@ -7,6 +7,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/utils/arabic_date.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
@@ -191,14 +192,21 @@ class _NotificationTile extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (!read) ...<Widget>[
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: p.primary, shape: BoxShape.circle),
+          // النقطة لوحدها لون بس — نديها نص لقارئ الشاشة.
+          Semantics(
+            label: 'إشعار جديد مش مقروء',
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: p.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
           ),
           const SizedBox(width: AppSpacing.sm),
         ],
-        Icon(Icons.chevron_right, color: p.textSecondary),
+        Icon(AppIcons.drillIn, color: p.textSecondary),
       ],
     );
     return AppListCard(
@@ -224,5 +232,7 @@ IconData _iconForType(String type) => switch (type) {
   'complaint_overdue' => Icons.report_problem,
   'certificate_candidate' => Icons.workspace_premium,
   'subscription_overdue' => Icons.payments,
+  'monthly_eval_returned' => Icons.assignment_return,
+  'development_returned' => Icons.undo,
   _ => Icons.notifications,
 };

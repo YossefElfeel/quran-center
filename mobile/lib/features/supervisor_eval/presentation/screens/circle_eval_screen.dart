@@ -11,6 +11,7 @@ import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/monthly_circle_report.dart';
 import '../../../documents/domain/monthly_circle_report_pdf.dart';
@@ -47,7 +48,6 @@ class CircleEvalScreen extends ConsumerWidget {
   /// يجهّز تقرير الحلقة الشهري (للشهر الحالي) ويفتح معاينة الطباعة.
   Future<void> _printMonthlyReport(BuildContext context, WidgetRef ref) async {
     final AppL10n l = AppL10n.of(context);
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     try {
       final DateTime now = DateTime.now();
       final MonthlyCircleReport report = await ref
@@ -63,7 +63,7 @@ class CircleEvalScreen extends ConsumerWidget {
             buildMonthlyCircleReportPdf(report: report, fontData: fontData),
       );
     } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(l.supMonthlyReportError)));
+      if (context.mounted) AppSnackbar.error(context, l.supMonthlyReportError);
     }
   }
 

@@ -11,3 +11,9 @@ part 'sync_status_provider.g.dart';
 Stream<SyncStatus> syncStatus(Ref ref) {
   return ref.watch(localDbProvider).watchSyncStatus();
 }
+
+/// عدد السجلات المعلّقة (في انتظار المزامنة) — لشارة زر المزامنة في رئيسية
+/// المعلّم. صفر لحد ما الطابور يتحمّل.
+@riverpod
+int syncPendingCount(Ref ref) =>
+    ref.watch(syncStatusProvider).asData?.value.pending ?? 0;

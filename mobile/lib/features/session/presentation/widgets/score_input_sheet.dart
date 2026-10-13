@@ -53,7 +53,10 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
             idempotencyKey: _idemKey,
             kind: _kind,
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(context, 'التسميع اتسجّل');
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);

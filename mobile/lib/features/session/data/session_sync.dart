@@ -9,6 +9,7 @@ import '../../../core/sync/outbox_op.dart';
 import '../../../core/sync/outbox_processor.dart';
 import '../../../core/sync/outbox_store.dart';
 import '../../../core/sync/sync_status_provider.dart';
+import '../domain/session_write_block.dart';
 import '../domain/tasmee_kind.dart';
 import 'session_repository.dart';
 
@@ -60,35 +61,76 @@ Future<void> dispatchSessionOp(Ref ref, OutboxOp op) async {
   }
 }
 
+/// عابر = النت مقطوع أو الإدارة موقفة التسجيل مؤقتًا → العملية تفضل معلّقة
+/// ويتعاد إرسالها؛ غير كده (رفض السيرفر) → dead-letter.
+bool isTransientSyncError(Object error) =>
+    error is SessionWritesBlockedException || isOfflineError(error);
+
+/// يحوّل رفض الصلاحية (42501) لـ [SessionWritesBlockedException] لو السبب
+/// تجميد/صيانة من الإدارة، وإلا يرجّع الخطأ زي ما هو. أفضل-جهد: لو سؤال السيرفر
+/// فشل (الـ RPC مش موجودة مثلًا) الخطأ الأصلي هو اللي بيطلع.
+Future<Object> explainSessionWriteError(
+  Object error,
+  Future<SessionWriteBlock?> Function() lookup,
+) async {
+  if (error is SessionWritesBlockedException ||
+      !isPermissionDeniedError(error)) {
+    return error;
+  }
+  final SessionWriteBlock? block = await lookup();
+  return block == null ? error : SessionWritesBlockedException(block);
+}
+
+/// سبب إيقاف المزامنة الحالي (تجميد/صيانة) — null = شغّالة عادي. يتحدّث من
+/// [OutboxSync] ويتعرض في شيت حالة المزامنة.
+@Riverpod(keepAlive: true)
+class SessionWritesBlockState extends _$SessionWritesBlockState {
+  @override
+  SessionWriteBlock? build() => null;
+
+  void set(SessionWriteBlock? block) {
+    if (state != block) state = block;
+  }
+}
+
 /// مزامن الطابور: يفرّغ المعلّق أول ما النت يرجع + محاولة عند بدء التطبيق.
 /// يتفعّل من جذر التطبيق (`ref.watch`) عشان يفضل شغّال طول الجلسة.
 @Riverpod(keepAlive: true)
 class OutboxSync extends _$OutboxSync {
-  late final OutboxProcessor _processor;
+  // Rebuilt on every build(): a `late final` field would throw if Riverpod
+  // re-runs build (e.g. when localDbProvider changes).
+  OutboxProcessor? _processor;
+  AppLifecycleListener? _lifecycle;
   Timer? _retryTimer;
   int _backoff = 1;
   bool _disposed = false;
   Future<void>? _flush;
 
+  /// فاصل إعادة المحاولة أثناء إيقاف الإدارة — ثابت (من غير backoff متصاعد).
+  static const Duration blockedRetry = Duration(minutes: 5);
+
   @override
   void build() {
     _disposed = false;
+    _lifecycle?.dispose();
     final AppLifecycleListener lifecycle = AppLifecycleListener(
       onResume: () {
         _backoff = 1;
         unawaited(flush());
       },
     );
+    _lifecycle = lifecycle;
     ref.onDispose(() {
       _disposed = true;
       _retryTimer?.cancel();
       lifecycle.dispose();
+      if (identical(_lifecycle, lifecycle)) _lifecycle = null;
     });
     _processor = OutboxProcessor(
       ref.watch(localDbProvider),
-      (OutboxOp op) => dispatchSessionOp(ref, op),
-      // عابر = النت مقطوع → يقف ويعيد؛ غير كده (رفض السيرفر) → dead-letter ويكمّل.
-      isTransient: isOfflineError,
+      _dispatch,
+      // عابر (نت مقطوع/إيقاف إداري) → يقف ويعيد؛ رفض نهائي → dead-letter ويكمّل.
+      isTransient: isTransientSyncError,
     );
     // افرّغ أول ما الاتصال يرجع.
     ref.listen<AsyncValue<bool>>(connectivityOnlineProvider, (
@@ -114,6 +156,26 @@ class OutboxSync extends _$OutboxSync {
     unawaited(Future<void>.microtask(flush));
   }
 
+  Future<void> _dispatch(OutboxOp op) async {
+    try {
+      await dispatchSessionOp(ref, op);
+    } catch (e) {
+      final Object explained = await explainSessionWriteError(
+        e,
+        ref.read(sessionRepositoryProvider).sessionWritesBlocked,
+      );
+      if (explained is SessionWritesBlockedException && !_disposed) {
+        ref
+            .read(sessionWritesBlockStateProvider.notifier)
+            .set(explained.reason);
+      }
+      throw explained;
+    }
+    if (!_disposed) {
+      ref.read(sessionWritesBlockStateProvider.notifier).set(null);
+    }
+  }
+
   /// تفريغ يدوي (مثلًا بعد إضافة عملية وإحنا أونلاين).
   Future<void> flush() {
     if (_disposed) return Future<void>.value();
@@ -124,20 +186,27 @@ class OutboxSync extends _$OutboxSync {
   }
 
   Future<void> _flushOnce() async {
+    final OutboxProcessor? processor = _processor;
+    if (processor == null) return;
     final LocalDb db = ref.read(localDbProvider);
     _retryTimer?.cancel();
     try {
-      await _processor.flush();
+      await processor.flush();
     } finally {
       final int pending = _disposed ? 0 : await db.pendingCount();
-      if (!_disposed && pending > 0) {
+      if (_disposed || pending == 0) {
+        _backoff = 1;
+      } else if (ref.read(sessionWritesBlockStateProvider) != null) {
+        // الإدارة موقفة التسجيل: مفيش داعي نضغط على السيرفر — محاولة هادية
+        // كل شوية + عند رجوع التطبيق/النت/أي تسجيل جديد.
+        _backoff = 1;
+        _retryTimer = Timer(blockedRetry, () => unawaited(flush()));
+      } else {
         _retryTimer = Timer(
           Duration(seconds: 30 * _backoff),
           () => unawaited(flush()),
         );
         _backoff = (_backoff * 2).clamp(1, 8);
-      } else {
-        _backoff = 1;
       }
     }
   }

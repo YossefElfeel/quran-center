@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
+import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_confirm_sheet.dart';
 import '../../../../shared/widgets/app_select_field.dart';
@@ -10,6 +13,7 @@ import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/subscription_repository.dart';
 import '../../domain/household_summary.dart';
+import '../../domain/payment_amount.dart';
 import '../controllers/household_payments_controller.dart';
 import '../controllers/households_controller.dart';
 
@@ -50,7 +54,8 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
     }
 
     try {
-      final double amount = parseLocalizedDouble(_amount.text)!;
+      final double? amount = parsePaymentAmount(_amount.text);
+      if (amount == null) return;
       if (!await showAppConfirmSheet(
         context: context,
         title: 'تأكيد الدفعة',
@@ -118,10 +123,15 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        // The shared sheet already shows the title; this line only names the
+        // household the payment is for.
         Text(
           widget.household.name,
-          style: Theme.of(context).textTheme.titleLarge,
+          style: AppTextStyles.bodyMd.copyWith(
+            color: context.palette.textSecondary,
+          ),
         ),
+        const SizedBox(height: AppSpacing.md),
         OutlinedButton(
           onPressed: _busy
               ? null
@@ -144,23 +154,20 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
             'الشهر: ${arabicNumber(_month.month)}/${arabicNumber(_month.year)}',
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
         AppTextField(
           controller: _amount,
           label: 'المبلغ (ج.م)',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (String? v) =>
-              v == null ||
-                  parseLocalizedDouble(v) == null ||
-                  !parseLocalizedDouble(v)!.isFinite ||
-                  parseLocalizedDouble(v)! < 0 ||
-                  (parseLocalizedDouble(v)! * 100 -
-                              (parseLocalizedDouble(v)! * 100).round())
-                          .abs() >
-                      .000001
-              ? 'اكتب مبلغ صحيح'
-              : null,
+          validator: (String? v) {
+            if (parsePaymentAmount(v) != null) return null;
+            final double? raw = v == null ? null : parseLocalizedDouble(v);
+            return raw != null && raw <= 0
+                ? AppL10n.of(context).subsAmountPositive
+                : 'اكتب مبلغ صحيح';
+          },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.md),
         AppSelectField<String>(
           label: 'طريقة الدفع',
           value: _method,
@@ -171,7 +178,7 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
           ],
           onChanged: (String? v) => setState(() => _method = v ?? 'cash'),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.lg),
         AppButton(
           label: 'مراجعة وتسجيل الدفعة',
           isLoading: _busy,

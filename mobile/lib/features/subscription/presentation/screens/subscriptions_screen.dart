@@ -9,10 +9,13 @@ import '../../../../shared/widgets/app_async_form_sheet.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/dispose_with.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/subscription_repository.dart';
 import '../../domain/household_summary.dart';
 import '../controllers/households_controller.dart';
 import '../widgets/household_tile.dart';
@@ -28,24 +31,26 @@ class SubscriptionsScreen extends ConsumerWidget {
     await showAppModalSheet<void>(
       context: context,
       title: l.subsNewHousehold,
-      builder: (BuildContext context) => AppAsyncFormSheet(
-        submitLabel: l.add,
-        successMessage: 'الأسرة اتضافت',
-        onSubmit: () => ref
-            .read(householdsControllerProvider.notifier)
-            .createHousehold(name.text.trim()),
-        fields: [
-          AppTextField(
-            controller: name,
-            autofocus: true,
-            label: l.subsHouseholdNameLabel,
-            validator: (v) =>
-                (v?.trim().length ?? 0) < 2 ? 'اكتب اسم الأسرة' : null,
-          ),
-        ],
+      builder: (BuildContext context) => DisposeWith(
+        notifiers: <ChangeNotifier>[name],
+        child: AppAsyncFormSheet(
+          submitLabel: l.add,
+          successMessage: 'الأسرة اتضافت',
+          onSubmit: () => ref
+              .read(householdsControllerProvider.notifier)
+              .createHousehold(name.text.trim()),
+          fields: [
+            AppTextField(
+              controller: name,
+              autofocus: true,
+              label: l.subsHouseholdNameLabel,
+              validator: (v) =>
+                  (v?.trim().length ?? 0) < 2 ? 'اكتب اسم الأسرة' : null,
+            ),
+          ],
+        ),
       ),
     );
-    name.dispose();
   }
 
   @override
@@ -81,24 +86,30 @@ class SubscriptionsScreen extends ConsumerWidget {
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(householdsControllerProvider),
-                child: ListView.builder(
+                child: AppPagedList<HouseholdSummary>(
+                  items: items,
+                  pageSize: SubscriptionRepository.householdsPageSize,
+                  loadPage: (int offset) => ref
+                      .read(subscriptionRepositoryProvider)
+                      .fetchHouseholds(offset: offset),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) => HouseholdTile(
-                    key: ValueKey<String>(items[i].id),
-                    household: items[i],
-                    onRecordPayment: () => showAppModalSheet<void>(
-                      context: context,
-                      title: 'تسجيل دفعة',
-                      builder: (_) => RecordPaymentSheet(
-                        household: items[i],
-                        feedbackContext: context,
-                      ),
-                    ),
-                    onTap: () => context.push(
-                      Routes.householdMembers(items[i].id, items[i].name),
-                    ),
-                  ),
+                  itemBuilder:
+                      (BuildContext context, HouseholdSummary h, int i) =>
+                          HouseholdTile(
+                            key: ValueKey<String>(h.id),
+                            household: h,
+                            onRecordPayment: () => showAppModalSheet<void>(
+                              context: context,
+                              title: 'تسجيل دفعة',
+                              builder: (_) => RecordPaymentSheet(
+                                household: h,
+                                feedbackContext: context,
+                              ),
+                            ),
+                            onTap: () => context.push(
+                              Routes.householdMembers(h.id, h.name),
+                            ),
+                          ),
                 ),
               ),
       ),

@@ -63,6 +63,7 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
                               '${arabicNumber(e.month.month)}/'
                               '${arabicNumber(e.month.year)}',
                           trailing: AppApprovalActions(
+                            subject: 'بند التطوّر',
                             onApprove: () => ref
                                 .read(pendingDevelopmentProvider.notifier)
                                 .approve(e.id),

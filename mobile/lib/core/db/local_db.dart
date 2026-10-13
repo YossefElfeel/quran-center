@@ -74,10 +74,14 @@ class LocalDb extends _$LocalDb implements OutboxStore {
     return row?.payloadJson;
   }
 
-  /// Preserve optimistic work until every operation for this circle is resolved.
+  /// Preserve optimistic work while this circle still has operations waiting
+  /// to sync. Dead (permanently failed) rows are excluded: they never sync, so
+  /// counting them would pin a stale cached session until the teacher discards
+  /// them from the sync sheet.
   Future<bool> hasUnsyncedSession(String circleId) async {
     final QueryRow row = await customSelect(
-      "SELECT count(*) AS n FROM outbox_entries WHERE json_extract(payload_json, '\$.circle_id') = ?",
+      "SELECT count(*) AS n FROM outbox_entries WHERE status = 'pending' "
+      "AND json_extract(payload_json, '\$.circle_id') = ?",
       variables: <Variable<Object>>[Variable<String>(circleId)],
     ).getSingle();
     return row.read<int>('n') > 0;

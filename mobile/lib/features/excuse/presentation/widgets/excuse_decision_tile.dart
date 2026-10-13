@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -116,7 +117,9 @@ class _ExcuseDecisionTileState extends State<ExcuseDecisionTile> {
                   kind: excuse.isApproved
                       ? AppStatusKind.success
                       : AppStatusKind.error,
-                  icon: excuse.isApproved ? Icons.check_circle : Icons.cancel,
+                  icon: excuse.isApproved
+                      ? AppIcons.approved
+                      : AppIcons.rejected,
                 ),
               ),
           ],

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
+import '../domain/invite_failure.dart';
 
 part 'invite_repository.g.dart';
 
@@ -38,12 +39,14 @@ class InviteRepository {
         'اتعمل الحساب لكن رابط الدعوة مرجعش — تواصل مع الإدارة',
       );
     } on FunctionException catch (e) {
-      if (e.status == 403) {
-        throw const PermissionDeniedException('الدعوة للأدمن بس');
-      }
-      throw const ValidationException(
-        'مش قادرين نبعت الدعوة — اتأكد من البيانات وجرّب تاني',
+      final InviteFailure failure = InviteFailure.fromResponse(
+        e.status,
+        e.details,
       );
+      if (failure == InviteFailure.forbidden) {
+        throw PermissionDeniedException(failure.message);
+      }
+      throw ValidationException(failure.message);
     }
   }
 }

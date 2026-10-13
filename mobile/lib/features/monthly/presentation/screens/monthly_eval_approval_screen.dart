@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_approval_actions.dart';
@@ -107,7 +108,7 @@ class MonthlyEvalApprovalScreen extends ConsumerWidget {
                           title: e.studentName,
                           subtitle: '${e.summary ?? '—'}\n${_monthLabel(e)}',
                           onTap: () => _openPreview(context, ref, e),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: const Icon(AppIcons.drillIn),
                         );
                       },
                 ),

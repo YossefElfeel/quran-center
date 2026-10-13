@@ -6,6 +6,7 @@ import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_select_field.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/level_option.dart';
@@ -37,7 +38,10 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
     super.dispose();
   }
 
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
+
   Future<void> _save() async {
+    if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final String? levelId = _resultLevelId;
     if (levelId == null) return;
     setState(() => _saving = true);
@@ -55,7 +59,10 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
             resultLevelId: levelId,
             notes: notes.isEmpty ? null : notes,
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(context, 'نتيجة اختبار المستوى اتسجّلت');
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -70,37 +77,23 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
     final AsyncValue<List<LevelOption>> levels = ref.watch(
       levelOptionsProvider,
     );
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: AppSpacing.lg,
-      ),
+    return Form(
+      key: _form,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(
-            l.itkPlacementTest,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(l.itkResultLevel),
-          ),
           levels.when(
             loading: () => const LinearProgressIndicator(),
             error: (Object e, StackTrace _) => AppErrorView(
               message: l.itkLevelsLoadError,
               onRetry: () => ref.invalidate(levelOptionsProvider),
             ),
-            data: (List<LevelOption> list) => DropdownButton<String>(
-              isExpanded: true,
+            data: (List<LevelOption> list) => AppSelectField<String>(
+              label: l.itkResultLevel,
               value: _resultLevelId,
-              hint: Text(l.itkChooseLevel),
+              hint: l.itkChooseLevel,
+              validator: (String? v) => v == null ? l.itkChooseLevel : null,
               items: list
                   .map(
                     (LevelOption l) => DropdownMenuItem<String>(
@@ -121,7 +114,8 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: _saving ? l.itkSaving : l.itkSave,
-            onPressed: _saving ? null : _save,
+            // مقفول لحد ما يختار المستوى الناتج (بدل الرجوع الصامت).
+            onPressed: _saving || _resultLevelId == null ? null : _save,
           ),
         ],
       ),

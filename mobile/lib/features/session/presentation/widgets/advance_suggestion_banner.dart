@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
 
 /// شريط بيظهر لما المجموعة تعدّي >٥٠٪ المقطع الحالي — يقترح الانتقال (بتأكيد).
 class AdvanceSuggestionBanner extends StatelessWidget {
@@ -22,14 +23,13 @@ class AdvanceSuggestionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AppPalette p = context.palette;
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      color: p.success.withValues(alpha: AppOpacity.badgeTint),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      child: AppCard(
+        color: p.success.withValues(alpha: AppOpacity.badgeTint),
         child: Row(
           children: <Widget>[
             Icon(Icons.trending_up, color: p.success),

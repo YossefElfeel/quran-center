@@ -52,38 +52,24 @@ class _AddLevelSheetState extends ConsumerState<AddLevelSheet> {
   @override
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: AppSpacing.lg,
-      ),
-      child: Form(
-        key: _form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              l.admNewLevel,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              controller: _name,
-              label: l.admLevelNameLabel,
-              validator: (String? v) =>
-                  v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: _saving ? l.admSaving : l.admSave,
-              onPressed: _saving ? null : _save,
-            ),
-          ],
-        ),
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppTextField(
+            controller: _name,
+            label: l.admLevelNameLabel,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: _saving ? l.admSaving : l.admSave,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
       ),
     );
   }

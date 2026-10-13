@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/env/env.dart';
 import '../../../../core/error/app_exception.dart';
+import '../../../../core/settings/settings_repository.dart';
 import '../../../../shared/presentation/exception_message.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -14,6 +15,7 @@ import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/login_controller.dart';
+import '../widgets/center_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -66,14 +68,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: <Widget>[
-              Icon(
-                Icons.menu_book_rounded,
-                color: context.palette.primary,
-                size: 64,
-              ),
+              const Center(child: CenterLogo()),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'دار تحفيظ القرآن',
+                ref.watch(publicCenterNameProvider).asData?.value ??
+                    AppSettings.defaults.centerName,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),

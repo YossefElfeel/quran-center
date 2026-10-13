@@ -5,12 +5,14 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_async_form_sheet.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/dispose_with.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../recognition/data/recognition_repository.dart';
 import '../../domain/monthly_eval.dart';
@@ -44,38 +46,39 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
     await showAppModalSheet<void>(
       context: context,
       title: l.monEvalStudentTitle(s.studentName),
-      builder: (BuildContext context) => AppAsyncFormSheet(
-        submitLabel: l.monSubmitForApproval,
-        successMessage: 'التقييم اتبعت للاعتماد',
-        onSubmit: () => ref
-            .read(circleMonthlyEvalsProvider(circleId, month: month).notifier)
-            .save(
-              studentPersonId: s.studentPersonId,
-              summary: summary.text.trim(),
-              behavior: behavior.text.trim(),
+      builder: (BuildContext context) => DisposeWith(
+        notifiers: <ChangeNotifier>[summary, behavior],
+        child: AppAsyncFormSheet(
+          submitLabel: l.monSubmitForApproval,
+          successMessage: 'التقييم اتبعت للاعتماد',
+          onSubmit: () => ref
+              .read(circleMonthlyEvalsProvider(circleId, month: month).notifier)
+              .save(
+                studentPersonId: s.studentPersonId,
+                summary: summary.text.trim(),
+                behavior: behavior.text.trim(),
+              ),
+          fields: <Widget>[
+            AppTextField(
+              controller: summary,
+              minLines: 2,
+              maxLines: 4,
+              label: l.monPerformanceSummaryLabel,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'اكتب ملخّص التقييم'
+                  : null,
             ),
-        fields: <Widget>[
-          AppTextField(
-            controller: summary,
-            minLines: 2,
-            maxLines: 4,
-            label: l.monPerformanceSummaryLabel,
-            validator: (value) => value == null || value.trim().isEmpty
-                ? 'اكتب ملخّص التقييم'
-                : null,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppTextField(
-            controller: behavior,
-            minLines: 1,
-            maxLines: 3,
-            label: l.monBehaviorLabel,
-          ),
-        ],
+            const SizedBox(height: AppSpacing.sm),
+            AppTextField(
+              controller: behavior,
+              minLines: 1,
+              maxLines: 3,
+              label: l.monBehaviorLabel,
+            ),
+          ],
+        ),
       ),
     );
-    summary.dispose();
-    behavior.dispose();
   }
 
   Future<void> _pickTop(BuildContext context, WidgetRef ref) async {
@@ -177,30 +180,36 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                       : s.isSubmitted
                       ? (l.monStatusSubmitted, context.palette.accent)
                       : (l.monStatusPending, context.palette.textSecondary);
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
+                  return Padding(
+                    key: ValueKey<String>(s.studentPersonId),
+                    padding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.xs,
                       horizontal: AppSpacing.md,
                     ),
-                    child: ListTile(
-                      title: Text(s.studentName),
-                      subtitle: Text(
-                        [
-                          label,
-                          if (s.returnReason != null)
-                            'سبب الإرجاع: ${s.returnReason}',
-                          if (s.summary != null) s.summary!,
-                        ].join('\n'),
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.bold,
+                    child: AppCard(
+                      padding: EdgeInsets.zero,
+                      child: ListTile(
+                        title: Text(s.studentName),
+                        subtitle: Text(
+                          [
+                            label,
+                            if (s.returnReason != null)
+                              'سبب الإرجاع: ${s.returnReason}',
+                            if (s.summary != null) s.summary!,
+                          ].join('\n'),
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      trailing: TextButton(
-                        onPressed: s.isApproved
-                            ? null
-                            : () => _edit(context, ref, s),
-                        child: Text(s.isSubmitted ? l.monEdit : l.monEvaluate),
+                        trailing: TextButton(
+                          onPressed: s.isApproved
+                              ? null
+                              : () => _edit(context, ref, s),
+                          child: Text(
+                            s.isSubmitted ? l.monEdit : l.monEvaluate,
+                          ),
+                        ),
                       ),
                     ),
                   );

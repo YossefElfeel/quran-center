@@ -63,6 +63,13 @@ String encodeTodaySession(TodaySession s) => jsonEncode(<String, dynamic>{
   'roster': s.roster.map(_rosterEntryToJson).toList(),
 });
 
+/// هل الكاش ده اتسجّل النهارده؟ كاش من يوم فات مينفعش يتعرض كـ "حصة النهارده"
+/// حتى لو لسه فيه سجلات معلّقة (هتتزامن لوحدها في الخلفية).
+bool isSessionCachedToday(String json, {DateTime? now}) {
+  final Object? day = (jsonDecode(json) as Map<String, dynamic>)['cached_day'];
+  return day == (now ?? DateTime.now()).toIso8601String().substring(0, 10);
+}
+
 /// يفك JSON المخزّن لـ [TodaySession] (للعرض أوفلاين).
 TodaySession decodeTodaySession(
   String json, {

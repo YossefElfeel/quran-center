@@ -17,25 +17,76 @@ class SubscriptionRepository {
 
   final SupabaseClient _client;
 
-  Future<List<HouseholdSummary>> fetchHouseholds() async {
+  /// حجم الصفحة لقايمة الأسر (الـ RPC بيرجّع جدول، فـ PostgREST بيدعم
+  /// الفلترة والـ range عليه من غير ما نعدّل الـ SQL).
+  static const int householdsPageSize = 50;
+
+  Future<List<HouseholdSummary>> fetchHouseholds({
+    String query = '',
+    int offset = 0,
+    int limit = householdsPageSize,
+  }) async {
+    PostgrestFilterBuilder<dynamic> q = _client.rpc('households_with_status');
+    final String term = query.trim().replaceAll(RegExp(r'[,().%*]'), '');
+    if (term.isNotEmpty) q = q.ilike('name', '%$term%');
+    final dynamic res = await q
+        .order('name', ascending: true)
+        .range(offset, offset + limit - 1)
+        .timeout(const Duration(seconds: 12));
+    final DateTime today = DateTime.now();
+    return (res as List<dynamic>)
+        .map((dynamic r) => _household(r as Map<String, dynamic>, today))
+        .toList();
+  }
+
+  /// أسرة واحدة بالحالة (من غير ما نحمّل القايمة كلها).
+  Future<HouseholdSummary?> fetchHousehold(String id) async {
     final dynamic res = await _client
         .rpc('households_with_status')
+        .eq('id', id)
+        .maybeSingle()
         .timeout(const Duration(seconds: 12));
-    final List<dynamic> rows = res as List<dynamic>;
+    if (res == null) return null;
+    return _household(res as Map<String, dynamic>, DateTime.now());
+  }
+
+  /// الأسر المتأخّرة فعلًا (فلترة على السيرفر بنفس منطق
+  /// [deriveSubscriptionStatus]) — للهوم، عشان مايفوتهاش أسرة بعد أول صفحة.
+  Future<List<HouseholdSummary>> fetchOverdueHouseholds({
+    int limit = householdsPageSize,
+  }) async {
     final DateTime today = DateTime.now();
-    return rows.map((dynamic r) {
-      final Map<String, dynamic> m = r as Map<String, dynamic>;
-      final String? lastPaid = m['last_paid_month'] as String?;
-      return HouseholdSummary(
-        id: m['id'] as String,
-        name: m['name'] as String,
-        monthlyAmount: (m['monthly_amount'] as num).toDouble(),
-        status: deriveSubscriptionStatus(
-          lastPaidMonth: lastPaid != null ? DateTime.parse(lastPaid) : null,
-          today: today,
-        ),
-      );
-    }).toList();
+    final DateTime current = DateTime(today.year, today.month);
+    // متأخّر = آخر شهر مدفوع قبل الشهر الحالي، إلا لو شهر واحد بس وإحنا
+    // لسه في فترة السماح.
+    final DateTime cutoff = today.day <= defaultGraceDays
+        ? DateTime(current.year, current.month - 1)
+        : current;
+    final String cutoffIso =
+        '${cutoff.year.toString().padLeft(4, '0')}-${cutoff.month.toString().padLeft(2, '0')}-01';
+    final dynamic res = await _client
+        .rpc('households_with_status')
+        .not('last_paid_month', 'is', null)
+        .lt('last_paid_month', cutoffIso)
+        .order('name', ascending: true)
+        .limit(limit)
+        .timeout(const Duration(seconds: 12));
+    return (res as List<dynamic>)
+        .map((dynamic r) => _household(r as Map<String, dynamic>, today))
+        .toList();
+  }
+
+  HouseholdSummary _household(Map<String, dynamic> m, DateTime today) {
+    final String? lastPaid = m['last_paid_month'] as String?;
+    return HouseholdSummary(
+      id: m['id'] as String,
+      name: m['name'] as String,
+      monthlyAmount: (m['monthly_amount'] as num).toDouble(),
+      status: deriveSubscriptionStatus(
+        lastPaidMonth: lastPaid != null ? DateTime.parse(lastPaid) : null,
+        today: today,
+      ),
+    );
   }
 
   Future<void> createHousehold(String name) async {

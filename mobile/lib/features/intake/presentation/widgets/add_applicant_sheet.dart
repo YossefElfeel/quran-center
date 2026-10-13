@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_select_field.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../enrollment/domain/gender.dart';
@@ -36,10 +37,8 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
     if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final String name = _name.text.trim();
     final String? levelId = _levelId;
-    if (name.isEmpty || levelId == null) {
-      AppSnackbar.error(context, 'اكتب الاسم واختار المستوى');
-      return;
-    }
+    // الفاليديتورز بتغطّي الحالتين؛ ده حارس بس.
+    if (name.isEmpty || levelId == null) return;
     setState(() => _saving = true);
     try {
       await ref
@@ -63,80 +62,60 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
     final AsyncValue<List<LevelOption>> levels = ref.watch(
       levelOptionsProvider,
     );
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: AppSpacing.lg,
-      ),
-      child: Form(
-        key: _form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              l.itkNewApplicant,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              controller: _name,
-              label: l.itkApplicantNameLabel,
-              validator: (String? v) =>
-                  v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SegmentedButton<Gender>(
-              segments: <ButtonSegment<Gender>>[
-                ButtonSegment<Gender>(
-                  value: Gender.male,
-                  label: Text(l.itkBoy),
-                ),
-                ButtonSegment<Gender>(
-                  value: Gender.female,
-                  label: Text(l.itkGirl),
-                ),
-              ],
-              selected: <Gender>{_gender},
-              onSelectionChanged: (Set<Gender> s) =>
-                  setState(() => _gender = s.first),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(l.itkTargetLevel),
-            ),
-            levels.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace _) => AppErrorView(
-                message: l.itkLevelsLoadError,
-                onRetry: () => ref.invalidate(levelOptionsProvider),
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppTextField(
+            controller: _name,
+            label: l.itkApplicantNameLabel,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          SegmentedButton<Gender>(
+            segments: <ButtonSegment<Gender>>[
+              ButtonSegment<Gender>(value: Gender.male, label: Text(l.itkBoy)),
+              ButtonSegment<Gender>(
+                value: Gender.female,
+                label: Text(l.itkGirl),
               ),
-              data: (List<LevelOption> list) => DropdownButton<String>(
-                isExpanded: true,
-                value: _levelId,
-                hint: Text(l.itkChooseLevel),
-                items: list
-                    .map(
-                      (LevelOption l) => DropdownMenuItem<String>(
-                        value: l.id,
-                        child: Text(l.label),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (String? v) => setState(() => _levelId = v),
-              ),
+            ],
+            selected: <Gender>{_gender},
+            onSelectionChanged: (Set<Gender> s) =>
+                setState(() => _gender = s.first),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          levels.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.itkLevelsLoadError,
+              onRetry: () => ref.invalidate(levelOptionsProvider),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: _saving ? l.itkSaving : l.itkSave,
-              onPressed: _saving ? null : _save,
+            data: (List<LevelOption> list) => AppSelectField<String>(
+              label: l.itkTargetLevel,
+              value: _levelId,
+              hint: l.itkChooseLevel,
+              validator: (String? v) => v == null ? l.itkChooseLevel : null,
+              items: list
+                  .map(
+                    (LevelOption l) => DropdownMenuItem<String>(
+                      value: l.id,
+                      child: Text(l.label),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (String? v) => setState(() => _levelId = v),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: _saving ? l.itkSaving : l.itkSave,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
       ),
     );
   }

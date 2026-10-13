@@ -32,6 +32,7 @@ class CurriculaScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showAppModalSheet<void>(
           context: context,
+          title: l.admNewCurriculum,
           isScrollControlled: true,
           builder: (BuildContext _) => const AddCurriculumSheet(),
         ),
@@ -51,6 +52,7 @@ class CurriculaScreen extends ConsumerWidget {
                   label: l.admNewCurriculum,
                   onPressed: () => showAppModalSheet<void>(
                     context: context,
+                    title: l.admNewCurriculum,
                     builder: (_) => const AddCurriculumSheet(),
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_date.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -55,8 +56,8 @@ class ExcuseQueueScreen extends ConsumerWidget {
             icon: excuse.isPending
                 ? Icons.schedule
                 : excuse.isApproved
-                ? Icons.check_circle
-                : Icons.cancel,
+                ? AppIcons.approved
+                : AppIcons.rejected,
           ),
           const SizedBox(height: AppSpacing.md),
           Text(

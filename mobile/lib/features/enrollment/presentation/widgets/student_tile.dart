@@ -9,9 +9,12 @@ import '../../domain/gender.dart';
 
 /// بلاطة طالب في روستر الحلقة.
 class StudentTile extends StatelessWidget {
-  const StudentTile({required this.student, super.key});
+  const StudentTile({required this.student, this.trailing, super.key});
 
   final EnrolledStudent student;
+
+  /// إجراء اختياري على يسار البلاطة (مثلًا ربط ولي أمر من الروستر).
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +27,7 @@ class StudentTile extends StatelessWidget {
       ),
       title: student.name,
       subtitle: student.gender?.label(AppL10n.of(context)) ?? '—',
+      trailing: trailing,
     );
   }
 }

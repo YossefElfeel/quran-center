@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/supabase/supabase_providers.dart';
+import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_search_picker.dart';
 import '../../../../shared/widgets/app_select_field.dart';
@@ -26,7 +27,11 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
   );
   final TextEditingController _phone = TextEditingController();
   final TextEditingController _newHousehold = TextEditingController();
-  late String _relation = widget.row.relation;
+  // Normalised again here so a free-text relation never trips the select
+  // field's "value must be one of the items" assertion.
+  late String _relation = GuardianLinkRow.normalizeRelation(
+    widget.row.relation,
+  );
   late String? _householdId = widget.row.householdId;
   late String? _householdName = widget.row.householdName;
   bool _loading = true;
@@ -118,6 +123,7 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
                 validator: (s) =>
                     s == null || s.trim().length < 2 ? 'اكتب الاسم' : null,
               ),
+              const SizedBox(height: AppSpacing.md),
               AppTextField(
                 controller: _phone,
                 label: 'رقم الهاتف',
@@ -130,6 +136,7 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
                     ? 'رقم الهاتف من ١٠ إلى ١٥ رقم'
                     : null,
               ),
+              const SizedBox(height: AppSpacing.md),
               AppSelectField<String>(
                 label: 'صلة القرابة',
                 value: _relation,
@@ -138,8 +145,11 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
                   DropdownMenuItem(value: 'mother', child: Text('أم')),
                   DropdownMenuItem(value: 'other', child: Text('ولي أمر')),
                 ],
-                onChanged: _busy ? null : (v) => setState(() => _relation = v!),
+                onChanged: _busy
+                    ? null
+                    : (v) => setState(() => _relation = v ?? 'other'),
               ),
+              const SizedBox(height: AppSpacing.sm),
               TextButton(
                 onPressed: _busy
                     ? null
@@ -169,7 +179,8 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
                       },
                 child: Text(_householdName ?? 'اختار أسرة موجودة'),
               ),
-              if (_householdId == null)
+              if (_householdId == null) ...<Widget>[
+                const SizedBox(height: AppSpacing.sm),
                 AppTextField(
                   controller: _newHousehold,
                   label: 'اسم الأسرة الجديدة',
@@ -178,11 +189,15 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
                       ? 'اكتب اسم الأسرة أو اختار أسرة موجودة'
                       : null,
                 ),
-              if (_error != null)
+              ],
+              if (_error != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   _error!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
               AppButton(
                 label: 'حفظ البيانات',
                 isLoading: _busy,

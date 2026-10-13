@@ -7,4 +7,8 @@ abstract final class AppIcons {
   static const IconData tasmee = Icons.record_voice_over;
   static const IconData note = Icons.note_add_outlined;
   static const IconData drillIn = Icons.chevron_right;
+
+  /// قرار رفض (عذر/طلب مسابقة) — مقابل [approved].
+  static const IconData rejected = Icons.cancel;
+  static const IconData approved = Icons.check_circle;
 }

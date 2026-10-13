@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/media_repository.dart';
@@ -37,7 +38,6 @@ class ChildMediaSection extends ConsumerWidget {
     ImageSource source,
   ) async {
     final AppL10n l = AppL10n.of(context);
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     try {
       final XFile? picked = await ImagePicker().pickImage(
         source: source,
@@ -54,7 +54,8 @@ class ChildMediaSection extends ConsumerWidget {
         bytes: raw,
         watermark: 'Quran Center • $stamp',
       );
-      messenger.showSnackBar(SnackBar(content: Text(l.ppMediaUploading)));
+      if (!context.mounted) return;
+      AppSnackbar.info(context, l.ppMediaUploading);
       await ref
           .read(mediaRepositoryProvider)
           .uploadMedia(
@@ -64,9 +65,9 @@ class ChildMediaSection extends ConsumerWidget {
             watermarked: true,
           );
       ref.invalidate(childMediaProvider(studentPersonId));
-      messenger.showSnackBar(SnackBar(content: Text(l.ppMediaUploaded)));
+      if (context.mounted) AppSnackbar.success(context, l.ppMediaUploaded);
     } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(l.ppMediaUploadError)));
+      if (context.mounted) AppSnackbar.error(context, l.ppMediaUploadError);
     }
   }
 
@@ -110,10 +111,9 @@ class ChildMediaSection extends ConsumerWidget {
         ref.watch(currentRolesProvider).asData?.value ?? const <String>[];
     final bool canUpload = roles.any(_uploaderRoles.contains);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[

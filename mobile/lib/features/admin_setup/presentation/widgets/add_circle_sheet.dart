@@ -6,6 +6,7 @@ import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_select_field.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/teacher_option.dart';
@@ -38,13 +39,9 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
   Future<void> _save() async {
     if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final String name = _name.text.trim();
-    final int? parsedSize = parseLocalizedInt(_maxSize.text.trim());
-    if (parsedSize == null || parsedSize <= 0) {
-      AppSnackbar.error(context, 'اكتب سعة الحلقة كرقم أكبر من صفر');
-      return;
-    }
-    final int maxSize = parsedSize;
-    if (name.isEmpty || maxSize <= 0) return;
+    // الفاليديتور ضمن إن السعة رقم موجب؛ الفحص هنا للأمان بس.
+    final int? maxSize = parseLocalizedInt(_maxSize.text.trim());
+    if (name.isEmpty || maxSize == null || maxSize <= 0) return;
     setState(() => _saving = true);
     try {
       await ref
@@ -67,71 +64,66 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
     final AsyncValue<List<TeacherOption>> teachers = ref.watch(
       teacherOptionsProvider,
     );
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: AppSpacing.lg,
-      ),
-      child: Form(
-        key: _form,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(
-              l.admNewCircle,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          AppTextField(
+            controller: _name,
+            label: l.admCircleNameLabel,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            controller: _maxSize,
+            keyboardType: TextInputType.number,
+            label: l.admCircleMaxSizeLabel,
+            validator: (String? v) {
+              final int? size = parseLocalizedInt((v ?? '').trim());
+              return size == null || size <= 0
+                  ? 'اكتب سعة الحلقة كرقم أكبر من صفر'
+                  : null;
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          teachers.when(
+            loading: () => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(l.admTeacherLabel),
+                const SizedBox(height: AppSpacing.sm),
+                const LinearProgressIndicator(),
+              ],
             ),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              controller: _name,
-              label: l.admCircleNameLabel,
-              validator: (String? v) =>
-                  v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+            error: (Object e, StackTrace _) => AppErrorView(
+              message: l.admTeachersLoadError,
+              onRetry: () => ref.invalidate(teacherOptionsProvider),
             ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              controller: _maxSize,
-              keyboardType: TextInputType.number,
-              label: l.admCircleMaxSizeLabel,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(l.admTeacherLabel),
-            ),
-            teachers.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (Object e, StackTrace _) => AppErrorView(
-                message: l.admTeachersLoadError,
-                onRetry: () => ref.invalidate(teacherOptionsProvider),
-              ),
-              data: (List<TeacherOption> list) => DropdownButton<String?>(
-                isExpanded: true,
-                value: _teacherId,
-                hint: Text(l.admNoTeacher),
-                items: <DropdownMenuItem<String?>>[
-                  DropdownMenuItem<String?>(child: Text(l.admNoTeacher)),
-                  ...list.map(
-                    (TeacherOption t) => DropdownMenuItem<String?>(
-                      value: t.id,
-                      child: Text(t.fullName),
-                    ),
+            data: (List<TeacherOption> list) => AppSelectField<String?>(
+              label: l.admTeacherLabel,
+              value: _teacherId,
+              hint: l.admNoTeacher,
+              items: <DropdownMenuItem<String?>>[
+                DropdownMenuItem<String?>(child: Text(l.admNoTeacher)),
+                ...list.map(
+                  (TeacherOption t) => DropdownMenuItem<String?>(
+                    value: t.id,
+                    child: Text(t.fullName),
                   ),
-                ],
-                onChanged: (String? v) => setState(() => _teacherId = v),
-              ),
+                ),
+              ],
+              onChanged: (String? v) => setState(() => _teacherId = v),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: _saving ? l.admSaving : l.admSave,
-              onPressed: _saving ? null : _save,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: _saving ? l.admSaving : l.admSave,
+            onPressed: _saving ? null : _save,
+          ),
+        ],
       ),
     );
   }

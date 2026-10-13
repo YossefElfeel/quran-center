@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/error/app_exception.dart';
+import '../../../../shared/presentation/exception_message.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -12,6 +15,7 @@ import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../user_invite/data/invite_repository.dart';
 import '../../data/family_repository.dart';
+import '../../domain/household_naming.dart';
 import '../../domain/household_option.dart';
 import '../../domain/student_option.dart';
 import '../controllers/guardian_links_controller.dart';
@@ -41,8 +45,28 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
   String? _createdPersonId;
   String? _link;
   String? _error;
+
+  /// آخر اسم أسرة اقترحناه — لو المستخدم كتب اسم بنفسه منغيّروش.
+  String _suggestedHousehold = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _name.addListener(_suggestHouseholdName);
+  }
+
+  void _suggestHouseholdName() {
+    final String current = _householdName.text.trim();
+    if (current.isNotEmpty && current != _suggestedHousehold) return;
+    final String family = suggestedFamilyName(_name.text);
+    final String suggestion = family.isEmpty ? '' : 'أسرة $family';
+    _suggestedHousehold = suggestion;
+    if (_householdName.text != suggestion) _householdName.text = suggestion;
+  }
+
   @override
   void dispose() {
+    _name.removeListener(_suggestHouseholdName);
     _name.dispose();
     _phone.dispose();
     _email.dispose();
@@ -91,12 +115,13 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
         AppSnackbar.success(context, 'ولي الأمر اتربط بالطفل والأسرة');
         Navigator.of(context).pop();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(
           () => _error = _createdPersonId == null
               ? 'تعذّر حفظ ولي الأمر — جرّب تاني'
-              : 'ولي الأمر اتحفظ، لكن الدعوة فشلت. جرّب الدعوة تاني بنفس البيانات.',
+              : 'ولي الأمر اتحفظ، لكن الدعوة فشلت: '
+                    '${e is AppException ? e.localizedMessage(AppL10n.of(context)) : 'جرّب الدعوة تاني بنفس البيانات.'}',
         );
       }
     } finally {
@@ -248,12 +273,15 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
                   },
             child: Text(_household?.name ?? 'إنشاء أسرة جديدة'),
           ),
-          if (_household == null)
+          if (_household == null) ...<Widget>[
+            const SizedBox(height: AppSpacing.md),
             AppTextField(
               controller: _householdName,
               enabled: _createdPersonId == null,
               label: 'اسم الأسرة (لو فاضي هنستخدم اسم ولي الأمر)',
             ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('إنشاء دعوة دخول'),
@@ -271,8 +299,10 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
                   ? 'اكتب إيميل صحيح'
                   : null,
             ),
-          if (_error != null)
+          if (_error != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
             Text(_error!, style: TextStyle(color: context.palette.error)),
+          ],
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: _createdPersonId == null

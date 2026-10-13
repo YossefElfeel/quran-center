@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/settings/settings_repository.dart';
@@ -201,8 +202,12 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
     final paid = billing.paidMonths
         .map((month) => '${month.year}-${month.month}')
         .toSet();
+    final l = AppL10n.of(context);
+    final num monthlyAmount = billing.household['monthly_amount'] as num? ?? 0;
+    // monthly_amount = 0 → الأسرة معفية: مفيش شهور مستحقة خالص.
+    final bool exempt = monthlyAmount <= 0;
     final due = <DateTime>[];
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < (exempt ? 0 : 12); i++) {
       final month = DateTime(now.year, now.month - i);
       if (month.isBefore(DateTime(created.year, created.month))) break;
       if (!paid.contains('${month.year}-${month.month}')) due.add(month);
@@ -218,14 +223,18 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           Text(
-            '${arabicNumber(billing.household['monthly_amount'] as num)} ج.م شهريًا',
+            exempt ? l.subsExempt : '${arabicNumber(monthlyAmount)} ج.م شهريًا',
           ),
           const SizedBox(height: 16),
-          const Text(
-            'الشهور المستحقة — آخر ١٢ شهر',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Text(due.isEmpty ? 'مفيش شهور مستحقة' : due.map(label).join('، ')),
+          if (exempt)
+            Text(l.subsExemptNoDue)
+          else ...<Widget>[
+            const Text(
+              'الشهور المستحقة — آخر ١٢ شهر',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(due.isEmpty ? 'مفيش شهور مستحقة' : due.map(label).join('، ')),
+          ],
           const SizedBox(height: 16),
           const Text(
             'سجل الدفعات',

@@ -87,7 +87,10 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
           ayahEnd: ae!,
         );
       }
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(context, 'المقطع اتحدّد');
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);

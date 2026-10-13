@@ -9,8 +9,10 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
+import '../../domain/session_write_block.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
+import '../session_write_block_label.dart';
 import 'portion_range_row.dart';
 import 'surah_load_error.dart';
 
@@ -72,7 +74,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
       _saving = true;
     });
     try {
-      await ref
+      final SessionWriteBlock? blocked = await ref
           .read(todaySessionControllerProvider(widget.circleId).notifier)
           .closeWithPlan(
             markUnrecordedPresent: _markPresent,
@@ -83,7 +85,15 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
             revAyahEnd: anyRevision ? ae : null,
           );
       if (mounted) {
-        AppSnackbar.success(context, 'الحصة اتقفلت');
+        if (blocked != null) {
+          final AppL10n l = AppL10n.of(context);
+          AppSnackbar.info(
+            context,
+            '${blocked.label(l)} — ${l.sesCloseQueuedBlocked}',
+          );
+        } else {
+          AppSnackbar.success(context, 'الحصة اتقفلت');
+        }
         Navigator.of(context).pop();
       }
     } catch (_) {

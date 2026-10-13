@@ -14,6 +14,7 @@ import '../../../../shared/widgets/app_inline_banner.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -106,13 +107,18 @@ class _TeacherDevelopmentScreenState
                   : AppRefreshIndicator(
                       onRefresh: () async =>
                           ref.invalidate(myDevelopmentProvider),
-                      child: ListView.builder(
+                      child: AppPagedList<TeacherDevEntry>(
+                        items: items,
+                        pageSize: TeacherRepository.developmentPageSize,
+                        loadPage: (int offset) => ref
+                            .read(teacherRepositoryProvider)
+                            .fetchMyDevelopment(offset: offset),
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.sm,
                         ),
-                        itemCount: items.length,
-                        itemBuilder: (BuildContext context, int i) =>
-                            _DevTile(entry: items[i]),
+                        itemBuilder:
+                            (BuildContext context, TeacherDevEntry e, int i) =>
+                                _DevTile(entry: e),
                       ),
                     ),
             ),

@@ -52,7 +52,15 @@ class PortionRangeRow extends StatelessWidget {
               surah == null
                   ? l.sesSurahHint
                   : surahs
-                        .firstWhere((SurahOption s) => s.number == surah)
+                        .firstWhere(
+                          (SurahOption s) => s.number == surah,
+                          // سورة مش في القايمة (داتا قديمة/ناقصة) — منقعش.
+                          orElse: () => SurahOption(
+                            number: surah!,
+                            name: l.sesSurahHint,
+                            ayahCount: 0,
+                          ),
+                        )
                         .name,
             ),
           ),

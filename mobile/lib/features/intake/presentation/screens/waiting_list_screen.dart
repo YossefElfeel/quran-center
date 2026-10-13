@@ -33,6 +33,7 @@ class WaitingListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showAppModalSheet<void>(
           context: context,
+          title: l.itkNewApplicant,
           isScrollControlled: true,
           builder: (BuildContext _) => const AddApplicantSheet(),
         ),
@@ -52,6 +53,7 @@ class WaitingListScreen extends ConsumerWidget {
                 action: TextButton(
                   onPressed: () => showAppModalSheet<void>(
                     context: context,
+                    title: l.itkNewApplicant,
                     builder: (_) => const AddApplicantSheet(),
                   ),
                   child: Text(l.itkNewApplicant),
@@ -74,6 +76,7 @@ class WaitingListScreen extends ConsumerWidget {
                           applicant: a,
                           onPlacement: () => showAppModalSheet<void>(
                             context: context,
+                            title: l.itkPlacementTest,
                             isScrollControlled: true,
                             builder: (BuildContext _) => PlacementSheet(
                               waitingId: a.waitingId,
@@ -82,6 +85,7 @@ class WaitingListScreen extends ConsumerWidget {
                           ),
                           onEnroll: () => showAppModalSheet<void>(
                             context: context,
+                            title: l.itkAssignToCircle,
                             isScrollControlled: true,
                             builder: (BuildContext _) => EnrollSheet(
                               waitingId: a.waitingId,

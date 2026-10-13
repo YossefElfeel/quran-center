@@ -15,11 +15,32 @@ import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../subscription/domain/household_summary.dart';
+import '../../../subscription/presentation/controllers/households_controller.dart';
+import '../../../subscription/presentation/widgets/record_payment_sheet.dart';
 import '../../../user_invite/presentation/screens/invite_user_screen.dart';
 import '../../domain/guardian_link_row.dart';
 import '../controllers/guardian_links_controller.dart';
 import '../widgets/add_guardian_link_sheet.dart';
 import '../widgets/edit_guardian_sheet.dart';
+
+/// يفتح دعوة الدخول لولي أمر موجود، وبعد الرجوع يحدّث القائمة (حالة الدخول).
+Future<void> _openInvite(
+  BuildContext context,
+  WidgetRef ref,
+  GuardianLinkRow r,
+) async {
+  await Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => InviteUserScreen(
+        existingPersonId: r.guardianId,
+        existingName: r.guardianName,
+        existingRole: 'parent',
+      ),
+    ),
+  );
+  ref.invalidate(guardianLinksControllerProvider);
+}
 
 /// الأدمن — ربط أولياء الأمور بالأطفال (عشان يدخلوا بوابة المتابعة).
 class GuardianLinksScreen extends ConsumerWidget {
@@ -72,7 +93,9 @@ class GuardianLinksScreen extends ConsumerWidget {
                   itemBuilder: (BuildContext context, int i) {
                     final GuardianLinkRow r = items[i];
                     return AppListCard(
+                      key: ValueKey<String>('${r.guardianId}-${r.studentId}'),
                       leadingIcon: Icons.link,
+                      trailing: _GuardianFixAction(row: r),
                       title: r.guardianName,
                       subtitle:
                           '${r.relationAr}: ${r.childName}\nدخول ${r.hasLogin ? '✓' : '✗'} · أسرة ${r.householdId != null ? '✓' : '✗'} · ${r.subscriptionActive ? 'الاشتراك نشط' : 'اشتراك محتاج تجديد'} · ${r.childrenCount} أطفال',
@@ -96,15 +119,10 @@ class GuardianLinksScreen extends ConsumerWidget {
                             if (!r.hasLogin)
                               AppButton(
                                 label: 'إنشاء دعوة دخول',
-                                onPressed: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => InviteUserScreen(
-                                      existingPersonId: r.guardianId,
-                                      existingName: r.guardianName,
-                                      existingRole: 'parent',
-                                    ),
-                                  ),
-                                ),
+                                onPressed: () async {
+                                  Navigator.of(sheetContext).pop();
+                                  await _openInvite(context, ref, r);
+                                },
                               ),
                             if (r.householdId != null)
                               AppButton(
@@ -156,5 +174,67 @@ class GuardianLinksScreen extends ConsumerWidget {
               ),
       ),
     );
+  }
+}
+
+/// إصلاح مباشر لأول بند ناقص في قائمة تجهيز ولي الأمر (أسرة ← دعوة ← دفعة)
+/// بدل شيت عام. الأسرة الأول لأن دعوة ولي الأمر بتتطلّب عضوية أسرة.
+class _GuardianFixAction extends ConsumerWidget {
+  const _GuardianFixAction({required this.row});
+
+  final GuardianLinkRow row;
+
+  Future<void> _recordPayment(BuildContext context, WidgetRef ref) async {
+    final String householdId = row.householdId!;
+    try {
+      final List<HouseholdSummary> households = await ref.read(
+        householdsControllerProvider.future,
+      );
+      final HouseholdSummary household = households.firstWhere(
+        (HouseholdSummary h) => h.id == householdId,
+      );
+      if (!context.mounted) return;
+      await showAppModalSheet<void>(
+        context: context,
+        title: AppL10n.of(context).famFixPayment,
+        builder: (_) =>
+            RecordPaymentSheet(household: household, feedbackContext: context),
+      );
+      ref.invalidate(guardianLinksControllerProvider);
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.error(context, 'تعذّر تحميل الأسرة — جرّب تاني');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
+    if (row.householdId == null) {
+      return TextButton(
+        onPressed: () async {
+          await showAppModalSheet<void>(
+            context: context,
+            title: 'تعديل ولي الأمر',
+            builder: (_) => EditGuardianSheet(row: row),
+          );
+        },
+        child: Text(l.famFixHousehold),
+      );
+    }
+    if (!row.hasLogin) {
+      return TextButton(
+        onPressed: () => _openInvite(context, ref, row),
+        child: Text(l.famFixInvite),
+      );
+    }
+    if (!row.subscriptionActive) {
+      return TextButton(
+        onPressed: () => _recordPayment(context, ref),
+        child: Text(l.famFixPayment),
+      );
+    }
+    return Icon(Icons.check_circle, color: context.palette.success);
   }
 }

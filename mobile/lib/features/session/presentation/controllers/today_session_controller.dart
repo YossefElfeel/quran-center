@@ -17,6 +17,7 @@ import '../../data/session_sync.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/portion.dart';
 import '../../domain/roster_entry.dart';
+import '../../domain/session_write_block.dart';
 import '../../domain/tasmee_kind.dart';
 
 part 'today_session_controller.g.dart';
@@ -29,7 +30,12 @@ class TodaySessionController extends _$TodaySessionController {
   Future<TodaySession> build(String circleId) async {
     final LocalDb db = ref.read(localDbProvider);
     final String? cached = await db.readCachedSession(circleId);
-    if (cached != null && await db.hasUnsyncedSession(circleId)) {
+    // Keep the optimistic copy only while today's work is still waiting to
+    // sync. A cache from an earlier day always goes through the stale-day
+    // check below, so yesterday's session never stays pinned.
+    if (cached != null &&
+        isSessionCachedToday(cached) &&
+        await db.hasUnsyncedSession(circleId)) {
       return decodeTodaySession(cached, preserveSession: true);
     }
     try {
@@ -130,7 +136,20 @@ class TodaySessionController extends _$TodaySessionController {
       ref.invalidateSelf();
       await future;
     } catch (e) {
-      if (!isOfflineError(e)) rethrow;
+      if (!isOfflineError(e)) {
+        // رفض صلاحية أثناء تجميد/صيانة → سبب واضح بدل "راجع الاتصال".
+        final Object explained = await explainSessionWriteError(
+          e,
+          ref.read(sessionRepositoryProvider).sessionWritesBlocked,
+        );
+        if (explained is SessionWritesBlockedException) {
+          ref
+              .read(sessionWritesBlockStateProvider.notifier)
+              .set(explained.reason);
+          throw explained;
+        }
+        rethrow;
+      }
       await ref
           .read(localDbProvider)
           .enqueue(
@@ -341,7 +360,10 @@ class TodaySessionController extends _$TodaySessionController {
   }
 
   /// قفل الحصة بخطة المراجعة الجاية + تسجيل حصيلة الحفظ النهارده (المقطع الحالي).
-  Future<void> closeWithPlan({
+  ///
+  /// القفل بيدخل الطابور دايمًا. بيرجّع سبب الإيقاف (تجميد/صيانة) لو السيرفر
+  /// رفض الإرسال بسببه — القفل يفضل محفوظ ويتبعت أول ما الإيقاف يتشال.
+  Future<SessionWriteBlock?> closeWithPlan({
     bool markUnrecordedPresent = true,
     String? revisionName,
     int? revSurahStart,
@@ -351,7 +373,7 @@ class TodaySessionController extends _$TodaySessionController {
   }) async {
     final TodaySession? current = state.asData?.value;
     final String? sessionId = current?.sessionId;
-    if (current == null || sessionId == null || !current.isOpen) return;
+    if (current == null || sessionId == null || !current.isOpen) return null;
     if (markUnrecordedPresent) {
       for (final RosterEntry entry in current.roster.where(
         (RosterEntry e) => !e.attendanceRecorded,
@@ -403,7 +425,9 @@ class TodaySessionController extends _$TodaySessionController {
     if (await ref.read(localDbProvider).pendingCount() == 0) {
       ref.invalidateSelf();
       await future;
+      return null;
     }
+    return ref.read(sessionWritesBlockStateProvider);
   }
 
   /// المعلّم يسجّل ملاحظة سلوك لطالب. parent-visible بتبعت إشعار لولي الأمر

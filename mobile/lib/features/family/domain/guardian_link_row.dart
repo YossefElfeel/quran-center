@@ -30,8 +30,21 @@ class GuardianLinkRow {
       childrenCount: (map['children_count'] as num?)?.toInt() ?? 0,
       childName:
           map['child_name'] as String? ?? (s?['full_name'] as String?) ?? 'طفل',
-      relation: map['relation'] as String,
+      relation: normalizeRelation(map['relation'] as String?),
     );
+  }
+
+  /// صلات القرابة اللي التطبيق بيعرفها. الـ DB بتسمح بقيمة فاضية/حرّة، فأي
+  /// قيمة تانية بتتعامل كـ 'other' (عشان قائمة الاختيار ماتنهارش).
+  static const List<String> knownRelations = <String>[
+    'father',
+    'mother',
+    'other',
+  ];
+
+  static String normalizeRelation(String? raw) {
+    final String value = (raw ?? '').trim().toLowerCase();
+    return knownRelations.contains(value) ? value : 'other';
   }
 
   final String guardianName;

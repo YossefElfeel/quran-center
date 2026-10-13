@@ -11,10 +11,13 @@ import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/dispose_with.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/competition_repository.dart';
 import '../../domain/competition_models.dart';
 import '../controllers/competition_controllers.dart';
 
@@ -28,23 +31,25 @@ class CompetitionsScreen extends ConsumerWidget {
     await showAppModalSheet<void>(
       context: context,
       title: l.cmpNewCompetition,
-      builder: (BuildContext context) => AppAsyncFormSheet(
-        submitLabel: l.add,
-        successMessage: 'المسابقة اتضافت',
-        onSubmit: () =>
-            ref.read(competitionsProvider.notifier).create(name.text.trim()),
-        fields: [
-          AppTextField(
-            controller: name,
-            autofocus: true,
-            label: l.cmpCompetitionName,
-            validator: (v) =>
-                (v?.trim().length ?? 0) < 2 ? 'اكتب اسم المسابقة' : null,
-          ),
-        ],
+      builder: (BuildContext context) => DisposeWith(
+        notifiers: <ChangeNotifier>[name],
+        child: AppAsyncFormSheet(
+          submitLabel: l.add,
+          successMessage: 'المسابقة اتضافت',
+          onSubmit: () =>
+              ref.read(competitionsProvider.notifier).create(name.text.trim()),
+          fields: [
+            AppTextField(
+              controller: name,
+              autofocus: true,
+              label: l.cmpCompetitionName,
+              validator: (v) =>
+                  (v?.trim().length ?? 0) < 2 ? 'اكتب اسم المسابقة' : null,
+            ),
+          ],
+        ),
       ),
     );
-    name.dispose();
   }
 
   @override
@@ -88,17 +93,24 @@ class CompetitionsScreen extends ConsumerWidget {
               )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(competitionsProvider),
-                child: ListView.builder(
+                child: AppPagedList<CompetitionRow>(
+                  items: items,
+                  pageSize: CompetitionRepository.pageSize,
+                  loadPage: (int offset) => ref
+                      .read(competitionRepositoryProvider)
+                      .fetchCompetitions(offset: offset),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) => AppListCard(
-                    leadingIcon: Icons.emoji_events,
-                    iconColor: context.palette.accent,
-                    title: items[i].name,
-                    onTap: () => context.push(
-                      Routes.competitionDetail(items[i].id, items[i].name),
-                    ),
-                  ),
+                  itemBuilder:
+                      (BuildContext context, CompetitionRow c, int i) =>
+                          AppListCard(
+                            key: ValueKey<String>(c.id),
+                            leadingIcon: Icons.emoji_events,
+                            iconColor: context.palette.accent,
+                            title: c.name,
+                            onTap: () => context.push(
+                              Routes.competitionDetail(c.id, c.name),
+                            ),
+                          ),
                 ),
               ),
       ),

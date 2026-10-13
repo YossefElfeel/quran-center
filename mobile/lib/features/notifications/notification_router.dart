@@ -27,6 +27,12 @@ String? notificationRoute(
     return Routes.parentChildren;
   }
 
+  // تقييم الحلقة الشهري للمعلّم (أو حلقاته لو الإشعار من غير حلقة).
+  String teacherMonthlyEval() => n.circleId == null
+      ? Routes.teacherCircles
+      : '${Routes.monthlyEval(n.circleId!, 'الحلقة')}'
+            '${n.month == null ? '' : '&month=${Uri.encodeComponent(n.month!)}'}';
+
   switch (n.type) {
     // تقييم/ملاحظة/كارت تقدّم → مصدرها الطفل (لولي الأمر).
     case 'supervisor_eval':
@@ -45,15 +51,18 @@ String? notificationRoute(
       if (isStaff) return Routes.supervisorEval;
       return null;
 
-    // تقييمات شهرية ناقصة → اعتماد التقييم الشهري (المشرف).
+    // تقييم شهري اترجّع للمعلّم → تقييم الحلقة (المعلّم هو اللي يعدّل).
     case 'monthly_eval_returned':
-    case 'monthly_eval_missed':
-      if (has('teacher')) {
-        return n.circleId == null
-            ? Routes.teacherCircles
-            : '${Routes.monthlyEval(n.circleId!, 'الحلقة')}${n.month == null ? '' : '&month=${Uri.encodeComponent(n.month!)}'}';
-      }
+      if (has('teacher')) return teacherMonthlyEval();
       if (isStaff) return Routes.supervisorMonthlyEval;
+      return null;
+
+    // تقييمات شهرية ناقصة: نسخة المعلّم فيها circle_id → حلقته؛ نسخة الإدارة
+    // من غير حلقة → اعتماد المشرف (حتى لو المستلم معلّم ومشرف في نفس الوقت).
+    case 'monthly_eval_missed':
+      if (n.circleId != null && has('teacher')) return teacherMonthlyEval();
+      if (isStaff) return Routes.supervisorMonthlyEval;
+      if (has('teacher')) return Routes.teacherCircles;
       return null;
 
     case 'development_returned':
@@ -73,9 +82,11 @@ String? notificationRoute(
       if (isStaff) return Routes.issueCertificate;
       return null;
 
-    // اشتراك متأخّر → الاشتراكات (للأدمن) أو لا وجهة لولي الأمر.
+    // اشتراك متأخّر → إدارة الأسر والاشتراكات للأدمن؛ شاشة الاشتراك لولي الأمر؛
+    // المشرف (من غير دور ولي أمر) مالوش شاشة اشتراكات.
     case 'subscription_overdue':
       if (has('admin') || has('super_admin')) return Routes.adminSubscriptions;
+      if (isStaff && !has('parent')) return null;
       return '/parent/subscription';
 
     default:

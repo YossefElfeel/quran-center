@@ -14,6 +14,7 @@ import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/dispose_with.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/course.dart';
 import '../controllers/courses_controller.dart';
@@ -46,43 +47,47 @@ class CoursesScreen extends ConsumerWidget {
     await showAppModalSheet<void>(
       context: context,
       title: l.courseNew,
-      builder: (BuildContext context) => AppAsyncFormSheet(
-        submitLabel: l.add,
-        successMessage: 'الكورس اتضاف',
-        onSubmit: () => ref
-            .read(coursesProvider.notifier)
-            .add(
-              title: title.text.trim(),
-              videoUrl: url.text.trim(),
-              description: desc.text.trim(),
+      builder: (BuildContext context) => DisposeWith(
+        notifiers: <ChangeNotifier>[title, url, desc],
+        child: AppAsyncFormSheet(
+          submitLabel: l.add,
+          successMessage: 'الكورس اتضاف',
+          onSubmit: () => ref
+              .read(coursesProvider.notifier)
+              .add(
+                title: title.text.trim(),
+                videoUrl: url.text.trim(),
+                description: desc.text.trim(),
+              ),
+          fields: <Widget>[
+            AppTextField(
+              controller: title,
+              label: l.courseTitleLabel,
+              validator: (v) =>
+                  (v?.trim().length ?? 0) < 2 ? 'اكتب عنوان الكورس' : null,
             ),
-        fields: <Widget>[
-          AppTextField(
-            controller: title,
-            label: l.courseTitleLabel,
-            validator: (v) =>
-                (v?.trim().length ?? 0) < 2 ? 'اكتب عنوان الكورس' : null,
-          ),
-          AppTextField(
-            controller: url,
-            label: l.courseUrlLabel,
-            keyboardType: TextInputType.url,
-            validator: (v) {
-              final uri = Uri.tryParse(v?.trim() ?? '');
-              return uri == null ||
-                      !['http', 'https'].contains(uri.scheme) ||
-                      uri.host.isEmpty
-                  ? 'اكتب رابط HTTP أو HTTPS صحيحًا'
-                  : null;
-            },
-          ),
-          AppTextField(controller: desc, label: l.courseDescLabel, maxLines: 3),
-        ],
+            AppTextField(
+              controller: url,
+              label: l.courseUrlLabel,
+              keyboardType: TextInputType.url,
+              validator: (v) {
+                final uri = Uri.tryParse(v?.trim() ?? '');
+                return uri == null ||
+                        !['http', 'https'].contains(uri.scheme) ||
+                        uri.host.isEmpty
+                    ? 'اكتب رابط HTTP أو HTTPS صحيحًا'
+                    : null;
+              },
+            ),
+            AppTextField(
+              controller: desc,
+              label: l.courseDescLabel,
+              maxLines: 3,
+            ),
+          ],
+        ),
       ),
     );
-    title.dispose();
-    url.dispose();
-    desc.dispose();
   }
 
   @override

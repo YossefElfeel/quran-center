@@ -17,7 +17,10 @@ import '../controllers/eval_circles_controller.dart';
 
 /// المشرف يختار حلقة عشان يقيّم طلبتها.
 class EvalCirclesScreen extends ConsumerWidget {
-  const EvalCirclesScreen({super.key});
+  const EvalCirclesScreen({this.appBarBottom, super.key});
+
+  /// شريط اختياري تحت العنوان (سويتش الدورين في التبويب الأساسي).
+  final PreferredSizeWidget? appBarBottom;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,6 +28,7 @@ class EvalCirclesScreen extends ConsumerWidget {
     final AsyncValue<List<Circle>> state = ref.watch(evalCirclesProvider);
     return AppScaffold(
       title: l.navEvalCircles,
+      bottom: appBarBottom,
       body: state.when(
         loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
