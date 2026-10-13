@@ -11,6 +11,7 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -40,10 +41,9 @@ class NotificationListScreen extends ConsumerWidget {
     String? route,
   ) {
     unawaited(_markRead(ref, n.id));
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
       builder: (BuildContext sheetContext) => SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(
@@ -76,12 +76,25 @@ class NotificationListScreen extends ConsumerWidget {
                 FilledButton.icon(
                   onPressed: () {
                     Navigator.of(sheetContext).pop();
-                    unawaited(context.push(route));
+                    if (<String>[
+                      '/me',
+                      '/teacher/circles',
+                      '/supervisor/eval',
+                      '/parent/children',
+                    ].contains(route)) {
+                      context.go('/me');
+                    } else {
+                      unawaited(context.push(route));
+                    }
                   },
                   icon: const Icon(Icons.open_in_new),
                   label: Text(AppL10n.of(sheetContext).notificationOpenSource),
                 ),
-              ],
+              ] else
+                TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text('تمام'),
+                ),
             ],
           ),
         ),
@@ -123,14 +136,27 @@ class NotificationListScreen extends ConsumerWidget {
             ? EmptyState(
                 message: l.noNotifications,
                 icon: Icons.notifications_none,
+                action: TextButton(
+                  onPressed: () =>
+                      ref.invalidate(notificationsControllerProvider),
+                  child: const Text('تحديث البيانات'),
+                ),
               )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(notificationsControllerProvider),
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: items.length,
+                  itemCount: items.length + 1,
                   itemBuilder: (BuildContext context, int i) {
+                    if (i == items.length) {
+                      return TextButton(
+                        onPressed: () => ref
+                            .read(notificationsControllerProvider.notifier)
+                            .loadMore(),
+                        child: const Text('عرض المزيد'),
+                      );
+                    }
                     final AppNotification n = items[i];
                     final String? route = notificationRoute(
                       n,
@@ -172,7 +198,7 @@ class _NotificationTile extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
         ],
-        Icon(Icons.chevron_left, color: p.textSecondary),
+        Icon(Icons.chevron_right, color: p.textSecondary),
       ],
     );
     return AppListCard(

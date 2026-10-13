@@ -72,6 +72,12 @@ jobs:
       - name: Type-check + build
         run: pnpm build
 
+      - name: Form regressions
+        run: pnpm test:forms
+
+      - name: Certificate PDF smoke
+        run: pnpm test:certificate
+
   web:
     name: Public Web (Next.js)
     runs-on: ubuntu-latest
@@ -142,6 +148,17 @@ jobs:
             exit 0
           fi
           echo "::error::Engine flow did not report a result (setup error?)"
+          exit 1
+
+      - name: UX flow regressions (rollback)
+        run: |
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          OUT=$(psql "$DB_URL" -f supabase/tests/ux_flows.sql 2>&1 || true)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "UX OK"; then
+            exit 0
+          fi
+          echo "::error::UX regression suite failed or did not report a result."
           exit 1
 
   goldens:

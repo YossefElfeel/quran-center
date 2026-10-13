@@ -1,5 +1,57 @@
 # Mobile app — flow audit (2026-06)
 
+## Re-verification — 2026-10-13
+
+The June findings below are preserved as history. The active plan is
+`C:\Users\yosse\.claude\plans\analyze-this-project-and-foamy-forest.md`, on
+`feat/ux-enhancement`. Its initial re-check found 6 fixed, 6 partial and 13 open
+items. The table below records the assembled local implementation, not a claim
+that these changes have been deployed.
+
+| June item | Current evidence / remaining limit |
+|---|---|
+| 1 Family/paywall | Guardian phone, atomic household/child creation, linked invitation retry and setup checklist implemented. New hosted RPC/Edge deployment awaits approval. |
+| 2 Offline loss | Pending/dead records visible; confirm before discard; immediate/resume/backoff flushing; failed grade/open blocks dependent close/writes. Regression tests pass. |
+| 3 Teacher name | Existing teacher embed preserved in the preparation snapshot. |
+| 4 Null joins | Earlier null-safe model/repository fixes preserved; original regression tests pass. |
+| 5 Unknown enums | Historical unknown-value fallback issue is outside the current UX plan; do not call it fixed by moving labels. |
+| 6 Document upload | Existing session/20MB checks, error mapping and orphan cleanup preserved. Live storage behavior has not been re-tested. |
+| 7 Video processing | Existing explicit upload/service protections preserved. No new video-processing pipeline is claimed. |
+| 8 Duplicate routes | Three primary-tab aliases redirect to `/me`; notifications switch tabs with `go`. |
+| 9 Navigation | Role home uses the primary tab for those destinations and pushes detail screens. |
+| 10 Enrollment | Searchable circle selection with capacity; student save returns ID; guardian linking follows from the success action. Device tap-count walkthrough remains unverified. |
+| 11 Theme location | Display preferences and logout live in Settings; More links to Settings. |
+| 12 RTL chevrons | Shared drill-in icon and RTL widget regression pass. |
+| 13 Icons | Semantic `AppIcons` adopted; filled tasmee icon uses the contrasting foreground. |
+| 14 RTL layout | Directional layouts retained; Arabic interface inspected at phone width and 200% text. |
+| 15 Feedback | Create/save outcomes, retry-preserving async sheets and dashboard action feedback implemented. |
+| 16 Confirmations | Payment, logout and saved-grade discard tests pass; approval/return/consent/destructive sheets share confirmation patterns. |
+| 17 Validation | Localized numbers and inline field errors; slow-save/retry regression passes; dashboard action schema regressions pass. |
+| 18 Double submit | Busy/disabled controls; async-sheet and concurrent outbox tests pass. |
+| 19 Empty/accessibility | Creation/contact/refresh/search-reset actions added; drawer, keyboard focus, Escape, failed-input retention and row disclosure verified in an isolated dashboard fixture. |
+| 20 Pagination | Complaints, ratings, excuses, waiting list, monthly/development queues and struggling students use bounded pages; household/person search is bounded; payment history has show-more. |
+| 21 Push | Interim Realtime + uncapped unread count implemented. FCM and preferences explicitly remain deferred until the user's Firebase/start decision. |
+| 22 Parent billing | Multiple households, paid/due months, paged history, contact and refresh implemented. Hosted uniqueness constraint and device gate walkthrough await release checks. |
+| 23 Account center | Name/email/password, display, sync, version/contact and confirmed logout implemented. |
+| 24 Localization | Eight enum labels, exception defaults and router fallback titles moved to presentation l10n. PDF labels and some new Arabic UI copy remain Arabic-only. |
+| 25 Recovery | Public confirmation/recovery pages, branded mobile login/reset and configurable redirect implemented. Real email delivery/password change await hosted Auth/SMTP configuration and a human walkthrough. |
+
+The current plan's 12 priority dead ends have local implementations, including
+three session states, queued default attendance on close, returned evaluations,
+payment review/undo, impersonated data access, checked settings/complaint outcomes,
+applicant phone links and public navigation. Returned monthly evaluations retain
+their month and the original teacher's circle after a student transfers.
+
+Validation: Flutter analyze has zero findings; 177 non-golden tests pass; five
+Windows golden snapshots include four 200% text cases. Both Next.js applications
+pass lint and production builds. Certificate generation and financial/input schema
+smokes pass. `docs/ux-design-detect.json` records the completed detector result.
+
+`supabase/tests/ux_flows.sql` is prepared and wired into isolated CI, but has not
+run here: this host has no local Docker/Postgres, and hosted writes need approval.
+Live role/device/TalkBack, SMTP, invite identity and impersonation walkthroughs
+are not claimed as complete. See `UX_IMPLEMENTATION.md` and `DEPLOY_RUNBOOK.md`.
+
 Verification-grade audit of the Flutter app (`mobile/`, Arabic-first RTL, Supabase + Drift
 offline outbox). Each finding is marked **CONFIRMED** (read in code/schema) or **SUSPECTED**
 (needs a runtime check), with a severity and `file:line`. Findings drive the phased fix plan in

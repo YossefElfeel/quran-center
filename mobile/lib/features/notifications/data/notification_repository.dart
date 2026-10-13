@@ -12,15 +12,26 @@ class NotificationRepository {
 
   final SupabaseClient _client;
 
-  Future<List<AppNotification>> fetchMine() async {
+  Future<List<AppNotification>> fetchMine({
+    String? recipientPersonId,
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('notification')
-        .select('id, type, title, body, read_at, created_at')
+        .select('id, type, title, body, read_at, created_at, route_data')
+        .eq('recipient_person_id', recipientPersonId ?? '')
         .order('created_at', ascending: false)
-        .limit(50)
+        .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));
     return rows.map(AppNotification.fromMap).toList();
   }
+
+  Future<int> unreadCount(String personId) async => await _client
+      .from('notification')
+      .count(CountOption.exact)
+      .eq('recipient_person_id', personId)
+      .isFilter('read_at', null);
 
   Future<void> markAllRead() async {
     await _client
@@ -48,12 +59,14 @@ class NotificationRepository {
     required String type,
     required String title,
     String? body,
+    String? circleId,
   }) async {
     await _client.from('notification').insert(<String, dynamic>{
       'recipient_person_id': recipientPersonId,
       'type': type,
       'title': title,
       'body': ?body,
+      'route_data': <String, dynamic>{'circle_id': ?circleId},
     });
   }
 }

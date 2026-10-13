@@ -1,5 +1,19 @@
 # دليل التشغيل والنشر (Deploy Runbook)
 
+## UX release — 2026-10-13
+
+Public URL: `https://quran-web-sage.vercel.app`. Dashboard: `https://quran-dashboard-kohl.vercel.app`.
+
+Hosted database changes need the user's pending explicit approval. Automatic approval review rejected applying the prepared UX migration to the shared Quran project. Do not publish the new competition page before its columns and submission RPC are applied.
+
+After approval, apply the two `20261012...ux_*.sql` migrations, run rollback smoke checks for duplicate payments, returned-evaluation notifications, family/login linking, session close retry and public application duplicates, then check security advisors. Deploy `invite-user` and `reset-password` with JWT verification enabled, and preserve the existing disabled JWT verification for the public `submit-public-application` endpoint. Include `_shared/log.ts` in that deployment. `WEB_URL` can override the verified public domain; `ALLOWED_ORIGINS` should include the actual public site.
+
+In [Supabase Auth URL configuration](https://supabase.com/dashboard/project/quzqenavfoqsjupbtiix/auth/url-configuration), set Site URL to the public URL and allow `https://quran-web-sage.vercel.app/auth/confirm`. Add development/preview redirect URLs only when needed. Configure [custom SMTP](https://supabase.com/dashboard/project/quzqenavfoqsjupbtiix/auth/smtp), sender identity and templates; verify an actual recovery email and link using a test account. Templates must preserve the confirmation URL. `generateLink` returns a link for sharing; it does not send an invitation email. Both admin UIs state this explicitly.
+
+Local frontend `.env.local` files use the public Supabase URL/anon key. Optional web configuration: `NEXT_PUBLIC_WEB_URL`, `NEXT_PUBLIC_PLAY_STORE_URL` (leave blank until a listing exists), and `NEXT_PUBLIC_APPLICATION_REVIEW_DAYS` (set only for a confirmed center timeframe). Keep `.env.local` out of Git.
+
+Build/QA evidence and the exact remaining checklist are in [UX_IMPLEMENTATION.md](./UX_IMPLEMENTATION.md). No hosted backend or Vercel deployment has been completed for this UX release yet. FCM is deferred per the plan.
+
 > خطوات **عمليّة** للبنود الخارجية/الحسّاسة اللي الكود فيها جاهز بس محتاجة إجراء منك
 > (تدوير مفاتيح، نشر، توجلات لوحة، مراجعة أمنية). مرتّبة بالأولوية. آخر تحديث: 2026-06-19.
 >
