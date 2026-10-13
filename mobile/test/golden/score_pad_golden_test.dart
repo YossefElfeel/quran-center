@@ -1,6 +1,8 @@
 @Tags(<String>['golden'])
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_center/features/session/presentation/widgets/score_pad.dart';
@@ -35,7 +37,7 @@ void main() {
 
     await expectLater(
       find.byType(ScorePad),
-      matchesGoldenFile('goldens/score_pad.png'),
+      matchesGoldenFile('goldens/${Platform.operatingSystem}/score_pad.png'),
     );
   });
 }

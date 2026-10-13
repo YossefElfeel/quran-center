@@ -36,7 +36,6 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(notificationRealtimeProvider);
     final AppL10n l = AppL10n.of(context);
 
     // مسجّل دخول بس من غير هوية (current_person_id() = NULL) = محظور/موقوف →
