@@ -5,7 +5,10 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/presentation/domain_labels.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../documents/data/certificate_repository.dart';
 import '../../../documents/presentation/controllers/child_certificates_controller.dart';
 
@@ -30,8 +33,8 @@ class ChildCertificatesSection extends ConsumerWidget {
       orElse: () => const SizedBox.shrink(),
       data: (List<CertificateRow> certs) {
         if (certs.isEmpty) return const SizedBox.shrink();
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        return AppCard(
+          padding: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
@@ -39,8 +42,7 @@ class ChildCertificatesSection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppCertificates,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: AppTextStyles.labelSm.copyWith(
                     color: context.palette.textSecondary,
                   ),
                 ),
@@ -52,7 +54,7 @@ class ChildCertificatesSection extends ConsumerWidget {
                       Icons.workspace_premium,
                       color: context.palette.accent,
                     ),
-                    title: Text(c.kind.labelAr),
+                    title: Text(c.kind.label(AppL10n.of(context))),
                     subtitle: Text(_date(c.issuedAt)),
                     trailing: TextButton.icon(
                       icon: const Icon(Icons.picture_as_pdf),
@@ -60,7 +62,7 @@ class ChildCertificatesSection extends ConsumerWidget {
                       onPressed: () => context.push(
                         Routes.certificatePreview(
                           childName,
-                          c.kind.labelAr,
+                          c.kind.label(AppL10n.of(context)),
                           _date(c.issuedAt),
                         ),
                       ),

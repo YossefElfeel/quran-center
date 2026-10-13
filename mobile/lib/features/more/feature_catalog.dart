@@ -177,6 +177,20 @@ final List<FeatureItem> kFeatureCatalog = <FeatureItem>[
     roles: const <String>['parent'],
     category: FeatureCategory.parent,
   ),
+  FeatureItem(
+    label: (_) => 'اشتراكي',
+    icon: Icons.payments_outlined,
+    route: '/parent/subscription',
+    roles: const <String>['parent'],
+    category: FeatureCategory.parent,
+  ),
+  FeatureItem(
+    label: (_) => 'الإعدادات',
+    icon: Icons.settings_outlined,
+    route: Routes.settings,
+    roles: const <String>[],
+    category: FeatureCategory.general,
+  ),
   // عام
   FeatureItem(
     label: (AppL10n l) => l.navCompetitions,

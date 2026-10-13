@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../core/auth/auth_providers.dart';
-import '../../../../shared/theme/theme_mode_provider.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
@@ -26,6 +26,12 @@ class MoreHubScreen extends ConsumerStatefulWidget {
 
 class _MoreHubScreenState extends ConsumerState<MoreHubScreen> {
   String _query = '';
+  final _search = TextEditingController();
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +40,6 @@ class _MoreHubScreenState extends ConsumerState<MoreHubScreen> {
 
     return AppScaffold(
       title: l.moreTitle,
-      actions: <Widget>[_ThemeMenu()],
       body: rolesAsync.when(
         loading: () => const AppListSkeleton(),
         error: (Object e, StackTrace _) => AppErrorView(
@@ -65,6 +70,7 @@ class _MoreHubScreenState extends ConsumerState<MoreHubScreen> {
             AppSpacing.sm,
           ),
           child: AppTextField(
+            controller: _search,
             hint: l.moreSearchHint,
             prefixIcon: Icons.search,
             onChanged: (String v) => setState(() => _query = v),
@@ -72,7 +78,17 @@ class _MoreHubScreenState extends ConsumerState<MoreHubScreen> {
         ),
         Expanded(
           child: filtered.isEmpty
-              ? EmptyState(message: l.moreNoResults, icon: Icons.search_off)
+              ? EmptyState(
+                  message: l.moreNoResults,
+                  icon: Icons.search_off,
+                  action: TextButton(
+                    onPressed: () {
+                      _search.clear();
+                      setState(() => _query = '');
+                    },
+                    child: const Text('مسح البحث'),
+                  ),
+                )
               : ListView(
                   padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                   children: <Widget>[
@@ -102,7 +118,14 @@ class _MoreHubScreenState extends ConsumerState<MoreHubScreen> {
         AppListCard(
           title: f.label(l),
           leadingIcon: f.icon,
-          onTap: () => context.push(f.route),
+          onTap: () =>
+              <String>[
+                Routes.teacherCircles,
+                Routes.supervisorEval,
+                Routes.parentChildren,
+              ].contains(f.route)
+              ? context.go(Routes.primaryTab)
+              : context.push(f.route),
           trailing: IconButton(
             tooltip: favorites.contains(f.route)
                 ? l.removeFavorite
@@ -122,35 +145,3 @@ class _MoreHubScreenState extends ConsumerState<MoreHubScreen> {
 }
 
 /// قائمة اختيار المظهر (system/light/dark/amoled).
-class _ThemeMenu extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AppL10n l = AppL10n.of(context);
-    final AppThemeChoice current = ref.watch(themeChoiceProvider);
-    return PopupMenuButton<AppThemeChoice>(
-      icon: const Icon(Icons.brightness_6_outlined),
-      tooltip: l.settingsTheme,
-      initialValue: current,
-      onSelected: (AppThemeChoice c) =>
-          ref.read(themeChoiceProvider.notifier).set(c),
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<AppThemeChoice>>[
-        PopupMenuItem<AppThemeChoice>(
-          value: AppThemeChoice.system,
-          child: Text(l.themeSystem),
-        ),
-        PopupMenuItem<AppThemeChoice>(
-          value: AppThemeChoice.light,
-          child: Text(l.themeLight),
-        ),
-        PopupMenuItem<AppThemeChoice>(
-          value: AppThemeChoice.dark,
-          child: Text(l.themeDark),
-        ),
-        PopupMenuItem<AppThemeChoice>(
-          value: AppThemeChoice.amoled,
-          child: Text(l.themeAmoled),
-        ),
-      ],
-    );
-  }
-}

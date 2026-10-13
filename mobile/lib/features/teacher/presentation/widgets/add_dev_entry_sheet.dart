@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/error/app_exception.dart';
+import '../../../../shared/presentation/exception_message.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -49,7 +50,9 @@ class _AddDevEntrySheetState extends ConsumerState<AddDevEntrySheet> {
       setState(() => _saving = false);
       AppSnackbar.error(
         context,
-        e is AppException ? e.message : l.tchDevAddFailed,
+        e is AppException
+            ? e.localizedMessage(AppL10n.of(context))
+            : l.tchDevAddFailed,
       );
     }
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
@@ -10,7 +11,7 @@ import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/enrolled_student.dart';
 import '../controllers/circle_roster_controller.dart';
-import '../widgets/add_student_sheet.dart';
+import '../widgets/enroll_student_flow.dart';
 import '../widgets/student_tile.dart';
 
 /// روستر حلقة — الطلبة المسجّلين + تسجيل طالب جديد.
@@ -33,11 +34,7 @@ class CircleRosterScreen extends ConsumerWidget {
     return AppScaffold(
       title: circleName,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          builder: (BuildContext _) => AddStudentSheet(circleId: circleId),
-        ),
+        onPressed: () => enrollStudentFlow(context, ref, circleId: circleId),
         icon: const Icon(Icons.person_add),
         label: Text(l.enrEnrollStudent),
       ),
@@ -49,7 +46,15 @@ class CircleRosterScreen extends ConsumerWidget {
               ref.invalidate(circleRosterControllerProvider(circleId)),
         ),
         data: (List<EnrolledStudent> items) => items.isEmpty
-            ? EmptyState(message: l.enrRosterEmpty, icon: Icons.groups_outlined)
+            ? EmptyState(
+                message: l.enrRosterEmpty,
+                icon: Icons.groups_outlined,
+                action: AppButton(
+                  label: l.enrEnrollStudent,
+                  onPressed: () =>
+                      enrollStudentFlow(context, ref, circleId: circleId),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(circleRosterControllerProvider(circleId)),

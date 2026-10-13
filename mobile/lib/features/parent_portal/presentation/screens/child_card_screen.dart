@@ -15,7 +15,9 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_hero.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_segmented_control.dart';
 import '../../../documents/domain/progress_card_pdf.dart';
 import '../../../feedback/presentation/widgets/rate_teacher_sheet.dart';
 import '../../../media/presentation/widgets/child_media_section.dart';
@@ -28,7 +30,7 @@ import '../widgets/child_journey_section.dart';
 import '../widgets/child_monthly_plan_section.dart';
 
 /// كارت متابعة الطفل: الحلقة + آخر تسميع + ملخّص الحضور.
-class ChildCardScreen extends ConsumerWidget {
+class ChildCardScreen extends ConsumerStatefulWidget {
   const ChildCardScreen({
     required this.studentPersonId,
     required this.childName,
@@ -37,6 +39,14 @@ class ChildCardScreen extends ConsumerWidget {
 
   final String studentPersonId;
   final String childName;
+  @override
+  ConsumerState<ChildCardScreen> createState() => _ChildCardScreenState();
+}
+
+class _ChildCardScreenState extends ConsumerState<ChildCardScreen> {
+  int _tab = 0;
+  String get studentPersonId => widget.studentPersonId;
+  String get childName => widget.childName;
 
   Future<void> _printProgressCard(BuildContext context, WidgetRef ref) async {
     final ChildCard? card = ref
@@ -61,7 +71,7 @@ class ChildCardScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<ChildCard> state = ref.watch(
       childCardProvider(studentPersonId),
@@ -77,7 +87,7 @@ class ChildCardScreen extends ConsumerWidget {
         IconButton(
           tooltip: l.ppRateTeacher,
           icon: const Icon(Icons.star_rate),
-          onPressed: () => showModalBottomSheet<void>(
+          onPressed: () => showAppModalSheet<void>(
             context: context,
             isScrollControlled: true,
             builder: (BuildContext _) =>
@@ -114,6 +124,21 @@ class ChildCardScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: AppSegmentedControl<int>(
+                  segments: const [
+                    (value: 0, label: 'التقدّم'),
+                    (value: 1, label: 'الحضور'),
+                    (value: 2, label: 'الشهادات'),
+                    (value: 3, label: 'الوسائط والموافقة'),
+                    (value: 4, label: 'الملاحظات'),
+                  ],
+                  selected: _tab,
+                  onChanged: (int v) => setState(() => _tab = v),
+                ),
+              ),
+              const SizedBox(height: 16),
               _InfoCard(
                 icon: Icons.groups,
                 title: l.ppCircle,
@@ -136,22 +161,33 @@ class ChildCardScreen extends ConsumerWidget {
                     Routes.parentChildHistory(studentPersonId, childName),
                   ),
                 ),
+              if (card.currentPortion != null)
+                _InfoCard(
+                  icon: Icons.menu_book,
+                  title: 'المقطع الحالي',
+                  value: card.currentPortion!,
+                ),
               _AttendanceCard(
                 card: card,
                 onTap: () => context.push(
                   Routes.parentChildHistory(studentPersonId, childName, tab: 1),
                 ),
               ),
-              ChildCertificatesSection(
-                studentPersonId: studentPersonId,
-                childName: childName,
-              ),
-              ChildMonthlyPlanSection(studentPersonId: studentPersonId),
-              ChildJourneySection(studentPersonId: studentPersonId),
-              if (card.isGirl)
+              if (_tab == 2)
+                ChildCertificatesSection(
+                  studentPersonId: studentPersonId,
+                  childName: childName,
+                ),
+              if (_tab == 0)
+                ChildMonthlyPlanSection(studentPersonId: studentPersonId),
+              if (_tab == 0)
+                ChildJourneySection(studentPersonId: studentPersonId),
+              if (_tab == 3 && card.isGirl)
                 ChildConsentSection(studentPersonId: studentPersonId),
-              ChildMediaSection(studentPersonId: studentPersonId),
-              ChildCommentsSection(studentPersonId: studentPersonId),
+              if (_tab == 3)
+                ChildMediaSection(studentPersonId: studentPersonId),
+              if (_tab == 4)
+                ChildCommentsSection(studentPersonId: studentPersonId),
             ],
           );
         },
@@ -217,7 +253,7 @@ class _InfoCard extends StatelessWidget {
                   hint,
                   style: AppTextStyles.labelSm.copyWith(color: p.primary),
                 ),
-              Icon(Icons.chevron_left, color: p.textSecondary),
+              Icon(Icons.chevron_right, color: p.textSecondary),
             ],
           ],
         ),
@@ -247,7 +283,7 @@ class _AttendanceCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    l.ppAttendance,
+                    '${l.ppAttendance} — الشهر الحالي',
                     style: AppTextStyles.labelSm.copyWith(
                       color: p.textSecondary,
                     ),
@@ -258,7 +294,7 @@ class _AttendanceCard extends StatelessWidget {
                     l.ppViewAttendanceLog,
                     style: AppTextStyles.labelSm.copyWith(color: p.primary),
                   ),
-                  Icon(Icons.chevron_left, size: 18, color: p.textSecondary),
+                  Icon(Icons.chevron_right, size: 18, color: p.textSecondary),
                 ],
               ],
             ),

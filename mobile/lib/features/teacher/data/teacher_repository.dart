@@ -42,7 +42,9 @@ class TeacherRepository {
   Future<List<TeacherDevEntry>> fetchMyDevelopment() async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
-        .select('id, month, status, memorization_progress, approved_at')
+        .select(
+          'id, month, status, memorization_progress, approved_at, return_reason',
+        )
         .order('month', ascending: false)
         .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
@@ -73,7 +75,9 @@ class TeacherRepository {
   }
 
   /// طابور اعتماد التطوّر (للمشرف).
-  Future<List<TeacherDevEntry>> fetchPendingDevelopment() async {
+  Future<List<TeacherDevEntry>> fetchPendingDevelopment({
+    int offset = 0,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
         .select(
@@ -82,6 +86,8 @@ class TeacherRepository {
         )
         .eq('status', 'submitted')
         .order('month', ascending: false)
+        .order('id')
+        .range(offset, offset + 49)
         .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
   }
@@ -94,6 +100,32 @@ class TeacherRepository {
         .select('id, status')
         .single()
         .timeout(const Duration(seconds: 12));
+  }
+
+  Future<void> returnDevelopment(String id, String reason) async {
+    await _client
+        .from('teacher_development')
+        .update(<String, dynamic>{
+          'status': 'returned',
+          'return_reason': reason,
+        })
+        .eq('id', id)
+        .eq('status', 'submitted')
+        .select('id')
+        .single();
+  }
+
+  Future<void> resubmitDevelopment(String id, String progress) async {
+    await _client
+        .from('teacher_development')
+        .update(<String, dynamic>{
+          'status': 'submitted',
+          'memorization_progress': progress,
+        })
+        .eq('id', id)
+        .eq('status', 'returned')
+        .select('id')
+        .single();
   }
 }
 

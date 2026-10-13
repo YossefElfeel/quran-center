@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../app/shell/sync_status_sheet.dart';
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/settings/settings_repository.dart';
+import '../../../../core/supabase/supabase_providers.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/display_prefs.dart';
 import '../../../../shared/theme/theme_mode_provider.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_confirm_sheet.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_section_header.dart';
 import '../../../../shared/widgets/app_segmented_control.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../home/presentation/screens/dashboard_screen.dart'
+    show homeNameProvider;
+import '../widgets/change_password_sheet.dart';
 
 /// شاشة الإعدادات — المظهر + سهولة الوصول + الخروج.
 class SettingsScreen extends ConsumerWidget {
@@ -69,6 +80,33 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.only(bottom: AppSpacing.xl),
         children: <Widget>[
+          const AppSectionHeader(title: 'حسابي'),
+          ListTile(
+            title: ref
+                .watch(homeNameProvider)
+                .when(
+                  data: (name) => Text(name),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, _) => const Text('تعذّر تحميل الاسم'),
+                ),
+            subtitle: const Text('الاسم'),
+          ),
+          ListTile(
+            title: Text(
+              ref.watch(supabaseClientProvider).auth.currentUser?.email ??
+                  'الحساب',
+            ),
+            subtitle: const Text('إيميل الدخول'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.password),
+            title: const Text('تغيير كلمة السر'),
+            onTap: () => showAppModalSheet<void>(
+              context: context,
+              title: 'تغيير كلمة السر',
+              builder: (_) => const ChangePasswordSheet(),
+            ),
+          ),
           // ───────── المظهر ─────────
           AppSectionHeader(title: l.settingsTheme),
           Padding(
@@ -168,6 +206,45 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
 
+          const AppSectionHeader(title: 'المزامنة'),
+          ListTile(
+            leading: const Icon(Icons.sync),
+            title: const Text('حالة المزامنة'),
+            onTap: () => SyncStatusSheet.show(context),
+          ),
+          const AppSectionHeader(title: 'عن التطبيق'),
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (BuildContext context, AsyncSnapshot<PackageInfo> info) =>
+                ListTile(
+                  title: const Text('نسخة التطبيق'),
+                  subtitle: Text(info.data?.version ?? 'جاري التحميل…'),
+                ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.phone),
+            title: const Text('تواصل مع الإدارة'),
+            subtitle: Text(
+              ref.watch(appSettingsProvider).asData?.value.centerPhone ?? '',
+            ),
+            onTap: () async {
+              final String phone =
+                  ref.read(appSettingsProvider).asData?.value.centerPhone ?? '';
+              if (phone.isEmpty) {
+                AppSnackbar.info(context, 'اطلب رقم الإدارة من الدار');
+                return;
+              }
+              try {
+                if (!await launchUrl(Uri(scheme: 'tel', path: phone))) {
+                  throw StateError('launch');
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  AppSnackbar.error(context, 'تعذّر فتح الاتصال — $phone');
+                }
+              }
+            },
+          ),
           // ───────── الخروج ─────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -175,7 +252,26 @@ class SettingsScreen extends ConsumerWidget {
               label: l.logout,
               icon: Icons.logout,
               variant: AppButtonVariant.outlined,
-              onPressed: () => ref.read(authRepositoryProvider).signOut(),
+              onPressed: () async {
+                if (!await showAppConfirmSheet(
+                  context: context,
+                  title: 'تسجيل خروج؟',
+                  confirmLabel: 'تسجيل خروج',
+                  message: 'الدرجات المعلّقة هتفضل محفوظة على الجهاز',
+                )) {
+                  return;
+                }
+                try {
+                  await ref.read(authRepositoryProvider).signOut();
+                } catch (_) {
+                  if (context.mounted) {
+                    AppSnackbar.error(
+                      context,
+                      'تعذّر تسجيل الخروج — جرّب تاني',
+                    );
+                  }
+                }
+              },
             ),
           ),
         ],

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../domain/monthly_plan_view.dart';
 import '../controllers/child_extras_controller.dart';
 
@@ -22,8 +24,8 @@ class ChildMonthlyPlanSection extends ConsumerWidget {
       orElse: () => const SizedBox.shrink(),
       data: (MonthlyPlanView? plan) {
         if (plan == null || plan.isEmpty) return const SizedBox.shrink();
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        return AppCard(
+          padding: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
@@ -31,8 +33,7 @@ class ChildMonthlyPlanSection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppMonthlyPlan,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: AppTextStyles.labelSm.copyWith(
                     color: context.palette.textSecondary,
                   ),
                 ),

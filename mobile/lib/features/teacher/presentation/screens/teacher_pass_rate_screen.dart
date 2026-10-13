@@ -49,6 +49,11 @@ class TeacherPassRateScreen extends ConsumerWidget {
                   ? EmptyState(
                       message: l.tchNoCirclesYet,
                       icon: Icons.groups_outlined,
+                      action: TextButton(
+                        onPressed: () =>
+                            ref.invalidate(circlePassRatesProvider),
+                        child: const Text('تحديث البيانات'),
+                      ),
                     )
                   : Column(
                       mainAxisSize: MainAxisSize.min,

@@ -81,6 +81,12 @@ class PendingDevelopment extends _$PendingDevelopment {
   Future<List<TeacherDevEntry>> build() =>
       ref.watch(teacherRepositoryProvider).fetchPendingDevelopment();
 
+  Future<void> returnForRevision(String id, String reason) async {
+    await ref.read(teacherRepositoryProvider).returnDevelopment(id, reason);
+    ref.invalidateSelf();
+    await future;
+  }
+
   Future<void> approve(String id) async {
     await ref.read(teacherRepositoryProvider).approveDevelopment(id);
     ref.invalidate(myDevelopmentProvider);

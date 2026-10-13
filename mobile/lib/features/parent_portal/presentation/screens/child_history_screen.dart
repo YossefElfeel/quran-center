@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/presentation/domain_labels.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -79,7 +81,15 @@ class _TasmeeTab extends ConsumerWidget {
             ref.invalidate(childTasmeeHistoryProvider(studentPersonId)),
       ),
       data: (List<TasmeeHistoryEntry> items) => items.isEmpty
-          ? EmptyState(message: l.ppNoTasmeeYet, icon: Icons.record_voice_over)
+          ? EmptyState(
+              message: l.ppNoTasmeeYet,
+              icon: AppIcons.tasmee,
+              action: TextButton(
+                onPressed: () =>
+                    ref.invalidate(childTasmeeHistoryProvider(studentPersonId)),
+                child: const Text('تحديث البيانات'),
+              ),
+            )
           : AppRefreshIndicator(
               onRefresh: () async =>
                   ref.invalidate(childTasmeeHistoryProvider(studentPersonId)),
@@ -146,6 +156,12 @@ class _AttendanceTab extends ConsumerWidget {
           ? EmptyState(
               message: l.ppNoAttendanceYet,
               icon: Icons.event_available,
+              action: TextButton(
+                onPressed: () => ref.invalidate(
+                  childAttendanceHistoryProvider(studentPersonId),
+                ),
+                child: const Text('تحديث البيانات'),
+              ),
             )
           : AppRefreshIndicator(
               onRefresh: () async => ref.invalidate(
@@ -172,15 +188,15 @@ class _AttendanceRow extends StatelessWidget {
     final AppL10n l = AppL10n.of(context);
     final AppPalette p = context.palette;
     final (IconData icon, Color color) = switch (entry.status) {
-      AttendanceStatus.present => (Icons.check_circle, p.success),
-      AttendanceStatus.absent => (Icons.cancel, p.error),
-      AttendanceStatus.absentExcused => (Icons.event_busy, p.accent),
+      AttendanceStatus.present => (AppIcons.present, p.success),
+      AttendanceStatus.absent => (AppIcons.absent, p.error),
+      AttendanceStatus.absentExcused => (AppIcons.excused, p.accent),
       AttendanceStatus.late => (Icons.schedule, p.warning),
     };
     return AppListCard(
       leadingIcon: icon,
       iconColor: color,
-      title: entry.status.labelAr,
+      title: entry.status.label(AppL10n.of(context)),
       subtitle: entry.date != null ? _dateLabel(entry.date!) : l.ppNoDate,
     );
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/theme/motion.dart';
 import '../../../shared/theme/tokens.dart';
@@ -39,11 +41,63 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AppPalette p = context.palette;
-    final List<_Slide> slides = <_Slide>[
-      _Slide(Icons.dashboard_customize_outlined, l.onbTitle1, l.onbBody1),
-      _Slide(Icons.touch_app_outlined, l.onbTitle2, l.onbBody2),
-      _Slide(Icons.palette_outlined, l.onbTitle3, l.onbBody3),
-    ];
+    final List<String> roles =
+        ref.watch(currentRolesProvider).asData?.value ?? <String>[];
+    final bool teacher = roles.contains('teacher'),
+        parent = roles.contains('parent');
+    final List<_Slide> slides = teacher
+        ? <_Slide>[
+            const _Slide(
+              Icons.menu_book,
+              'حصة منظّمة كل يوم',
+              'افتح حلقتك وسجّل الحضور والتسميع من مكان واحد.',
+            ),
+            const _Slide(
+              Icons.cloud_off,
+              'سجّل التسميع حتى من غير نت',
+              'الدرجات تتحفظ على الجهاز وتتزامن لما الاتصال يرجع.',
+            ),
+            const _Slide(
+              Icons.trending_up,
+              'تابع كل طالب',
+              'شوف اللي محتاج مراجعة وخلّي خطوات الحفظ واضحة.',
+            ),
+          ]
+        : parent
+        ? <_Slide>[
+            const _Slide(
+              Icons.child_care,
+              'تابع حفظ ولادك يوم بيوم',
+              'آخر تسميع والحضور والخطة في بطاقة واحدة لكل طفل.',
+            ),
+            const _Slide(
+              Icons.message,
+              'تواصل مع الدار',
+              'اقرأ الملاحظات وابعث شكوى أو تواصل مع الإدارة.',
+            ),
+            const _Slide(
+              Icons.payments,
+              'اشتراكك واضح',
+              'شوف الدفعات والشهور المستحقة وحدّث الحالة بعد الدفع.',
+            ),
+          ]
+        : <_Slide>[
+            const _Slide(
+              Icons.groups,
+              'كل طلبة الدار في مكان واحد',
+              'سجّل الطالب واربط ولي الأمر بأسرة وحساب دخول.',
+            ),
+            const _Slide(
+              Icons.fact_check,
+              'المراجعات من غير انتظار',
+              'اعتمد التقييم أو رجّعه للمعلّم مع سبب واضح.',
+            ),
+            const _Slide(
+              Icons.notifications,
+              'تابع اللي محتاج قرار',
+              'الأعذار والاشتراكات والتقييمات ظاهرة في الرئيسية.',
+            ),
+          ];
     final bool last = _page == slides.length - 1;
 
     return Material(
@@ -64,36 +118,38 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                   final _Slide s = slides[i];
                   return Padding(
                     padding: const EdgeInsets.all(AppSpacing.xl),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: p.heroGradient),
-                            shape: BoxShape.circle,
-                            boxShadow: AppElevation.shadowMd(p.shadowColor),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: p.heroGradient),
+                              shape: BoxShape.circle,
+                              boxShadow: AppElevation.shadowMd(p.shadowColor),
+                            ),
+                            child: Icon(s.icon, size: 56, color: p.onHero),
                           ),
-                          child: Icon(s.icon, size: 56, color: p.onHero),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          s.title,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.headlineMd.copyWith(
-                            color: p.textPrimary,
+                          const SizedBox(height: AppSpacing.xl),
+                          Text(
+                            s.title,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.headlineMd.copyWith(
+                              color: p.textPrimary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          s.body,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.bodyLg.copyWith(
-                            color: p.textSecondary,
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            s.body,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodyLg.copyWith(
+                              color: p.textSecondary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -103,16 +159,22 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 for (int i = 0; i < slides.length; i++)
-                  AnimatedContainer(
-                    duration: AppDurations.fast,
-                    margin: const EdgeInsets.all(4),
-                    width: i == _page ? 22 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: i == _page
-                          ? p.primary
-                          : p.primary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(AppRadii.full),
+                  Semantics(
+                    label: 'صفحة ${i + 1} من ${slides.length}',
+                    selected: i == _page,
+                    child: AnimatedContainer(
+                      duration: reduceMotion(context)
+                          ? Duration.zero
+                          : AppDurations.fast,
+                      margin: const EdgeInsets.all(4),
+                      width: i == _page ? 22 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: i == _page
+                            ? p.primary
+                            : p.primary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppRadii.full),
+                      ),
                     ),
                   ),
               ],
@@ -120,12 +182,23 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: AppButton(
-                label: last ? l.onbStart : l.onbNext,
-                icon: last ? Icons.check : Icons.arrow_back,
+                label: last
+                    ? (teacher
+                          ? 'افتح حلقتك'
+                          : parent
+                          ? 'شوف ولادك'
+                          : 'ابدأ من الرئيسية')
+                    : l.onbNext,
+                icon: last ? Icons.check : Icons.arrow_forward,
                 onPressed: () {
                   if (last) {
                     _finish();
+                    if (teacher || parent) context.go('/me');
                   } else {
+                    if (reduceMotion(context)) {
+                      _controller.jumpToPage(_page + 1);
+                      return;
+                    }
                     _controller.nextPage(
                       duration: AppDurations.base,
                       curve: AppCurves.emphasized,

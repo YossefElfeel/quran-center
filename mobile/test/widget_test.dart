@@ -24,6 +24,9 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {}
+
+  @override
+  Future<void> resetPassword(String email) async {}
 }
 
 void main() {
@@ -45,9 +48,7 @@ void main() {
     expect(find.text('الإيميل'), findsOneWidget);
   });
 
-  testWidgets('الداشبورد بيعرض دور المستخدم (أدمن)', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('الداشبورد بيعرض تسجيل طالب للأدمن', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -65,6 +66,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('أدمن'), findsOneWidget);
+    expect(find.text('تسجيل طالب'), findsOneWidget);
   });
 }

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../domain/national_id.dart';
@@ -67,11 +68,11 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -92,11 +93,7 @@ class _NationalIdScanSheetState extends State<NationalIdScanSheet> {
             Text(
               toArabicDigits(_result!),
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
+              style: AppTextStyles.headlineMd.copyWith(letterSpacing: 2),
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(

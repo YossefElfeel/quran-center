@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_confirm_sheet.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../controllers/child_consents_controller.dart';
 
 /// بوابة موافقة وسائط البنت — ولي الأمر يسمح/يمنع الصور والفيديو (opt-in).
@@ -17,8 +21,8 @@ class ChildConsentSection extends ConsumerWidget {
     final AsyncValue<Set<String>> state = ref.watch(
       childConsentsControllerProvider(studentPersonId),
     );
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -26,16 +30,14 @@ class ChildConsentSection extends ConsumerWidget {
           children: <Widget>[
             Text(
               l.ppGirlMediaConsent,
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTextStyles.labelSm.copyWith(
                 color: context.palette.textSecondary,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               l.ppGirlMediaConsentNote,
-              style: TextStyle(
-                fontSize: 11,
+              style: AppTextStyles.labelSm.copyWith(
                 color: context.palette.textSecondary,
               ),
             ),
@@ -87,7 +89,7 @@ class ChildConsentSection extends ConsumerWidget {
   }
 }
 
-class _ConsentSwitch extends ConsumerWidget {
+class _ConsentSwitch extends ConsumerStatefulWidget {
   const _ConsentSwitch({
     required this.studentPersonId,
     required this.scope,
@@ -101,15 +103,61 @@ class _ConsentSwitch extends ConsumerWidget {
   final bool granted;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ConsentSwitch> createState() => _ConsentSwitchState();
+}
+
+class _ConsentSwitchState extends ConsumerState<_ConsentSwitch> {
+  bool _busy = false;
+  String get studentPersonId => widget.studentPersonId;
+  String get scope => widget.scope;
+  String get label => widget.label;
+  bool get granted => widget.granted;
+  @override
+  Widget build(BuildContext context) {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
       title: Text(label),
       value: granted,
-      onChanged: (bool v) => ref
-          .read(childConsentsControllerProvider(studentPersonId).notifier)
-          .setConsent(scope: scope, granted: v),
+      onChanged: _busy
+          ? null
+          : (bool v) async {
+              if (_busy) return;
+              setState(() => _busy = true);
+              try {
+                if (!v &&
+                    !await showAppConfirmSheet(
+                      context: context,
+                      title: 'سحب موافقة الوسائط؟',
+                      message:
+                          'الإدارة مش هتقدر تعرض الوسائط الجديدة بالموافقة دي',
+                      confirmLabel: 'سحب الموافقة',
+                    )) {
+                  return;
+                }
+                try {
+                  await ref
+                      .read(
+                        childConsentsControllerProvider(
+                          studentPersonId,
+                        ).notifier,
+                      )
+                      .setConsent(scope: scope, granted: v);
+                  if (context.mounted) {
+                    AppSnackbar.success(
+                      context,
+                      v ? 'الموافقة اتسجّلت' : 'الموافقة اتسحبت',
+                    );
+                  }
+                } catch (_) {
+                  if (context.mounted) {
+                    AppSnackbar.error(context, 'تعذّر تحديث الموافقة');
+                  }
+                }
+              } finally {
+                if (mounted) setState(() => _busy = false);
+              }
+            },
     );
   }
 }

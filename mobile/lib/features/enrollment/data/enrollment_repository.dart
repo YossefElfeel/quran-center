@@ -31,14 +31,14 @@ class EnrollmentRepository {
   /// بينشئ طالب جديد ويسجّله في الحلقة + يضبط الرقم القومي (اختياري) في معاملة
   /// واحدة ذرّية عبر RPC `enroll_student` — لو الرقم مكرّر/غلط كله بيترجع (مفيش
   /// طالب يتيم).
-  Future<void> addStudent({
+  Future<String> addStudent({
     required String circleId,
     required String name,
     required Gender gender,
     String? nationalId,
   }) async {
     try {
-      await _client.rpc<void>(
+      final dynamic studentId = await _client.rpc<dynamic>(
         'enroll_student',
         params: <String, dynamic>{
           'p_circle': circleId,
@@ -49,6 +49,7 @@ class EnrollmentRepository {
               : nationalId,
         },
       );
+      return studentId as String;
     } on PostgrestException catch (e) {
       if (e.code == '23505') {
         throw const ValidationException(

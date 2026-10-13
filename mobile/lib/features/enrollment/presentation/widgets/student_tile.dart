@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/presentation/domain_labels.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../domain/enrolled_student.dart';
@@ -21,7 +23,7 @@ class StudentTile extends StatelessWidget {
         child: Icon(isGirl ? Icons.girl : Icons.boy),
       ),
       title: student.name,
-      subtitle: student.gender?.labelAr ?? '—',
+      subtitle: student.gender?.label(AppL10n.of(context)) ?? '—',
     );
   }
 }

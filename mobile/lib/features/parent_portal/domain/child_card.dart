@@ -4,11 +4,13 @@ class LatestTasmee {
     required this.score,
     required this.passed,
     required this.portionName,
+    this.date,
   });
 
   final int score;
   final bool passed;
   final String portionName;
+  final DateTime? date;
 }
 
 /// كارت متابعة الطفل: الحلقة + آخر تسميع + ملخّص الحضور.
@@ -21,9 +23,11 @@ class ChildCard {
     this.circleName,
     this.latestTasmee,
     this.isGirl = false,
+    this.currentPortion,
   });
 
   final String? circleName;
+  final String? currentPortion;
   final LatestTasmee? latestTasmee;
   final int present;
   final int absent;
