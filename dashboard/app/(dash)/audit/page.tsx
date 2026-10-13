@@ -5,10 +5,10 @@ import { OperatorScopeNote } from "@/components/operator-scope-note";
 import Link from "next/link";
 
 import { ExportButton } from "@/components/export-button";
-import { ACTION_LABEL,actionLabel } from "@/lib/action-labels";
+import { ACTION_LABEL,actionLabel,roleLabel,tableLabel } from "@/lib/action-labels";
 import { auditQuery,parseAuditFilters } from "@/lib/audit-query";
 import { Pager } from "@/components/list-controls";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { formatDateTime, formatNumber, personOptionLabel, pluralAr } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type AuditRow = {
@@ -17,7 +17,7 @@ type AuditRow = {
   target_table: string | null;
   target_id: string | null;
   at: string;
-  actor: { id: string; full_name: string } | null;
+  actor: { id: string; full_name: string; phone: string | null } | null;
 };
 
 
@@ -50,8 +50,9 @@ export default async function AuditPage({
 
   const readErrors=[totalEvents,eventsToday,blocked,deactivated].some(r=>r.error);
   if(readErrors)throw new Error("data_load_failed");
-  const {data:actors,error:actorError}=await supabase.from("person").select("id,full_name").eq("is_minor",false).order("full_name");
+  const {data:actorRows,error:actorError}=await supabase.from("person").select("id,full_name,phone,role_assignment(role)").eq("is_minor",false).order("full_name");
   if(actorError)throw new Error("data_load_failed");
+  const actors=((actorRows??[]) as unknown as {id:string;full_name:string;phone:string|null;role_assignment:{role:string}[]|null}[]).map(a=>({...a,label:personOptionLabel(a,(a.role_assignment??[]).map(r=>roleLabel(r.role)).join("، ")||null)}));
   const filters=parseAuditFilters({action,actor,from,to});
   // الاستكشاف (فلاتر + ترقيم).
   const {data,count,error:loadError1}=await auditQuery(supabase,filters).range(offset,offset+PAGE_SIZE-1);
@@ -101,7 +102,7 @@ export default async function AuditPage({
           الإجراء
           <FieldSelect name="action" defaultValue={action??""} aria-label="الإجراء" className="text-sm"><option value="">كل الإجراءات</option>{Object.entries(ACTION_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</FieldSelect>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-foreground/60">الفاعل<FieldSelect name="actor" defaultValue={actor??""} aria-label="الفاعل" className="text-sm"><option value="">كل الأشخاص</option>{(actors??[]).map(a=><option key={a.id} value={a.id}>{a.full_name}</option>)}</FieldSelect></label>
+        <label className="flex flex-col gap-1 text-xs text-foreground/60">الفاعل<FieldSelect name="actor" defaultValue={actor??""} aria-label="الفاعل" className="text-sm"><option value="">كل الأشخاص</option>{actors.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</FieldSelect></label>
         <label className="flex flex-col gap-1 text-xs text-foreground/60">
           من
           <FieldInput type="date" name="from" defaultValue={from ?? ""} aria-label="من" className="text-sm" />
@@ -117,7 +118,7 @@ export default async function AuditPage({
           مسح
         </Link>
         <span className="ms-auto self-center text-sm text-foreground/50">
-          {formatNumber(count ?? 0)} نتيجة
+          {pluralAr(count, { zero: "مفيش نتايج", one: "نتيجة واحدة", two: "نتيجتين", few: "{n} نتايج", many: "{n} نتيجة" })}
         </span>
       </form>
 
@@ -144,14 +145,14 @@ export default async function AuditPage({
                   <td className="whitespace-nowrap px-4 py-2 text-foreground/70">
                     {formatDateTime(r.at)}
                   </td>
-                  <td className="px-4 py-2"><PersonLink person={r.actor} /></td>
+                  <td className="px-4 py-2"><PersonLink person={r.actor} fallback="النظام" showTag /></td>
                   <td className="px-4 py-2">
                     <span className="rounded bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
                       {actionLabel(r.action)}
                     </span>
                   </td>
                   <td className="px-4 py-2 text-foreground/60">
-                    {r.target_table ?? "—"}
+                    <span title={r.target_table ?? undefined}>{tableLabel(r.target_table)}</span>
                   </td>
                 </tr>
               ))

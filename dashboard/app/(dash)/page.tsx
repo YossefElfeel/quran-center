@@ -8,8 +8,16 @@ import { getDataClient } from "@/lib/supabase/data-client";
 
 import { RevenueChart } from "./analytics/revenue-chart";
 
-export default async function DashHome() {
+export default async function DashHome({ searchParams }: { searchParams: Promise<{ system?: string }> }) {
+  // مهام النظام (cron) بتغرق النشاط المباشر — مخفية افتراضيًا، و?system=1 بيظهرها.
+  const showSystem = (await searchParams).system === "1";
   const supabase = await getDataClient();
+  let activityQuery = supabase
+    .from("audit_log")
+    .select("id, action, target_table, at, actor_person_id")
+    .order("at", { ascending: false })
+    .limit(30);
+  if (!showSystem) activityQuery = activityQuery.not("actor_person_id", "is", null);
 
   // كل المقاييس في نداء RPC واحد (بدل ١٨ COUNT)، + بيانات الرسوم + بذرة سجل النشاط.
   const [metricsRes, payments, enrolledRows, activity] = await Promise.all([
@@ -23,11 +31,7 @@ export default async function DashHome() {
       .select("enrolled_at")
       .order("enrolled_at", { ascending: false })
       .limit(3000),
-    supabase
-      .from("audit_log")
-      .select("id, action, target_table, at")
-      .order("at", { ascending: false })
-      .limit(30),
+    activityQuery,
   ]);
 
   // A failed section shows an inline notice; the rest of the overview stays usable.
@@ -119,7 +123,7 @@ export default async function DashHome() {
       {!metricsFailed && anomalies.length ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-bold text-red-700">إشارات تستدعي تدخّلك</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">
             {anomalies.map((a) => (
               <Link
                 key={a.label}
@@ -139,7 +143,7 @@ export default async function DashHome() {
       ) : null}
 
       {!metricsFailed ? <>
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         {kpis.map((k) => (
           <div key={k.label} className="rounded-xl border border-border bg-white p-4">
             <p className="text-xs text-foreground/60">{k.label}</p>
@@ -154,7 +158,7 @@ export default async function DashHome() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">يحتاج انتباهك</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3">
           {alerts.map((a) => (
             <AlertCard key={a.label} {...a} />
           ))}
@@ -174,8 +178,13 @@ export default async function DashHome() {
       </div> : null}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">النشاط المباشر</h2>
-        <ActivityFeed initial={(activity.data ?? []) as ActivityEntry[]} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-bold">النشاط المباشر</h2>
+          <Link href={showSystem ? "/" : "/?system=1"} scroll={false} className="text-sm text-primary underline">
+            {showSystem ? "إخفاء مهام النظام" : "إظهار مهام النظام"}
+          </Link>
+        </div>
+        <ActivityFeed key={showSystem ? "all" : "people"} initial={(activity.data ?? []) as ActivityEntry[]} showSystem={showSystem} />
       </section>
     </div>
   );

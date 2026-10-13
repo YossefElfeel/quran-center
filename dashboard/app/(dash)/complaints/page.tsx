@@ -1,4 +1,4 @@
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, referenceNumber, shortRef } from "@/lib/format";
 import { getDataClient } from "@/lib/supabase/data-client";
 
 import { ComplaintResponseForm } from "./forms";
@@ -44,7 +44,7 @@ export default async function ComplaintsPage() {
       <div>
         <h1 className="text-2xl font-bold">صندوق الشكاوى</h1>
         <p className="mt-1 text-sm text-foreground/60">
-          الرد خلال ٤٨ ساعة (SLA). الكاتب مخفي — الشكوى للمدير بس.
+          لازم الرد خلال ٤٨ ساعة. الكاتب مخفي — الشكوى للمدير بس. رقم الشكوى هو نفسه اللي ظاهر لصاحبها في التطبيق.
         </p>
       </div>
 
@@ -62,6 +62,13 @@ export default async function ComplaintsPage() {
                 className="flex flex-col gap-3 rounded-xl border border-border bg-white p-4"
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
+                  <bdi
+                    dir="ltr"
+                    title={`الرقم المرجعي ${referenceNumber(c.id)}`}
+                    className="rounded-full border border-border px-2 py-0.5 font-mono font-bold text-foreground/80"
+                  >
+                    {shortRef(c.id)}
+                  </bdi>
                   <span className="rounded-full bg-accent/10 px-2 py-0.5 text-accent">
                     {CATEGORY[c.category] ?? c.category}
                   </span>

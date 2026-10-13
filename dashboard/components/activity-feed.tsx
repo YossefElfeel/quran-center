@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { actionIsDanger, actionLabel } from "@/lib/action-labels";
+import { actionIsDanger, actionLabel, tableLabel } from "@/lib/action-labels";
 import { formatNumber } from "@/lib/format";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -11,6 +11,7 @@ export type ActivityEntry = {
   action: string;
   target_table: string | null;
   at: string;
+  actor_person_id: string | null;
 };
 
 function relativeTime(iso: string, nowMs: number): string {
@@ -24,7 +25,8 @@ function relativeTime(iso: string, nowMs: number): string {
   return `منذ ${formatNumber(Math.floor(h / 24))} ي`;
 }
 
-export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {
+// showSystem=false: بيخفي الأحداث اللي مالهاش فاعل (مهام النظام/cron) — من البذرة ومن البث المباشر.
+export function ActivityFeed({ initial, showSystem = false }: { initial: ActivityEntry[]; showSystem?: boolean }) {
   const [items, setItems] = useState<ActivityEntry[]>(initial);
   // mounted-time clock so relative times don't desync server/client on first paint.
   const [nowMs, setNowMs] = useState<number | null>(null);
@@ -41,6 +43,7 @@ export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {
         { event: "INSERT", schema: "public", table: "audit_log" },
         (payload) => {
           const row = payload.new as ActivityEntry;
+          if (!showSystem && row.actor_person_id == null) return;
           setItems((prev) => [row, ...prev.filter((p) => p.id !== row.id)].slice(0, 30));
         },
       )
@@ -51,11 +54,13 @@ export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {
       clearInterval(clock);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [showSystem]);
 
   if (items.length === 0) {
     return (
-      <p className="text-sm text-foreground/50">مفيش نشاط مسجّل بعد.</p>
+      <p className="text-sm text-foreground/50">
+        {showSystem ? "مفيش نشاط مسجّل بعد." : "مفيش نشاط من المستخدمين لسه — مهام النظام مخفية."}
+      </p>
     );
   }
 
@@ -76,7 +81,10 @@ export function ActivityFeed({ initial }: { initial: ActivityEntry[] }) {
             <span className="truncate">
               {actionLabel(e.action)}
               {e.target_table ? (
-                <span className="text-foreground/40"> · {e.target_table}</span>
+                <span className="text-foreground/40"> · {tableLabel(e.target_table)}</span>
+              ) : null}
+              {e.actor_person_id == null ? (
+                <span className="ms-2 rounded bg-border/60 px-1.5 py-0.5 text-xs text-foreground/60">النظام</span>
               ) : null}
             </span>
           </span>

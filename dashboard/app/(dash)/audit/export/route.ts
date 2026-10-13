@@ -1,7 +1,7 @@
 import { getSuperAdmin } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { auditQuery,parseAuditFilters } from "@/lib/audit-query";
-import { actionLabel } from "@/lib/action-labels";
+import { actionLabel, tableLabel } from "@/lib/action-labels";
 import { formatDateTime } from "@/lib/format";
 
 type Row={id:string;at:string;action:string;target_table:string|null;target_id:string|null;actor:{full_name:string}|null};
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       try{
         controller.enqueue(encoder.encode('\uFEFFالتاريخ,الفاعل,الإجراء,الجدول,المعرّف\r\n'));
         while(rows.length){
-          controller.enqueue(encoder.encode(rows.map(r=>[formatDateTime(r.at),r.actor?.full_name??"—",actionLabel(r.action),r.target_table??"",r.target_id??""].map(cell).join(",")).join("\r\n")+"\r\n"));
+          controller.enqueue(encoder.encode(rows.map(r=>[formatDateTime(r.at),r.actor?.full_name??"النظام",actionLabel(r.action),r.target_table?tableLabel(r.target_table):"",r.target_id??""].map(cell).join(",")).join("\r\n")+"\r\n"));
           const last=rows[rows.length-1];
           const next=await auditQuery(client,values).lte("at",snapshot).or(`at.lt.${last.at},and(at.eq.${last.at},id.lt.${last.id})`).limit(500);
           if(next.error)throw next.error;rows=(next.data??[]) as unknown as Row[];

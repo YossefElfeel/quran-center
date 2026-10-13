@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:certificate": "node scripts/verify-certificate.mjs",
-    "test:forms": "node scripts/verify-forms.mjs"
+    "test:forms": "node scripts/verify-forms.mjs",
+    "test:labels": "node scripts/verify-labels.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "4.3.1",

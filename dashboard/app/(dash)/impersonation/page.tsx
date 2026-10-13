@@ -4,7 +4,9 @@ import { SubmitButton } from "@/components/ui/button";
 
 import { DangerZone } from "@/components/danger-zone";
 import { getSuperAdmin } from "@/lib/auth";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, personOptionLabel } from "@/lib/format";
+import { roleLabel } from "@/lib/action-labels";
+import { flagLabel } from "../flags/meta";
 import { getActiveImpersonation } from "@/lib/impersonation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -12,7 +14,7 @@ import { startImpersonation, stopImpersonation } from "./actions";
 
 type RoleRow = {
   role: string;
-  person: { id: string; full_name: string } | null;
+  person: { id: string; full_name: string; phone: string | null } | null;
 };
 
 export default async function ImpersonationPage({
@@ -31,22 +33,27 @@ export default async function ImpersonationPage({
       .select("enabled")
       .eq("key", "write_impersonation")
       .maybeSingle(),
-    supabase.from("role_assignment").select("role, person:person_id(id, full_name)"),
+    supabase.from("role_assignment").select("role, person:person_id(id, full_name, phone)"),
   ]);
   if (flagError || peopleError) throw new Error("impersonation_options_load_failed");
   const flagOn = flagRow?.enabled === true;
 
   // أشخاص بأدوار، باستثناء السوبر أدمن (مش بنتقمّص سوبر أدمن).
-  const people = new Map<string, string>();
+  // كل خيار: «الاسم — الموبايل/#XXXX (الأدوار)» عشان الأسماء المتكررة تتفرّق.
+  const people = new Map<string, { person: NonNullable<RoleRow["person"]>; roles: string[] }>();
   const superIds = new Set<string>();
   for (const row of (data ?? []) as unknown as RoleRow[]) {
     if (!row.person) continue;
     if (row.role === "super_admin") superIds.add(row.person.id);
-    people.set(row.person.id, row.person.full_name);
+    const entry = people.get(row.person.id) ?? { person: row.person, roles: [] };
+    entry.roles.push(roleLabel(row.role));
+    people.set(row.person.id, entry);
   }
-  const options = [...people.entries()]
-    .filter(([id]) => !superIds.has(id))
-    .sort((a, b) => a[1].localeCompare(b[1], "ar"));
+  const options = [...people.values()]
+    .filter(({ person }) => !superIds.has(person.id))
+    .sort((a, b) => a.person.full_name.localeCompare(b.person.full_name, "ar"))
+    .map(({ person, roles }) => [person.id, personOptionLabel(person, roles.join("، "))] as const);
+  const flagName = flagLabel("write_impersonation");
 
   const isActive = active && !active.expired;
 
@@ -56,10 +63,10 @@ export default async function ImpersonationPage({
         <h1 className="text-2xl font-bold">تقمّص الدور (بصلاحية الكتابة)</h1>
         <p className="mt-1 text-sm text-foreground/60">
           بتتصرّف <span className="font-bold text-red-600">كـ المستخدم فعليًا</span>{" "}
-          — أي تغيير بيتنسب له. مدقّق (<code>impersonation_session</code> + سجل
-          التدقيق)، بتنبيه فوري، ومحدّد بـ ٣٠ دقيقة. متحكّم فيه بمفتاح{" "}
+          — أي تغيير بيتنسب له. كل جلسة بتتسجّل (سجل جلسات التقمّص + سجل
+          التدقيق)، بتنبيه فوري، ومحدّدة بـ ٣٠ دقيقة. بيتحكّم فيه مفتاح «{flagName}» من{" "}
           <Link href="/flags" className="text-primary underline">
-            write_impersonation
+            صفحة المفاتيح والصيانة
           </Link>
           .
         </p>
@@ -87,8 +94,8 @@ export default async function ImpersonationPage({
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-white p-5">
           <p className="text-sm font-bold">التقمّص بالكتابة مقفول 🔒</p>
           <p className="text-xs text-foreground/60">
-            فعّل مفتاح <code>write_impersonation</code> من صفحة المفاتيح الأول —
-            ده كِل سويتش أمان.
+            فعّل مفتاح «{flagName}» من صفحة المفاتيح والصيانة الأول — ده مفتاح
+            أمان بيقفل التقمّص كله.
           </p>
           <Link
             href="/flags"
