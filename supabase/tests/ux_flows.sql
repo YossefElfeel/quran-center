@@ -106,6 +106,19 @@ begin
     or (select count(*) from public.competition_application where competition_id=v_competition) <> 1 then
     raise exception 'UX FAIL: public duplicate submission did not retain one reference';
   end if;
+  begin
+    insert into public.public_registration(name,phone,normalized_phone,consent_ack)
+      values('UX Duplicate',v_public_phone,v_public_phone,true);
+    raise exception 'UX FAIL: duplicate normalized phone accepted';
+  exception when unique_violation then null;
+  end;
+  begin
+    insert into public.competition_application(competition_id,origin,public_registration_id)
+      select competition_id,origin,public_registration_id
+      from public.competition_application where id=v_public_application;
+    raise exception 'UX FAIL: duplicate public application accepted';
+  exception when unique_violation then null;
+  end;
   update public.competition set deadline=now()-interval '1 minute' where id=v_competition;
   set local role service_role;
   begin
