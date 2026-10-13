@@ -13,6 +13,20 @@ Vercel deployment is already authorized. Production frontend deployment must wai
 
 The original user edits are preserved in preparation commit `d6180ac` (34 files). The original tracked patch remains at `%TEMP%\quran-dar-ux-existing.patch`. Preserve that commit and every subsequent local UX commit/edit. Never stage `.env.local`, `.codex/`, `.pnpm-store/` or ignored build/QA output.
 
+## Saved phase commits
+
+| Phase | Local commit | Scope |
+|---|---|---|
+| 1 | `a8a92f0` | Account/family/billing/session flows, P0 dashboard and shared prerequisites |
+| 2 | `260f18e` | Mobile form, empty-state and paging consistency |
+| 3 | `89b03fe` | Role home, enrollment/guardian chain, child/account views and returned approvals |
+| 4 | `15e918b` | Accessibility/localization cleanup and scaled UI regression snapshots |
+| 5 | `be3be2a` | Remaining dashboard management flows and validated actions |
+| 6 | `36afc36` | Public navigation, competitions/applications, course content and SEO |
+| 7 | `e31356b` | Interim Realtime/unread count and release documentation/check wiring |
+
+These are unpublished local commits. Shared prerequisites span phases; the checks below verify the assembled branch. Intermediate PR heads still need their own CI checks when the approved PR stack is published. FCM is not included in phase 7.
+
 ## Implemented locally
 
 - Password confirmation/recovery, branded autofill login, neutral reset response, typed errors, optional Play Store/copy-email results and configurable redirects. Generated invite/reset links are explicitly for sharing; generateLink does not send mail.
@@ -46,7 +60,7 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 
 ## Remaining release work
 
-1. Finish/save local phase commits and obtain the explicit public-source approval. Then push, create and attach the plan's phase PRs, and run CI. Shared prerequisites may be included in the first implementation commit; assembled-branch checks are documented above. Do not claim intermediate PR checks without running them.
+1. Obtain explicit public-source approval. Then push, create and attach the plan's phase PRs, and run CI. Local phase commits are saved; assembled-branch checks are documented above. Do not claim intermediate PR checks without running them.
 2. After explicit backend approval, apply the two migrations in order, run the rollback smoke suite/advisors and deploy the three Edge functions preserving JWT flags. Verify imports and `_shared/log.ts` before publishing.
 3. Hosted Auth site URL/redirect allow-list, templates and SMTP configuration still require verification. Follow `DEPLOY_RUNBOOK.md`; real reset/invite password entry requires the user's browser handoff.
 4. Deploy authorized Vercel web/dashboard only after backend readiness. CLI authentication is unavailable; use the connector with project ID and omit team.
