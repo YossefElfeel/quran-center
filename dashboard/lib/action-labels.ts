@@ -2,6 +2,8 @@
 // والتنبيهات الفورية (client-safe — مفيهوش أي استيراد server).
 export const ACTION_LABEL: Record<string, string> = {
   role_granted: "منح دور",
+  // Written by an earlier app version (still present in production history).
+  guardian_created: "إضافة ولي أمر",
   role_revoked: "سحب دور",
   user_blocked: "حظر مستخدم",
   user_unblocked: "فك حظر",
