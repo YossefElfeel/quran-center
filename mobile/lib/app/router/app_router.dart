@@ -75,6 +75,7 @@ GoRouter appRouter(Ref ref) {
           roles: () => ref.read(currentRolesProvider.future),
           subscriptionActive: () =>
               ref.read(mySubscriptionActiveProvider.future),
+          childName: state.uri.queryParameters['name'],
         );
       }
       return null;
@@ -136,9 +137,13 @@ GoRouter appRouter(Ref ref) {
 
       GoRoute(
         path: '/parent/subscription',
-        builder: (BuildContext context, _) => AppScaffold(
+        builder: (BuildContext context, GoRouterState state) => AppScaffold(
           title: AppL10n.of(context).routeMySubscriptionTitle,
-          body: const SubscriptionStatusView(),
+          body: SubscriptionStatusView(
+            redirectedFromChild:
+                state.uri.queryParameters['from'] == parentGateFromChild,
+            childName: state.uri.queryParameters['name'],
+          ),
         ),
       ),
 

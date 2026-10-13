@@ -58,3 +58,7 @@ String toArabicDigits(String input) {
 
 /// رقم جاهز للعرض بالأرقام العربية.
 String arabicNumber(num value) => toArabicDigits(value.toString());
+
+/// مبلغ جاهز للعرض بالأرقام العربية — من غير ".0" لو المبلغ صحيح (١٠٠ مش ١٠٠.٠).
+String arabicAmount(num value) =>
+    arabicNumber(value == value.roundToDouble() ? value.round() : value);

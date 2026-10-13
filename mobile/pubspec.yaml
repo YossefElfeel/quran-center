@@ -46,6 +46,8 @@ dev_dependencies:
   riverpod_generator: ^4.0.4
   mocktail: ^1.0.5
   drift_dev: ^2.34.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 # ملاحظة: حزم الطرف الثالث (riverpod / go_router / intl / build_runner ...) بتتضاف
 # عبر `flutter pub add` عشان تتحلّ على آخر إصدار متوافق، مش بأرقام يدوية.
@@ -62,3 +64,32 @@ flutter:
     - family: Amiri
       fonts:
         - asset: assets/fonts/Amiri-Regular.ttf
+
+# أيقونة التطبيق — المصدر من شعار الدار (web/public/logo.svg) متصدّر PNG في
+# assets/branding. بعد أي تعديل: `dart run flutter_launcher_icons`.
+flutter_launcher_icons:
+  android: "ic_launcher"
+  # iOS متوقّف: الأداة بتعدّل project.pbxproj غلط
+  # (ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS) — نفعّله لما
+  # نجهّز بناء iOS ونراجع التعديلات يدويًا.
+  ios: false
+  image_path: "assets/branding/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0C7C59"
+  adaptive_icon_foreground: "assets/branding/app_icon_foreground.png"
+  adaptive_icon_monochrome: "assets/branding/app_icon_foreground.png"
+  # الـ PNG نفسه فيه هامش منطقة الأمان (٦٦ من ١٠٨dp) فمش محتاجين inset إضافي.
+  adaptive_icon_foreground_inset: 0
+
+# شاشة البداية (native splash) بلون البراند + الشعار.
+# بعد أي تعديل: `dart run flutter_native_splash:create`.
+flutter_native_splash:
+  color: "#0C7C59"
+  image: "assets/branding/splash_logo.png"
+  android: true
+  ios: false
+  web: false
+  android_12:
+    color: "#0C7C59"
+    image: "assets/branding/splash_android12.png"
+    icon_background_color: "#0C7C59"

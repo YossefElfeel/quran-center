@@ -22,6 +22,7 @@ class StudentTile extends StatelessWidget {
     this.onNote,
     this.excuseRequested = false,
     this.onRequestExcuse,
+    this.onSetPortion,
     super.key,
   });
 
@@ -36,6 +37,10 @@ class StudentTile extends StatelessWidget {
 
   /// متاح لو الطالب غايب — يطلب عذر للمشرف (null = ماينفعش).
   final VoidCallback? onRequestExcuse;
+
+  /// لما مفيش مقطع حفظ ([canRecordTasmee] = false): التلميح تحت زرّ "سمّع"
+  /// المعطّل بيفتح تحديد المقطع (null = تلميح نصّي بس).
+  final VoidCallback? onSetPortion;
 
   @override
   Widget build(BuildContext context) {
@@ -87,20 +92,25 @@ class StudentTile extends StatelessWidget {
                     child: Text(l.sesRequestExcuse),
                   ),
                 if (onNote != null)
-                  IconButton(
-                    tooltip: l.sesBehavioralNoteTooltip,
-                    icon: const Icon(AppIcons.note),
+                  TextButton.icon(
                     onPressed: onNote,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
+                    icon: const Icon(AppIcons.note, size: 20),
+                    label: Text(l.sesBehavioralNoteTooltip),
                   ),
                 if (canRecordTasmee)
-                  IconButton.filled(
-                    tooltip: l.sesTasmeeTooltip,
-                    style: IconButton.styleFrom(
-                      foregroundColor: palette.onPrimary,
-                    ),
-                    icon: Icon(AppIcons.tasmee, color: palette.onPrimary),
+                  FilledButton.icon(
                     onPressed: onTasmee,
-                  ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
+                    icon: const Icon(AppIcons.tasmee, size: 20),
+                    label: Text(l.fyTasmeeButton),
+                  )
+                else
+                  _DisabledTasmee(onSetPortion: onSetPortion),
               ],
             ),
           ],
@@ -121,9 +131,52 @@ class _LedgerBadge extends StatelessWidget {
     final (String label, AppStatusKind kind) = switch (state) {
       LedgerState.passed => (l.sesLedgerPassed, AppStatusKind.success),
       LedgerState.failedRetry => (l.sesLedgerOwed, AppStatusKind.error),
-      _ => (l.sesLedgerPending, AppStatusKind.neutral),
+      _ => (l.fyLedgerNotRecitedYet, AppStatusKind.neutral),
     };
     return AppStatusBadge(label: label, kind: kind);
+  }
+}
+
+/// زرّ "سمّع" معطّل + تلميح "حدّد مقطع الحفظ الأول" — التلميح (لو فيه
+/// [onSetPortion]) بيفتح تحديد المقطع بدل ما الزرّ يختفي من غير تفسير.
+class _DisabledTasmee extends StatelessWidget {
+  const _DisabledTasmee({this.onSetPortion});
+
+  final VoidCallback? onSetPortion;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    final AppPalette palette = context.palette;
+    final VoidCallback? onSetPortion = this.onSetPortion;
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        FilledButton.icon(
+          onPressed: null,
+          style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+          icon: const Icon(AppIcons.tasmee, size: 20),
+          label: Text(l.fyTasmeeButton),
+        ),
+        if (onSetPortion != null)
+          TextButton.icon(
+            onPressed: onSetPortion,
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+            icon: const Icon(Icons.info_outline, size: 18),
+            label: Text(l.fyTasmeeNeedsPortionHint),
+          )
+        else
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: AppSpacing.sm),
+            child: Text(
+              l.fyTasmeeNeedsPortionHint,
+              style: AppTextStyles.labelSm.copyWith(
+                color: palette.textSecondary,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 

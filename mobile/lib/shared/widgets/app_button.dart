@@ -34,7 +34,7 @@ class AppButton extends StatelessWidget {
 
     final Color spinnerColor = switch (variant) {
       AppButtonVariant.primary => context.palette.onPrimary,
-      AppButtonVariant.tonal => cs.onSecondaryContainer,
+      AppButtonVariant.tonal => cs.onPrimaryContainer,
       AppButtonVariant.outlined ||
       AppButtonVariant.text => context.palette.primary,
     };
@@ -62,13 +62,24 @@ class AppButton extends StatelessWidget {
               )
             : ElevatedButton(onPressed: effective, child: content);
       case AppButtonVariant.tonal:
+        // الثيم بيفرض primary على كل FilledButton (حتى الـ tonal)، فلازم style
+        // صريح هنا وإلا الزر الثانوي يطلع شبه الأساسي بالظبط.
+        final ButtonStyle tonalStyle = FilledButton.styleFrom(
+          backgroundColor: cs.primaryContainer,
+          foregroundColor: cs.onPrimaryContainer,
+        );
         button = (icon != null && !isLoading)
             ? FilledButton.tonalIcon(
                 onPressed: effective,
+                style: tonalStyle,
                 icon: Icon(icon),
                 label: content,
               )
-            : FilledButton.tonal(onPressed: effective, child: content);
+            : FilledButton.tonal(
+                onPressed: effective,
+                style: tonalStyle,
+                child: content,
+              );
       case AppButtonVariant.outlined:
         button = (icon != null && !isLoading)
             ? OutlinedButton.icon(

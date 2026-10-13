@@ -11,6 +11,7 @@ class AppListCard extends StatelessWidget {
   const AppListCard({
     required this.title,
     this.subtitle,
+    this.caption,
     this.leadingIcon,
     this.leading,
     this.trailing,
@@ -25,6 +26,9 @@ class AppListCard extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+
+  /// سطر صغير اختياري تحت [subtitle] (تاريخ/سياق) بخط أصغر.
+  final String? caption;
   final IconData? leadingIcon;
   final Widget? leading;
   final Widget? trailing;
@@ -37,6 +41,7 @@ class AppListCard extends StatelessWidget {
     final AppPalette p = context.palette;
     final Color icColor = iconColor ?? p.primary;
     final String? subtitle = this.subtitle;
+    final String? caption = this.caption;
 
     final Widget? lead =
         leading ??
@@ -92,6 +97,17 @@ class AppListCard extends StatelessWidget {
                           color: p.textSecondary,
                         ),
                         maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (caption != null) ...<Widget>[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        caption,
+                        style: AppTextStyles.labelSm.copyWith(
+                          color: p.textSecondary,
+                        ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],

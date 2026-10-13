@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../app/router/parent_gate.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../app/shell/sync_status_sheet.dart';
 import '../../../../core/auth/auth_providers.dart';
@@ -41,8 +42,12 @@ import '../../../subscription/domain/household_summary.dart';
 import '../../../subscription/presentation/controllers/households_controller.dart';
 import '../../../subscription/presentation/controllers/my_subscription_controller.dart';
 import '../../../subscription/presentation/widgets/record_payment_sheet.dart';
+import '../../../supervisor_eval/presentation/controllers/eval_circles_controller.dart';
 import '../../../supervisor_eval/presentation/controllers/struggling_controller.dart';
 import '../../../teacher/presentation/controllers/teacher_controllers.dart';
+
+/// هامش أفقي واحد لكل أقسام الهوم (بيطابق هامش [AppListCard]/[AppSectionHeader]).
+const EdgeInsets _hPad = EdgeInsets.symmetric(horizontal: AppSpacing.md);
 
 final FutureProvider<String> homeNameProvider = FutureProvider((Ref ref) async {
   final String? id = await ref.watch(currentPersonIdProvider.future);
@@ -87,39 +92,55 @@ class DashboardScreen extends ConsumerWidget {
               ref.invalidate(pendingExcusesControllerProvider);
               ref.invalidate(strugglingStudentsProvider);
               ref.invalidate(waitingListControllerProvider);
+              ref.invalidate(evalCirclesProvider);
+              ref.invalidate(evalMonthProgressProvider);
             },
             child: ListView(
-              padding: const EdgeInsets.all(24),
+              // هامش أفقي واحد لكل الأقسام: الكروت/العناوين بتحطّ هامشها
+              // (md)، والنصوص والأزرار بتتلف في [_hPad] بنفس القيمة.
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
               children: <Widget>[
-                Text(
-                  name.isEmpty ? l.welcome : l.homeGreeting(name),
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                Text(settings.centerName),
-                Text(
-                  l.homeDateLine(
-                    arabicNumber(today.day),
-                    arabicMonthLabel(today),
-                    arabicNumber(hijri.hDay),
-                    arabicNumber(hijri.hMonth),
-                    arabicNumber(hijri.hYear),
+                Padding(
+                  padding: _hPad,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        name.isEmpty ? l.welcome : l.homeGreeting(name),
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      Text(settings.centerName),
+                      Text(
+                        l.homeDateLine(
+                          arabicNumber(today.day),
+                          arabicMonthLabel(today),
+                          arabicNumber(hijri.hDay),
+                          arabicNumber(hijri.hMonth),
+                          arabicNumber(hijri.hYear),
+                        ),
+                        style: TextStyle(color: context.palette.textSecondary),
+                      ),
+                    ],
                   ),
-                  style: TextStyle(color: context.palette.textSecondary),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.sm),
                 if (roles.contains('teacher')) ...<Widget>[
                   AppSectionHeader(title: l.homeTodaySessions),
                   ref
                       .watch(myCirclesProvider)
                       .when(
-                        loading: () => const LinearProgressIndicator(),
+                        loading: () => const _Loading(),
                         error: (_, _) => _Retry(
                           message: l.homeCirclesLoadError,
                           onRetry: () => ref.invalidate(myCirclesProvider),
                         ),
                         data: (List<Circle> circles) => Column(
                           children: <Widget>[
-                            if (circles.isEmpty) Text(l.homeNoCircleAssigned),
+                            if (circles.isEmpty)
+                              Padding(
+                                padding: _hPad,
+                                child: Text(l.homeNoCircleAssigned),
+                              ),
                             for (final Circle circle in circles)
                               _TeacherCircle(circle: circle),
                           ],
@@ -129,15 +150,10 @@ class DashboardScreen extends ConsumerWidget {
                 ],
                 if (roles.contains('parent')) ...<Widget>[
                   AppSectionHeader(title: l.homeFollowChildren),
-                  AppListCard(
-                    title: l.homeMySubscription,
-                    leadingIcon: Icons.payments_outlined,
-                    onTap: () => context.push('/parent/subscription'),
-                  ),
                   ref
                       .watch(myChildrenProvider)
                       .when(
-                        loading: () => const LinearProgressIndicator(),
+                        loading: () => const _Loading(),
                         error: (_, _) => _Retry(
                           message: l.homeChildrenLoadError,
                           onRetry: () => ref.invalidate(myChildrenProvider),
@@ -155,22 +171,33 @@ class DashboardScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                  // الاشتراك قسم لوحده (مش وسط ملخّصات الولاد).
+                  AppSectionHeader(title: l.fySubscriptionSection),
+                  const _MySubscriptionCard(),
                 ],
                 if (roles.any(
                   (String r) => <String>['admin', 'super_admin'].contains(r),
                 )) ...<Widget>[
                   AppSectionHeader(title: l.homeCenterManagement),
-                  AppButton(
-                    label: l.enrEnrollStudent,
-                    icon: Icons.person_add,
-                    onPressed: () => enrollStudentFlow(context, ref),
-                  ),
-                  const SizedBox(height: 12),
-                  AppButton(
-                    label: l.homeRecordPayment,
-                    icon: Icons.payments,
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () => _recordPaymentFlow(context, ref),
+                  Padding(
+                    padding: _hPad,
+                    child: Column(
+                      children: <Widget>[
+                        AppButton(
+                          label: l.enrEnrollStudent,
+                          icon: Icons.person_add,
+                          onPressed: () => enrollStudentFlow(context, ref),
+                        ),
+                        const SizedBox(height: 12),
+                        AppButton(
+                          label: l.homeRecordPayment,
+                          icon: Icons.payments,
+                          variant: AppButtonVariant.outlined,
+                          onPressed: () => _recordPaymentFlow(context, ref),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
+                    ),
                   ),
                   _Queue(
                     state: ref.watch(waitingListControllerProvider),
@@ -182,7 +209,7 @@ class DashboardScreen extends ConsumerWidget {
                   ref
                       .watch(overdueHouseholdsProvider)
                       .when(
-                        loading: () => const LinearProgressIndicator(),
+                        loading: () => const _Loading(),
                         error: (_, _) => _Retry(
                           message: l.homeSubscriptionsLoadError,
                           onRetry: () =>
@@ -201,9 +228,7 @@ class DashboardScreen extends ConsumerWidget {
                             for (final HouseholdSummary h in households)
                               AppListCard(
                                 title: h.name,
-                                subtitle: l.homeMonthlyAmount(
-                                  arabicNumber(h.monthlyAmount),
-                                ),
+                                subtitle: _overdueLine(l, h, today),
                                 onTap: () => context.push(
                                   Routes.householdMembers(h.id, h.name),
                                 ),
@@ -219,6 +244,7 @@ class DashboardScreen extends ConsumerWidget {
                     'super_admin',
                   ].contains(r),
                 )) ...<Widget>[
+                  if (roles.contains('supervisor')) const _SupervisorCircles(),
                   AppSectionHeader(title: l.homeNeedsYourDecision),
                   _Queue(
                     state: ref.watch(pendingExcusesControllerProvider),
@@ -270,8 +296,11 @@ class _Queue<T> extends StatelessWidget {
   final bool alwaysShow;
   @override
   Widget build(BuildContext context) => state.when(
-    loading: () => const LinearProgressIndicator(),
-    error: (_, _) => Text(AppL10n.of(context).homeQueueLoadError(title)),
+    loading: () => const _Loading(),
+    error: (_, _) => Padding(
+      padding: _hPad,
+      child: Text(AppL10n.of(context).homeQueueLoadError(title)),
+    ),
     data: (List<T> rows) => rows.isEmpty && !alwaysShow
         ? const SizedBox.shrink()
         : AppListCard(
@@ -279,6 +308,31 @@ class _Queue<T> extends StatelessWidget {
                 '$title (${arabicNumber(rows.length)}${rows.length >= 50 ? '+' : ''})',
             onTap: () => context.push(route),
           ),
+  );
+}
+
+/// مؤشّر تحميل بنفس هامش الأقسام.
+class _Loading extends StatelessWidget {
+  const _Loading();
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(
+      horizontal: AppSpacing.md,
+      vertical: AppSpacing.sm,
+    ),
+    child: LinearProgressIndicator(),
+  );
+}
+
+/// سطر الأسرة المتأخّرة: "متأخر ٤ شهور · ٤٠٠ ج.م" (أو الشهري لو مفيش دفعات).
+String _overdueLine(AppL10n l, HouseholdSummary h, DateTime today) {
+  final int? months = h.monthsLate(today);
+  if (months == null || months <= 0) {
+    return l.homeMonthlyAmount(arabicAmount(h.monthlyAmount));
+  }
+  return l.fyOverdueSummary(
+    l.fyMonthsCount(months, arabicNumber(months)),
+    arabicAmount(h.amountDue(today)),
   );
 }
 
@@ -332,22 +386,28 @@ class _SyncButton extends ConsumerWidget {
         : failed
         ? l.homeSyncFailedSemantics
         : l.syncStatusTitle;
-    return Semantics(
-      button: true,
-      label: label,
-      excludeSemantics: true,
-      child: TextButton.icon(
-        onPressed: () => SyncStatusSheet.show(context),
-        icon: Badge(
-          isLabelVisible: pending > 0 || failed,
-          backgroundColor: failed ? context.palette.error : null,
-          label: Text(pending > 0 ? arabicNumber(pending) : '!'),
-          child: const Icon(Icons.sync),
-        ),
-        label: Text(
-          pending > 0
-              ? l.homeSyncPendingLabel(arabicNumber(pending))
-              : l.syncStatusTitle,
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: AppSpacing.sm),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Semantics(
+          button: true,
+          label: label,
+          excludeSemantics: true,
+          child: TextButton.icon(
+            onPressed: () => SyncStatusSheet.show(context),
+            icon: Badge(
+              isLabelVisible: pending > 0 || failed,
+              backgroundColor: failed ? context.palette.error : null,
+              label: Text(pending > 0 ? arabicNumber(pending) : '!'),
+              child: const Icon(Icons.sync),
+            ),
+            label: Text(
+              pending > 0
+                  ? l.homeSyncPendingLabel(arabicNumber(pending))
+                  : l.syncStatusTitle,
+            ),
+          ),
         ),
       ),
     );
@@ -360,14 +420,15 @@ class _HomeChild extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
-    final AsyncValue<ChildCard> state = ref.watch(
-      childCardProvider(child.studentPersonId),
-    );
     // الاشتراك على مستوى الأسرة — نفس الحالة لكل طفل في نفس الحساب.
     final bool? subscribed = ref
         .watch(mySubscriptionActiveProvider)
         .asData
         ?.value;
+    if (subscribed == false) return HomeLockedChildCard(child: child);
+    final AsyncValue<ChildCard> state = ref.watch(
+      childCardProvider(child.studentPersonId),
+    );
     return AppListCard(
       title: child.fullName,
       leadingIcon: Icons.child_care,
@@ -379,10 +440,14 @@ class _HomeChild extends ConsumerWidget {
           final String portionLine = portion == null || portion.trim().isEmpty
               ? l.homeNoPortion
               : l.homeCurrentPortion(portion);
-          final String attendance = l.homeMonthAttendance(
-            arabicNumber(card.present + card.late),
-            arabicNumber(card.present + card.late + card.absent + card.excused),
-          );
+          final int total =
+              card.present + card.late + card.absent + card.excused;
+          final String attendance = total == 0
+              ? l.fyNoSessionsThisMonth
+              : l.homeMonthAttendance(
+                  arabicNumber(card.present + card.late),
+                  arabicNumber(total),
+                );
           return '$portionLine\n$attendance';
         },
       ),
@@ -392,12 +457,8 @@ class _HomeChild extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 AppStatusBadge(
-                  label: subscribed
-                      ? l.homeSubscriptionActive
-                      : l.homeSubscriptionOverdue,
-                  kind: subscribed
-                      ? AppStatusKind.success
-                      : AppStatusKind.warning,
+                  label: l.homeSubscriptionActive,
+                  kind: AppStatusKind.success,
                 ),
                 Icon(AppIcons.drillIn, color: context.palette.textSecondary),
               ],
@@ -406,6 +467,131 @@ class _HomeChild extends ConsumerWidget {
         Routes.parentChild(child.studentPersonId, child.fullName),
       ),
     );
+  }
+}
+
+/// كارت طفل والاشتراك مش نشط: الاسم + "التفاصيل متاحة بعد تجديد الاشتراك"
+/// من غير ملخّص (ورد/حضور)، والنقر بيفتح شاشة الاشتراك مع اسم الطفل.
+class HomeLockedChildCard extends StatelessWidget {
+  const HomeLockedChildCard({required this.child, super.key});
+  final ChildSummary child;
+  @override
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    final AppPalette p = context.palette;
+    return AppListCard(
+      title: child.fullName,
+      leadingIcon: AppIcons.locked,
+      iconColor: p.textSecondary,
+      subtitle: l.fyChildLockedLine,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          AppStatusBadge(
+            label: l.homeSubscriptionOverdue,
+            kind: AppStatusKind.warning,
+          ),
+          Icon(AppIcons.drillIn, color: p.textSecondary),
+        ],
+      ),
+      onTap: () => context.push(
+        parentSubscriptionGateLocation(childName: child.fullName),
+      ),
+    );
+  }
+}
+
+/// كارت "اشتراكي" في قسم الاشتراك — بحالته (ساري/متأخّر) لو معروفة.
+class _MySubscriptionCard extends ConsumerWidget {
+  const _MySubscriptionCard();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
+    final bool? subscribed = ref
+        .watch(mySubscriptionActiveProvider)
+        .asData
+        ?.value;
+    return AppListCard(
+      title: l.homeMySubscription,
+      leadingIcon: Icons.payments_outlined,
+      iconColor: subscribed == false ? context.palette.warning : null,
+      subtitle: subscribed == null
+          ? null
+          : subscribed
+          ? l.homeSubscriptionActive
+          : l.homeSubscriptionOverdue,
+      onTap: () => context.push(parentSubscriptionRoute),
+    );
+  }
+}
+
+/// ملخّص الحلقات للمشرف: كل حلقة بمعلّمها وتقدّم تقييم الشهر ده
+/// (اتقيّم كام من كام) + "عرض الكل" للمراجعات.
+class _SupervisorCircles extends ConsumerWidget {
+  const _SupervisorCircles();
+
+  static const int _maxRows = 5;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
+    final Map<String, int> progress =
+        ref.watch(evalMonthProgressProvider).asData?.value ??
+        const <String, int>{};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        AppSectionHeader(
+          title: l.fyHomeCirclesSection,
+          action: TextButton(
+            onPressed: () => context.go(Routes.primaryTab),
+            child: Text(l.fyHomeShowAll),
+          ),
+        ),
+        ref
+            .watch(evalCirclesProvider)
+            .when(
+              loading: () => const _Loading(),
+              error: (_, _) => _Retry(
+                message: l.supCirclesLoadError,
+                onRetry: () => ref.invalidate(evalCirclesProvider),
+              ),
+              data: (List<Circle> circles) => Column(
+                children: <Widget>[
+                  if (circles.isEmpty)
+                    Padding(padding: _hPad, child: Text(l.supNoCircles)),
+                  for (final Circle c in circles.take(_maxRows))
+                    AppListCard(
+                      title: c.name,
+                      leadingIcon: Icons.fact_check,
+                      subtitle: _subtitle(l, c, progress[c.id] ?? 0),
+                      onTap: () => context.push(
+                        Routes.supervisorCircleEval(c.id, c.name),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+      ],
+    );
+  }
+
+  String? _subtitle(AppL10n l, Circle c, int evaluated) {
+    final String? teacher = c.teacherName;
+    final int? total = c.activeStudentCount;
+    final String? line = total == null
+        ? null
+        : evaluated == 0
+        ? l.fyHomeCircleEvalNone(
+            l.enrCircleStudentCount(total, arabicNumber(total)),
+          )
+        : l.fyHomeCircleEvalProgress(
+            arabicNumber(evaluated),
+            arabicNumber(total),
+          );
+    if (teacher == null || teacher.isEmpty) return line;
+    if (line == null) return teacher;
+    return l.fyHomeCircleSubtitle(teacher, line);
   }
 }
 

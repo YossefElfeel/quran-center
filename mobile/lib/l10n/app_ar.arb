@@ -1,5 +1,57 @@
 {
   "@@locale": "ar",
+  "fxRelToday": "النهارده",
+  "@fxRelToday": {
+    "description": "تاريخ نسبي: اليوم (صفوف الإشعارات وآخر مزامنة)"
+  },
+  "fxRelYesterday": "امبارح",
+  "@fxRelYesterday": {
+    "description": "تاريخ نسبي: أمس"
+  },
+  "fxRelTwoDaysAgo": "من يومين",
+  "@fxRelTwoDaysAgo": {
+    "description": "تاريخ نسبي: من يومين"
+  },
+  "fxRelDaysAgo": "من {count} أيام",
+  "@fxRelDaysAgo": {
+    "description": "تاريخ نسبي: من ٣ لـ ٦ أيام (الرقم بأرقام عربية)",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "fxNotifForMonth": "شهر {month}",
+  "@fxNotifForMonth": {
+    "description": "سياق إشعار تأخّر الاشتراك: الشهر (مثلاً: شهر أكتوبر ٢٠٢٦)",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "fxNotifComplaintRef": "شكوى {code}",
+  "@fxNotifComplaintRef": {
+    "description": "سياق إشعار تصعيد شكوى: كود الشكوى المختصر (مثلاً #A183)",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "fxSyncLastSync": "آخر مزامنة: {when}",
+  "@fxSyncLastSync": {
+    "description": "شيت حالة المزامنة: وقت آخر مزامنة ناجحة",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "fxSyncAllSynced": "كل حاجة متزامنة ✓",
+  "@fxSyncAllSynced": {
+    "description": "شيت حالة المزامنة: مفيش معلّق ولا فاشل"
+  },
   "appTitle": "مركز تحفيظ القرآن",
   "@appTitle": {
     "description": "اسم التطبيق"
@@ -2120,7 +2172,7 @@
   "@enrNoCirclesHint": {
     "description": "Empty state of the circle picker when no circles exist"
   },
-  "enrCircleStudentCount": "{count, plural, other{{countText} طالب}}",
+  "enrCircleStudentCount": "{count, plural, =0{مفيش طلاب} =1{طالب واحد} =2{طالبين} few{{countText} طلاب} other{{countText} طالب}}",
   "@enrCircleStudentCount": {
     "description": "Circle picker subtitle: active students (no capacity limit). countText is count formatted with Arabic digits.",
     "placeholders": {
@@ -2206,5 +2258,283 @@
   "errMediaUploadFailed": "مش قادرين نرفع الوسيط — جرّب تاني",
   "errMediaUrlFailed": "مش قادرين نجيب رابط الوسيط",
   "errNationalIdTaken": "الرقم القومي ده مسجّل قبل كده لشخص تاني",
-  "errAlreadyInHousehold": "الشخص ده مضاف لأسرة بالفعل"
+  "errAlreadyInHousehold": "الشخص ده مضاف لأسرة بالفعل",
+  "fyTasmeeButton": "سمّع",
+  "@fyTasmeeButton": {
+    "description": "Labeled per-student button in the session that opens the tasmee (recitation) sheet"
+  },
+  "fyTasmeeNeedsPortionHint": "حدّد مقطع الحفظ الأول",
+  "@fyTasmeeNeedsPortionHint": {
+    "description": "Hint under the disabled tasmee button when the circle has no memorization portion yet"
+  },
+  "fyLedgerNotRecitedYet": "لسه ما سمّعش",
+  "@fyLedgerNotRecitedYet": {
+    "description": "Per-student badge: the student has not recited the current portion yet"
+  },
+  "fyCircleRowSubtitle": "{status} · {students}",
+  "@fyCircleRowSubtitle": {
+    "description": "My circles row subtitle: circle status and student count",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "students": {
+        "type": "String"
+      }
+    }
+  },
+  "fyMonthlyPlanChip": "الخطة الشهرية",
+  "@fyMonthlyPlanChip": {
+    "description": "Compact labeled button on a circle row that opens the monthly plan"
+  },
+  "fyMonthlyEvalChip": "التقييم الشهري",
+  "@fyMonthlyEvalChip": {
+    "description": "Compact labeled button on a circle row that opens the monthly evaluation"
+  },
+  "fyMonthsCount": "{count, plural, =1{شهر} =2{شهرين} few{{countText} شهور} other{{countText} شهر}}",
+  "@fyMonthsCount": {
+    "description": "A number of months. countText is count formatted with Arabic digits.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      }
+    }
+  },
+  "fyTotalDue": "المطلوب: {amount} ج.م",
+  "@fyTotalDue": {
+    "description": "Parent subscription: total amount due (months due x monthly amount)",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "fyTotalDueForMonths": "عن {months}",
+  "@fyTotalDueForMonths": {
+    "description": "Parent subscription: how many unpaid months the total covers (months is fyMonthsCount)",
+    "placeholders": {
+      "months": {
+        "type": "String"
+      }
+    }
+  },
+  "fyGateRedirectChild": "علشان تتابع {name} لازم الاشتراك يتجدد",
+  "@fyGateRedirectChild": {
+    "description": "Banner on the subscription screen when a parent was redirected from a child's card",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fyGateRedirectGeneric": "علشان تتابع ولادك لازم الاشتراك يتجدد",
+  "@fyGateRedirectGeneric": {
+    "description": "Banner on the subscription screen when a parent was redirected from a child's card (no name known)"
+  },
+  "fyChildLockedLine": "التفاصيل متاحة بعد تجديد الاشتراك",
+  "@fyChildLockedLine": {
+    "description": "Parent home: child card line when the subscription is not active"
+  },
+  "fyNoSessionsThisMonth": "لسه مفيش حصص الشهر ده",
+  "@fyNoSessionsThisMonth": {
+    "description": "Parent home: child attendance line when no sessions happened this month"
+  },
+  "fySubscriptionSection": "الاشتراك",
+  "@fySubscriptionSection": {
+    "description": "Parent home: section heading for the subscription card"
+  },
+  "fyOverdueSummary": "متأخر {months} · {amount} ج.م",
+  "@fyOverdueSummary": {
+    "description": "Admin home overdue household row: months late and total due (months is fyMonthsCount)",
+    "placeholders": {
+      "months": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "fyHomeCirclesSection": "الحلقات",
+  "@fyHomeCirclesSection": {
+    "description": "Supervisor home: circles overview section heading"
+  },
+  "fyHomeShowAll": "عرض الكل",
+  "@fyHomeShowAll": {
+    "description": "Supervisor home: link to the full circles (reviews) list"
+  },
+  "fyHomeCircleEvalProgress": "اتقيّم {done} من {total} الشهر ده",
+  "@fyHomeCircleEvalProgress": {
+    "description": "Supervisor home: this month's evaluation progress for a circle",
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "fyHomeCircleEvalNone": "لسه محدش اتقيّم الشهر ده من {total}",
+  "@fyHomeCircleEvalNone": {
+    "description": "Supervisor home: no student evaluated yet this month; total is an already-pluralised student count (avoids a lone Arabic zero that looks like a dot)",
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "fyHomeCircleSubtitle": "{teacher} · {progress}",
+  "@fyHomeCircleSubtitle": {
+    "description": "Supervisor home circle row subtitle: teacher name and evaluation progress",
+    "placeholders": {
+      "teacher": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "String"
+      }
+    }
+  },
+  "fyExcuseAbsenceDay": "يوم الغياب: {date}",
+  "@fyExcuseAbsenceDay": {
+    "description": "Excuse card: the date of the session the student was absent from",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "fyExcuseRequestedBy": "طلبها: {name} · {time}",
+  "@fyExcuseRequestedBy": {
+    "description": "Excuse card: who requested the excuse (circle teacher) and how long ago",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "fyExcuseRequestedAt": "اتطلب {time}",
+  "@fyExcuseRequestedAt": {
+    "description": "Excuse card: when the excuse was requested (requester unknown)",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "fyExcusePendingTab": "المعلّقة",
+  "@fyExcusePendingTab": {
+    "description": "Excuse queue segment: pending excuses"
+  },
+  "fyExcuseHistoryTab": "السابقة",
+  "@fyExcuseHistoryTab": {
+    "description": "Excuse queue segment: already decided excuses"
+  },
+  "fyExcuseHistoryEmpty": "لسه مفيش أعذار اتقرّرت",
+  "@fyExcuseHistoryEmpty": {
+    "description": "Empty state of the decided excuses history"
+  },
+  "fyTimeJustNow": "دلوقتي",
+  "@fyTimeJustNow": {
+    "description": "Relative time: less than a minute ago"
+  },
+  "fyTimeMinutesAgo": "{count, plural, =1{من دقيقة} =2{من دقيقتين} few{من {countText} دقايق} other{من {countText} دقيقة}}",
+  "@fyTimeMinutesAgo": {
+    "description": "Relative time in minutes. countText is count with Arabic digits.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      }
+    }
+  },
+  "fyTimeHoursAgo": "{count, plural, =1{من ساعة} =2{من ساعتين} few{من {countText} ساعات} other{من {countText} ساعة}}",
+  "@fyTimeHoursAgo": {
+    "description": "Relative time in hours. countText is count with Arabic digits.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      }
+    }
+  },
+  "fyTimeDaysAgo": "{count, plural, =1{امبارح} =2{من يومين} few{من {countText} أيام} other{من {countText} يوم}}",
+  "@fyTimeDaysAgo": {
+    "description": "Relative time in days. countText is count with Arabic digits.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      }
+    }
+  },
+  "fyEvalMonthHeader": "تقييم {month}",
+  "@fyEvalMonthHeader": {
+    "description": "Circle evaluation screen header: the month new evaluations belong to",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "fyEvalBreakdown": "الحفظ {memorization} · التلاوة {recitation} · المصحف {mushaf}",
+  "@fyEvalBreakdown": {
+    "description": "Evaluation scores paired with their criteria names",
+    "placeholders": {
+      "memorization": {
+        "type": "String"
+      },
+      "recitation": {
+        "type": "String"
+      },
+      "mushaf": {
+        "type": "String"
+      }
+    }
+  },
+  "fyEvalFromMonth": "آخر تقييم: {month}",
+  "@fyEvalFromMonth": {
+    "description": "Shown on a student whose latest evaluation is from an earlier month",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "fyEvalNotThisMonth": "لسه ما اتقيّمش الشهر ده",
+  "@fyEvalNotThisMonth": {
+    "description": "Student whose latest evaluation is from an earlier month — not done for the current month"
+  },
+  "fyEvalPrevious": "آخر تقييم ({month}): {score}/١٠ · {level}",
+  "@fyEvalPrevious": {
+    "description": "Previous month's evaluation result, shown for reference",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "fyRandomPickHint": "بيختار ٣ طلاب عشوائي ويعلّم عليهم علشان تقيّمهم الشهر ده",
+  "@fyRandomPickHint": {
+    "description": "Explanation under the random pick button on the circle evaluation screen"
+  }
 }

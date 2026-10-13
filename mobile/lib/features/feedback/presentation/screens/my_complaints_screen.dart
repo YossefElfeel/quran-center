@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_date.dart';
+import '../../../../core/utils/bidi.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -125,9 +126,13 @@ class _ComplaintCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
+            // الكود (معزول LTR) والتاريخ كل واحد في سطر عشان الـ bidi.
             Text(
-              '${l.fbkComplaintNumber(complaint.referenceNumber)} · '
-              '${arabicDateTimeLabel(complaint.createdAt)}',
+              l.fbkComplaintNumber(ltrIsolate(complaint.shortReference)),
+              style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+            ),
+            Text(
+              arabicDateTimeLabel(complaint.createdAt),
               style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xs),

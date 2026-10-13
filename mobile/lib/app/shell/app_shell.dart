@@ -69,7 +69,13 @@ class AppShell extends ConsumerWidget {
     Widget badgeWrap(Widget icon, int index) {
       // شارة العدّاد على تبويب الإشعارات (index 2).
       if (index != 2 || unread == 0) return icon;
-      return Badge.count(count: unread, child: icon);
+      // أرقام عربية-هندية بدل Badge.count (اللي بيعرض أرقام غربية).
+      return Badge(
+        label: Text(
+          unread > 99 ? '${arabicNumber(99)}+' : arabicNumber(unread),
+        ),
+        child: icon,
+      );
     }
 
     final Widget shellBody = Column(

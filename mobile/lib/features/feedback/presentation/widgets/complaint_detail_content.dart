@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_date.dart';
+import '../../../../core/utils/bidi.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
@@ -38,7 +39,7 @@ class ComplaintDetailContent extends StatelessWidget {
                   : AppStatusKind.warning,
             ),
             Text(
-              l.fbkComplaintNumber(complaint.referenceNumber),
+              l.fbkComplaintNumber(ltrIsolate(complaint.shortReference)),
               style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
             ),
           ],

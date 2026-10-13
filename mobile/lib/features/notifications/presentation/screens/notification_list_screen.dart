@@ -7,6 +7,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/utils/arabic_date.dart';
+import '../../../../core/utils/bidi.dart';
+import '../../../../shared/presentation/relative_date.dart';
 import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -16,6 +18,7 @@ import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../feedback/domain/complaint.dart';
 import '../../../parent_portal/domain/child_summary.dart';
 import '../../../parent_portal/presentation/controllers/my_children_controller.dart';
 import '../../domain/app_notification.dart';
@@ -214,10 +217,27 @@ class _NotificationTile extends StatelessWidget {
       iconColor: read ? p.textSecondary : p.primary,
       title: notification.title,
       subtitle: notification.body,
+      caption: _caption(AppL10n.of(context), notification),
       onTap: onTap,
       trailing: trailing,
     );
   }
+}
+
+/// سطر التاريخ النسبي + سياق يفرّق الإشعارات المتكرّرة بنفس النص (شهر
+/// الاشتراك المتأخّر / كود الشكوى المصعّدة لو موجود في route_data).
+String _caption(AppL10n l, AppNotification n) {
+  final String when = relativeDayLabel(l, n.createdAt);
+  final String? extra = switch (n.type) {
+    'subscription_overdue' => l.fxNotifForMonth(
+      arabicMonthLabel(n.createdAt.toLocal()),
+    ),
+    'complaint_overdue' when n.complaintId != null => l.fxNotifComplaintRef(
+      ltrIsolate(complaintShortReference(n.complaintId!)),
+    ),
+    _ => null,
+  };
+  return extra == null ? when : '$when · $extra';
 }
 
 /// أيقونة الإشعار حسب نوعه (يطابق منتِجات الـ triggers سيرفر-سايد).

@@ -80,41 +80,59 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                 onPageChanged: (int i) => setState(() => _page = i),
                 itemBuilder: (BuildContext context, int i) {
                   final _Slide s = slides[i];
-                  return Padding(
-                    padding: const EdgeInsets.all(AppSpacing.xl),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: p.heroGradient),
-                              shape: BoxShape.circle,
-                              boxShadow: AppElevation.shadowMd(p.shadowColor),
-                            ),
-                            child: Icon(s.icon, size: 56, color: p.onHero),
+                  // المحتوى في نص المساحة رأسيًا (minHeight = ارتفاع الصفحة)،
+                  // ولسه بيتمرّر لو الخط كبير.
+                  return LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints box) =>
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
                           ),
-                          const SizedBox(height: AppSpacing.xl),
-                          Text(
-                            s.title,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.headlineMd.copyWith(
-                              color: p.textPrimary,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: box.maxHeight,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: p.heroGradient,
+                                    ),
+                                    shape: BoxShape.circle,
+                                    boxShadow: AppElevation.shadowMd(
+                                      p.shadowColor,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    s.icon,
+                                    size: 56,
+                                    color: p.onHero,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xl),
+                                Text(
+                                  s.title,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.headlineMd.copyWith(
+                                    color: p.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                Text(
+                                  s.body,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.bodyLg.copyWith(
+                                    color: p.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            s.body,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.bodyLg.copyWith(
-                              color: p.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
                   );
                 },
               ),

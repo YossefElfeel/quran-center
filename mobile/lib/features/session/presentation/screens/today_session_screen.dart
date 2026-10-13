@@ -11,6 +11,7 @@ import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/settings/settings_repository.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/presentation/domain_labels.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -325,6 +326,9 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
                 entry: e,
                 excuseRequested: e.excuseRequested,
                 canRecordTasmee: session.hasPortion,
+                onSetPortion: session.hasPortion
+                    ? null
+                    : () => _openSetPortion(context),
                 onAttendanceChanged: (AttendanceStatus s) async {
                   try {
                     await notifier.setAttendance(e.enrollmentId, s, l: l);
@@ -397,7 +401,13 @@ class _ClosedViewState extends State<_ClosedView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(Icons.event_available, size: 64, color: p.primary),
+          Icon(
+            widget.session.closedToday
+                ? AppIcons.sessionClosed
+                : AppIcons.sessionPending,
+            size: 64,
+            color: widget.session.closedToday ? p.primary : p.textSecondary,
+          ),
           const SizedBox(height: AppSpacing.md),
           Text(
             widget.session.closedToday

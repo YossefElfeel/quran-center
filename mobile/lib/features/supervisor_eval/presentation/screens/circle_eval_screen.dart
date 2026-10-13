@@ -5,6 +5,8 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_date.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -103,14 +105,43 @@ class CircleEvalScreen extends ConsumerWidget {
           final CircleEvalController notifier = ref.read(
             circleEvalControllerProvider(circleId).notifier,
           );
+          final AppPalette p = context.palette;
           return Column(
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: AppButton(
-                  label: l.supRandomPick,
-                  icon: Icons.shuffle,
-                  onPressed: () => notifier.randomPick(3),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    // التقييمات الجديدة بتتسجّل للشهر الحالي.
+                    Text(
+                      l.fyEvalMonthHeader(arabicMonthLabel(DateTime.now())),
+                      style: AppTextStyles.titleMd.copyWith(
+                        color: p.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    // اختيار مساعد (مش المهمة الأساسية) → tonal + سطر شرح.
+                    AppButton(
+                      label: l.supRandomPick,
+                      icon: Icons.shuffle,
+                      variant: AppButtonVariant.tonal,
+                      onPressed: () => notifier.randomPick(3),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      l.fyRandomPickHint,
+                      style: AppTextStyles.labelSm.copyWith(
+                        color: p.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Expanded(

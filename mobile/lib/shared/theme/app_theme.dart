@@ -218,6 +218,45 @@ abstract final class AppTheme {
         ),
         titleTextStyle: AppTextStyles.titleLg.copyWith(color: p.textPrimary),
       ),
+      // الاختيار في SegmentedButton من عيلة الـ primary (زي باقي حالات
+      // الاختيار) بدل الافتراضي secondaryContainer الذهبي. فاتح: primaryContainer
+      // + primaryDeep؛ داكن: صبغة primary فوق الـ surface + نص أساسي — تباين ≥ ٧:١.
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (Set<WidgetState> s) => s.contains(WidgetState.selected)
+                ? (isDark
+                      ? Color.alphaBlend(
+                          p.primary.withValues(alpha: 0.28),
+                          p.surface,
+                        )
+                      : scheme.primaryContainer)
+                : Colors.transparent,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (Set<WidgetState> s) => s.contains(WidgetState.disabled)
+                ? p.textSecondary
+                : s.contains(WidgetState.selected)
+                ? (isDark ? p.textPrimary : p.primaryDeep)
+                : p.textPrimary,
+          ),
+          overlayColor: WidgetStateProperty.resolveWith(
+            (Set<WidgetState> s) => s.contains(WidgetState.pressed)
+                ? p.primary.withValues(alpha: 0.12)
+                : s.contains(WidgetState.hovered) ||
+                      s.contains(WidgetState.focused)
+                ? p.primary.withValues(alpha: 0.08)
+                : null,
+          ),
+          textStyle: WidgetStateProperty.resolveWith(
+            (Set<WidgetState> s) => AppTextStyles.labelLg.copyWith(
+              fontWeight: s.contains(WidgetState.selected)
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
       chipTheme: ChipThemeData(
         backgroundColor: p.primary.withValues(alpha: AppOpacity.chipBg),
         side: BorderSide.none,

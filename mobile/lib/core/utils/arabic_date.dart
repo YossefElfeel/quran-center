@@ -29,3 +29,22 @@ String arabicDateTimeLabel(DateTime date) {
   final String minute = local.minute.toString().padLeft(2, '0');
   return toArabicDigits('$day/$month/${local.year} - $hour:$minute');
 }
+
+/// يوم + اسم الشهر (+ السنة لو مختلفة عن [now]) بأرقام عربية، مثلاً "٣ أكتوبر".
+String arabicDayMonthLabel(DateTime date, {DateTime? now}) {
+  final DateTime local = date.toLocal();
+  final DateTime ref = (now ?? DateTime.now()).toLocal();
+  final String base =
+      '${toArabicDigits(local.day.toString())} ${_arGregorianMonths[local.month - 1]}';
+  return local.year == ref.year
+      ? base
+      : '$base ${toArabicDigits(local.year.toString())}';
+}
+
+/// الساعة بصيغة ٢٤ ساعة بأرقام عربية (مثلاً "١٦:٠٢").
+String arabicTimeLabel(DateTime date) {
+  final DateTime local = date.toLocal();
+  final String hour = local.hour.toString().padLeft(2, '0');
+  final String minute = local.minute.toString().padLeft(2, '0');
+  return toArabicDigits('$hour:$minute');
+}

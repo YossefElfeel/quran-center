@@ -6,15 +6,19 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../core/settings/settings_repository.dart';
 import '../../../../core/supabase/supabase_providers.dart';
+import '../../../../core/utils/arabic_date.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_inline_banner.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/center_contact_button.dart';
 import '../../data/subscription_repository.dart';
 import '../../domain/payment_row.dart';
+import '../../domain/subscription_logic.dart';
 import '../controllers/my_subscription_controller.dart';
 
 class HouseholdBilling {
@@ -51,7 +55,18 @@ subscriptionDetailsProvider = FutureProvider((ref) async {
 });
 
 class SubscriptionStatusView extends ConsumerStatefulWidget {
-  const SubscriptionStatusView({super.key});
+  const SubscriptionStatusView({
+    this.redirectedFromChild = false,
+    this.childName,
+    super.key,
+  });
+
+  /// ولي الأمر اتحوّل هنا من كارت طفل (بوابة الاشتراك) → بانر بيشرح السبب.
+  final bool redirectedFromChild;
+
+  /// اسم الطفل اللي كان بيحاول يفتحه (اختياري).
+  final String? childName;
+
   @override
   ConsumerState<SubscriptionStatusView> createState() =>
       _SubscriptionStatusViewState();
@@ -92,6 +107,19 @@ class _SubscriptionStatusViewState
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(24),
           children: <Widget>[
+            if (widget.redirectedFromChild && !data.$2) ...<Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadii.md),
+                child: AppInlineBanner(
+                  kind: AppBannerKind.warning,
+                  icon: Icons.lock_outline,
+                  message: (widget.childName ?? '').trim().isEmpty
+                      ? l.fyGateRedirectGeneric
+                      : l.fyGateRedirectChild(widget.childName!.trim()),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
             Text(
               data.$2 ? l.subsActive : l.subsNeedsRenewal,
               style: Theme.of(context).textTheme.headlineSmall,
@@ -193,23 +221,24 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now(),
-        created = DateTime.parse(billing.household['created_at'] as String);
-    final paid = billing.paidMonths
-        .map((month) => '${month.year}-${month.month}')
-        .toSet();
+    final DateTime now = DateTime.now();
     final l = AppL10n.of(context);
+    final AppPalette p = context.palette;
     final num monthlyAmount = billing.household['monthly_amount'] as num? ?? 0;
     // monthly_amount = 0 → الأسرة معفية: مفيش شهور مستحقة خالص.
     final bool exempt = monthlyAmount <= 0;
-    final due = <DateTime>[];
-    for (int i = 0; i < (exempt ? 0 : 12); i++) {
-      final month = DateTime(now.year, now.month - i);
-      if (month.isBefore(DateTime(created.year, created.month))) break;
-      if (!paid.contains('${month.year}-${month.month}')) due.add(month);
-    }
-    String label(DateTime month) =>
-        '${arabicNumber(month.month)}/${arabicNumber(month.year)}';
+    final List<DateTime> due = dueMonths(
+      today: now,
+      householdCreatedAt: DateTime.parse(
+        billing.household['created_at'] as String,
+      ),
+      paidMonths: billing.paidMonths,
+      monthlyAmount: monthlyAmount,
+    );
+    final num total = totalDue(
+      months: due.length,
+      monthlyAmount: monthlyAmount,
+    );
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,12 +250,28 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
           Text(
             exempt
                 ? l.subsExempt
-                : l.subsMonthlyAmountPerMonth(arabicNumber(monthlyAmount)),
+                : l.subsMonthlyAmountPerMonth(arabicAmount(monthlyAmount)),
           ),
           const SizedBox(height: 16),
           if (exempt)
             Text(l.subsExemptNoDue)
           else ...<Widget>[
+            if (due.isNotEmpty) ...<Widget>[
+              Text(
+                l.fyTotalDue(arabicAmount(total)),
+                style: AppTextStyles.titleLg.copyWith(
+                  color: p.error,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                l.fyTotalDueForMonths(
+                  l.fyMonthsCount(due.length, arabicNumber(due.length)),
+                ),
+                style: AppTextStyles.bodyMd.copyWith(color: p.textSecondary),
+              ),
+              const SizedBox(height: 12),
+            ],
             Text(
               l.subsDueMonthsTitle,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -235,7 +280,7 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
               due.isEmpty
                   ? l.subsNoDueMonths
                   : due
-                        .map(label)
+                        .map(arabicMonthLabel)
                         .join('، '), // l10n-ignore: Arabic list separator
             ),
           ],
@@ -248,11 +293,11 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
           for (final payment in [...billing.payments, ..._extra])
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(label(payment.periodMonth)),
+              title: Text(arabicMonthLabel(payment.periodMonth)),
               subtitle: Text(
                 payment.voided
-                    ? l.subsPaymentAmountVoided(arabicNumber(payment.amount))
-                    : l.subsPaymentAmountPaid(arabicNumber(payment.amount)),
+                    ? l.subsPaymentAmountVoided(arabicAmount(payment.amount))
+                    : l.subsPaymentAmountPaid(arabicAmount(payment.amount)),
               ),
             ),
           if (_error != null)
