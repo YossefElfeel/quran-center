@@ -1,6 +1,8 @@
 @Tags(<String>['golden'])
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,7 +88,9 @@ void main() {
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(const ValueKey('snapshot')),
-        matchesGoldenFile('goldens/${entry.key}.png'),
+        matchesGoldenFile(
+          'goldens/${Platform.operatingSystem}/${entry.key}.png',
+        ),
       );
     });
   }

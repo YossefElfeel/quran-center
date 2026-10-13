@@ -4,10 +4,17 @@ Plan: `C:\Users\yosse\.claude\plans\analyze-this-project-and-foamy-forest.md`
 Branch: `feat/ux-enhancement`
 Updated: 2026-10-13 (Africa/Cairo). Local implementation is ready for release review; the complete plan is not deployed.
 
-## Pending explicit approvals
+## Release authorization and progress
 
-1. Automatic approval review rejected hosted Supabase migration deployment to `quzqenavfoqsjupbtiix`: implementing the plan/Vercel deployment did not specifically authorize changing this production/shared database. The pending question covers both UX migrations and the matching `invite-user`, `reset-password` and `submit-public-application` functions. **No hosted migration or Edge update has occurred. Do not retry or bypass without a human answer.**
-2. Automatic approval review also rejected `git push -u origin feat/ux-enhancement`: publishing the project source to the public `YossefElfeel/quran-center` repository needs explicit approval. **No push or PR creation has occurred. Do not use the GitHub connector or another route to bypass this rejection.**
+The user explicitly approved both release actions on 2026-10-13: public GitHub publication and the two UX migrations plus `invite-user`, `reset-password` and `submit-public-application` on hosted Supabase `quzqenavfoqsjupbtiix`. The earlier approval blocks are resolved.
+
+The saved feature branch and six intermediate phase branches are published. Draft PRs [14](https://github.com/YossefElfeel/quran-center/pull/14) through [20](https://github.com/YossefElfeel/quran-center/pull/20) are attached to this chat, stacked in phase order. GitHub connector writes returned insufficient integration permissions; Git/CLI publication succeeded using the existing GitHub credential without exposing it.
+
+Supabase `apply_migration` returned `Invalid or expired requestState` twice without applying changes. The user then explicitly selected `YossefElfeel` for the browser fallback. Both exact migration files were applied transactionally through the SQL editor, with matching version/name/source entries recorded in migration history. The hosted rollback suite reported **UX OK**, and a separate query confirmed zero leftover UX fixtures. Edge versions are now `invite-user` 13 (JWT enabled), `reset-password` 10 (enabled) and `submit-public-application` 12 (disabled as before; shared logger included).
+
+Security advisors were checked before and after: the only count increase is the intentionally admin-gated `update_guardian_details` definer RPC (18 callable guarded RPCs versus 17 before). Existing service-only RLS/no-policy informational notices and leaked-password warning remain; see [definer advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable) and [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Vercel production builds started from verified application commit `31d81ee`: web `dpl_DjYNvDMQBwgF8pU3yMRZQx3ut82G`, dashboard `dpl_6LVordYQN7SFekYNDonhnEjjeNgX`. Completion, canonical aliases and live browser verification are still pending.
 
 Vercel deployment is already authorized. Production frontend deployment must wait for its required database columns/RPCs and Edge functions. Existing domains are `https://quran-web-sage.vercel.app` and `https://quran-dashboard-kohl.vercel.app`.
 
@@ -15,17 +22,17 @@ The original user edits are preserved in preparation commit `d6180ac` (34 files)
 
 ## Saved phase commits
 
-| Phase | Local commit | Scope |
-|---|---|---|
-| 1 | `a8a92f0` | Account/family/billing/session flows, P0 dashboard and shared prerequisites |
-| 2 | `260f18e` | Mobile form, empty-state and paging consistency |
-| 3 | `89b03fe` | Role home, enrollment/guardian chain, child/account views and returned approvals |
-| 4 | `15e918b` | Accessibility/localization cleanup and scaled UI regression snapshots |
-| 5 | `be3be2a` | Remaining dashboard management flows and validated actions |
-| 6 | `36afc36` | Public navigation, competitions/applications, course content and SEO |
-| 7 | `e31356b` | Interim Realtime/unread count and release documentation/check wiring |
+| Phase | Commit | Draft PR | Scope |
+|---|---|---|---|
+| 1 | `a8a92f0` | [14](https://github.com/YossefElfeel/quran-center/pull/14) | Account/family/billing/session flows, P0 dashboard and shared prerequisites |
+| 2 | `260f18e` | [15](https://github.com/YossefElfeel/quran-center/pull/15) | Mobile form, empty-state and paging consistency |
+| 3 | `89b03fe` | [16](https://github.com/YossefElfeel/quran-center/pull/16) | Role home, enrollment/guardian chain, child/account views and returned approvals |
+| 4 | `15e918b` | [17](https://github.com/YossefElfeel/quran-center/pull/17) | Accessibility/localization cleanup and scaled UI regression snapshots |
+| 5 | `be3be2a` | [18](https://github.com/YossefElfeel/quran-center/pull/18) | Remaining dashboard management flows and validated actions |
+| 6 | `36afc36` | [19](https://github.com/YossefElfeel/quran-center/pull/19) | Public navigation, competitions/applications, course content and SEO |
+| 7 | `e31356b` | [20](https://github.com/YossefElfeel/quran-center/pull/20) | Interim Realtime/unread count and release documentation/check wiring |
 
-These are unpublished local commits. Shared prerequisites span phases; the checks below verify the assembled branch. Intermediate PR heads still need their own CI checks when the approved PR stack is published. FCM is not included in phase 7.
+All saved commits, including preparation `d6180ac` and checkpoint `31d81ee`, are published without rewriting history. CI found missing early-phase reset/realtime dependencies and the original harness formatting; repair commits were merged forward through the phase stack. Phases 1–3 now pass all five CI jobs. Phase 4's Linux generation run passed; comparison and phases 5–7 are being verified. FCM is not included in phase 7.
 
 ## Implemented locally
 
@@ -48,7 +55,7 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 
 - Flutter analyze: zero findings (`mobile/build/ux-analyze.log`).
 - Full non-golden suite: 177 passed (`mobile/build/ux-tests.log`). Focused new tests cover save validation/failure retention/slow double submit, logout/discard/payment confirmations, localized digits, all five palette contrasts, cache states, notification months, RTL, scaling, queue paging/concurrency and failed dependencies.
-- Five Windows snapshots: existing score pad plus four 200% phone text cases. Real Cairo/Material icons loaded; final visual review fixed an invisible filled tasmee icon. These are local Windows references; Linux CI comparison is still pending publication.
+- Five Windows snapshots: existing score pad plus four 200% phone text cases. Real Cairo/Material icons loaded; final visual review fixed an invisible filled tasmee icon. Linux CI exposed platform pixel differences, so references now live under `goldens/windows` and `goldens/linux`, selected by the actual host OS. Windows comparison still passes all five; Linux references were generated in CI and visually reviewed. Regeneration requires the explicit `update_goldens=true` dispatch input; ordinary dispatch/PR checks compare the saved references.
 - Web and dashboard lint/build pass. Temporary `/login/ux-check` fixture was removed; confirm it is absent from the final build.
 - `pnpm test:forms` passes: financial precision/digits, UUID/role/reason guards, national ID, bounded JSON conditions and Cairo winter/summer timestamps.
 - `pnpm test:certificate` generated a one-page real PDF and passed its byte/header smoke; earlier Arabic shaping/clipping inspection passed. Outputs are ignored under `dashboard/.next/qa/`.
@@ -56,24 +63,24 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 - Public auth browser showed expired/used-link result and neutral recovery for a disposable `.invalid` address. No real password or mail delivery was tested.
 - Completed Impeccable detector: `docs/ux-design-detect.json` = `[]`. Do not repeat unchanged checks routinely.
 - Read-only hosted schema/function/index preflight completed. Duplicate non-voided household/month payments = 0; registration-phone and application uniqueness indexes already exist. Existing legacy close overload retained for compatibility.
-- Prepared `supabase/tests/ux_flows.sql` rolls back guardian/login linkage, payment uniqueness/void, return-reason guard, returned notifications after transfer and retry-safe close. CI is wired to run it against an isolated Supabase instance. **Not executed here** (no Docker/psql; hosted mutation approval pending).
+- `supabase/tests/ux_flows.sql` rolls back guardian/login linkage, payment uniqueness/void, return-reason guard, returned notifications after transfer and retry-safe close. Passed in isolated Linux CI and against the approved hosted release, with zero fixtures remaining afterward. Live invite delivery/login is a separate unverified check.
 
 ## Remaining release work
 
-1. Obtain explicit public-source approval. Then push, create and attach the plan's phase PRs, and run CI. Local phase commits are saved; assembled-branch checks are documented above. Do not claim intermediate PR checks without running them.
-2. After explicit backend approval, apply the two migrations in order, run the rollback smoke suite/advisors and deploy the three Edge functions preserving JWT flags. Verify imports and `_shared/log.ts` before publishing.
+1. Finish CI on the seven published draft PRs and fix any failures. Public-source approval, push, PR creation and attachment are complete.
+2. Backend migration, rollback smoke/advisor and three Edge deployments are complete. Finish endpoint validation and actual account workflows when account/device access is available.
 3. Hosted Auth site URL/redirect allow-list, templates and SMTP configuration still require verification. Follow `DEPLOY_RUNBOOK.md`; real reset/invite password entry requires the user's browser handoff.
-4. Deploy authorized Vercel web/dashboard only after backend readiness. CLI authentication is unavailable; use the connector with project ID and omit team.
+4. Finish the authorized Vercel web/dashboard builds and verify canonical production aliases and browser flows. Connector deployment uses project ID and omits team.
 5. Complete actual Android role flows/TalkBack and authenticated dashboard impersonation/settings/recipient walkthroughs when device/account access permits. These live checks remain unverified.
-6. Disable `resume-quran-dar-ux-plan` only once the complete plan/release is done. Stay quiet while approval/usage state is unchanged; do not retry rejected publication or hosted writes automatically.
+6. Disable `resume-quran-dar-ux-plan` only once the complete plan/release is done. Stay quiet while usage/non-actionable external state is unchanged. Both release approvals and the Supabase account choice have arrived.
 
 ## Tools
 
-- Hourly continuation remains active. Most recent usage reading: 44% of five-hour, 42% weekly; ordinary usage allowed. Do not consume reset credits without a request.
+- Hourly continuation remains active. Both release actions and sign-in as `YossefElfeel` are explicitly approved. Check usage on resume; do not consume reset credits without a request.
 - Supabase: `quzqenavfoqsjupbtiix` (Quran). Web project `prj_nilbtl8NBZQrPO7GAVlPPNcVKVie`; dashboard `prj_ffDLeI0u4sxExBO2t5MY61ppzqZS`.
 - Flutter uses escalated `C:\src\flutter\bin\cache\dart-sdk\bin\dart.exe C:\src\flutter\bin\cache\flutter_tools.snapshot ...` because the wrapper SDK lockfile stalls. Dart format/fix uses the same executable; `dart fix` takes one target per command.
 - Next build workers require escalated `pnpm build`. Existing package store is `C:\Users\yosse\AppData\Local\pnpm\store`.
 - Ignored `.env.local` files contain public Supabase URL/anon key for local QA, no service key. Do not print or commit keys.
-- GitHub CLI reports invalid stored tokens; the read-only GitHub connector works. Git publication itself is approval-blocked regardless of authentication route.
+- GitHub CLI's stored tokens were invalid, but the existing Git credential successfully pushed and created draft PRs. Use a temporary `GH_TOKEN` only within the CLI process and restore it afterward; never print/store the credential. GitHub connector reads work, PR writes return HTTP 403.
 - Use LiteralPath for Windows bracket paths; `rg -g` for globs. Windows mapped-file error 1224 can need a brief retry; do not terminate unrelated user processes.
 - Skills applied/read: Impeccable/harden/craft floor, Supabase, Vercel deployment/CLI/React/verification/env, PDF, computer-use and OpenAI Docs for continuation.

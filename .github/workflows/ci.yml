@@ -4,7 +4,13 @@ on:
   push:
     branches: [main, dev]
   pull_request:
-  workflow_dispatch: # manual trigger — used to (re)generate RTL goldens on Linux
+  workflow_dispatch:
+    inputs:
+      update_goldens:
+        description: Regenerate reviewed golden references on Linux
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   mobile:
@@ -197,7 +203,7 @@ jobs:
           set -e
           # auto-commit on any non-main branch on manual dispatch (main is protected — a
           # bot push is rejected there; dev + feature branches accept bot pushes).
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref_name }}" != "main" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.update_goldens }}" = "true" ] && [ "${{ github.ref_name }}" != "main" ]; then
             (cd mobile && flutter test --tags golden --update-goldens)
             git add mobile/test
             if git diff --cached --quiet; then

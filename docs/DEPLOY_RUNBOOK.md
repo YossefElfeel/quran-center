@@ -4,9 +4,11 @@
 
 Public URL: `https://quran-web-sage.vercel.app`. Dashboard: `https://quran-dashboard-kohl.vercel.app`.
 
-Hosted database changes need the user's pending explicit approval. Automatic approval review rejected applying the prepared UX migration to the shared Quran project. Do not publish the new competition page before its columns and submission RPC are applied.
+The user explicitly approved the two prepared hosted UX migrations and three matching Edge functions on 2026-10-13. Do not publish the new competition page before its columns and submission RPC are applied.
 
-Publishing the feature branch to the public `YossefElfeel/quran-center` GitHub repository was separately rejected by automatic approval review. Keep the saved phase commits local until that explicit approval arrives; do not bypass the rejection through the GitHub connector. Vercel deployment remains authorized after backend readiness.
+The user also explicitly approved public source publication. The feature branch and seven stacked draft phase PRs ([14–20](https://github.com/YossefElfeel/quran-center/pulls)) are published. Vercel deployment remains authorized after backend readiness.
+
+Supabase migration MCP calls failed with an expired request-state error. After the user selected `YossefElfeel`, browser fallback applied both exact migration files transactionally with matching migration-history entries. Hosted rollback regression reported **UX OK**, with zero fixtures left. All three Edge functions are active with the intended JWT flags: invite 13, reset 10, public application 12.
 
 After approval, apply the two `20261012...ux_*.sql` migrations, run rollback smoke checks for duplicate payments, returned-evaluation notifications, family/login linking, session close retry and public application duplicates, then check security advisors. Deploy `invite-user` and `reset-password` with JWT verification enabled, and preserve the existing disabled JWT verification for the public `submit-public-application` endpoint. Include `_shared/log.ts` in that deployment. `WEB_URL` can override the verified public domain; `ALLOWED_ORIGINS` should include the actual public site.
 
@@ -14,7 +16,7 @@ In [Supabase Auth URL configuration](https://supabase.com/dashboard/project/quzq
 
 Local frontend `.env.local` files use the public Supabase URL/anon key. Optional web configuration: `NEXT_PUBLIC_WEB_URL`, `NEXT_PUBLIC_PLAY_STORE_URL` (leave blank until a listing exists), and `NEXT_PUBLIC_APPLICATION_REVIEW_DAYS` (set only for a confirmed center timeframe). Keep `.env.local` out of Git.
 
-Build/QA evidence and the exact remaining checklist are in [UX_IMPLEMENTATION.md](./UX_IMPLEMENTATION.md). No hosted backend or Vercel deployment has been completed for this UX release yet. FCM is deferred per the plan.
+Build/QA evidence and the exact remaining checklist are in [UX_IMPLEMENTATION.md](./UX_IMPLEMENTATION.md). Hosted backend release is complete; Vercel production builds and live verification are in progress. FCM is deferred per the plan.
 
 > خطوات **عمليّة** للبنود الخارجية/الحسّاسة اللي الكود فيها جاهز بس محتاجة إجراء منك
 > (تدوير مفاتيح، نشر، توجلات لوحة، مراجعة أمنية). مرتّبة بالأولوية. آخر تحديث: 2026-06-19.
