@@ -1,4 +1,4 @@
--- UX release regression suite. Run only after both UX migrations have committed.
+-- UX release regression suite. Run only after all UX migrations (through 20261013120000) have committed.
 -- All fixtures, test identities, notifications and payments roll back.
 -- Success raises "UX OK"; a failed invariant raises "UX FAIL".
 do $$
@@ -10,6 +10,8 @@ declare
   v_competition uuid; v_public_application uuid; v_duplicate_application uuid;
   v_public_phone text := '999' || lpad(floor(random()*1000000000)::bigint::text,9,'0');
   v_month date := date_trunc('month', now() at time zone 'Africa/Cairo')::date;
+  v_old_month date := '2001-01-01';
+  v_moved_household uuid;
 begin
   insert into public.person(full_name,is_minor) values ('UX Admin',false) returning id into v_admin;
   insert into public.role_assignment(person_id,role) values(v_admin,'admin');
@@ -128,5 +130,57 @@ begin
   exception when invalid_parameter_value then null;
   end;
   reset role;
-  raise exception 'UX OK — guardian linkage, payment uniqueness/void, reason guard, returned notifications, close retry and public duplicate/deadline guards (rolled back)';
+
+  -- M1: editing a guardian's household moves the membership instead of silently keeping the old one.
+  insert into public.household(name) values('UX Moved Family') returning id into v_moved_household;
+  perform set_config('request.jwt.claims',json_build_object('sub',v_admin_uid::text)::text,true);
+  set local role authenticated;
+  perform public.update_guardian_details(v_guardian,v_student,'UX Guardian','201000000099','mother',v_moved_household,null);
+  reset role;
+  if (select count(*) from public.household_member where person_id=v_guardian) <> 1
+    or not exists(select 1 from public.household_member where person_id=v_guardian and household_id=v_moved_household)
+    or exists(select 1 from public.household_member where person_id=v_guardian and household_id=v_household)
+    or (select relation::text from public.guardian_link where guardian_person_id=v_guardian and student_person_id=v_student) <> 'mother' then
+    raise exception 'UX FAIL: guardian household move did not take effect';
+  end if;
+  set local role authenticated;
+  perform public.update_guardian_details(v_guardian,v_student,'UX Guardian','201000000099','mother',null,'UX Brand New Family');
+  reset role;
+  if (select h.name from public.household_member hm join public.household h on h.id=hm.household_id where hm.person_id=v_guardian) <> 'UX Brand New Family'
+    or (select count(*) from public.household_member where person_id=v_guardian) <> 1 then
+    raise exception 'UX FAIL: guardian move to a new household did not take effect';
+  end if;
+
+  -- M3: session_writes_blocked() names the active freeze, is null otherwise, and is not exposed to anon.
+  if has_function_privilege('anon','public.session_writes_blocked()','execute')
+    or not has_function_privilege('authenticated','public.session_writes_blocked()','execute') then
+    raise exception 'UX FAIL: session_writes_blocked grants are wrong';
+  end if;
+  insert into public.feature_flag(key,enabled) values('freeze_sessions',false),('maintenance_mode',false)
+    on conflict (key) do update set enabled=false;
+  set local role authenticated;
+  if public.session_writes_blocked() is not null then raise exception 'UX FAIL: writes reported blocked with no flag on'; end if;
+  reset role;
+  update public.feature_flag set enabled=true where key='maintenance_mode';
+  set local role authenticated;
+  if public.session_writes_blocked() is distinct from 'maintenance_mode' then raise exception 'UX FAIL: maintenance mode not reported'; end if;
+  reset role;
+  update public.feature_flag set enabled=true where key='freeze_sessions';
+  set local role authenticated;
+  if public.session_writes_blocked() is distinct from 'freeze_sessions' then raise exception 'UX FAIL: session freeze not reported'; end if;
+  reset role;
+  update public.feature_flag set enabled=false where key in ('freeze_sessions','maintenance_mode');
+
+  -- Monthly close: a missed evaluation also reaches the circle's teacher with the circle and month.
+  perform public.run_monthly_close(v_old_month);
+  if not exists(select 1 from public.notification where recipient_person_id=v_new_teacher and type='monthly_eval_missed'
+    and route_data->>'circle_id'=v_new_circle::text and route_data->>'month'=v_old_month::text) then
+    raise exception 'UX FAIL: missed evaluation did not notify the circle teacher';
+  end if;
+  perform public.run_monthly_close(v_old_month);
+  if (select count(*) from public.notification where recipient_person_id=v_new_teacher and type='monthly_eval_missed'
+    and route_data->>'month'=v_old_month::text) <> 1 then
+    raise exception 'UX FAIL: monthly close re-run duplicated teacher notifications';
+  end if;
+  raise exception 'UX OK — guardian linkage/household move, payment uniqueness/void, reason guard, returned notifications, close retry, write-freeze reason, missed-eval teacher notice and public duplicate/deadline guards (rolled back)';
 end $$;

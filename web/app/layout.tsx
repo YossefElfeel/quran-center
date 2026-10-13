@@ -9,7 +9,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://quran-web-sage.vercel.app"),
   title: { default: "دار تحفيظ القرآن", template: "%s — دار تحفيظ القرآن" },
   description: "كورسات تحفيظ القرآن المجانية ومسابقات دار التحفيظ.",
-  openGraph: { title: "دار تحفيظ القرآن", description: "الكورسات المجانية والمسابقات", locale: "ar_EG", type: "website", images: ["/logo.svg"] },
+  openGraph: { title: "دار تحفيظ القرآن", description: "الكورسات المجانية والمسابقات", locale: "ar_EG", type: "website" },
+  twitter: { card: "summary_large_image" },
   icons: { icon: "/logo.svg" },
 };
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <a href="#content" className="sr-only focus:not-sr-only focus:p-4">انتقل للمحتوى</a>
     <header className="border-b border-gray-200 bg-white"><div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 py-4"><Link href="/" className="flex items-center gap-3 font-bold text-[var(--brand)]"><Image src="/logo.svg" width={40} height={40} alt="" />{name}</Link><nav aria-label="التنقّل الرئيسي" className="flex flex-wrap gap-5"><Link href="/">الرئيسية</Link><Link href="/courses">الكورسات</Link><Link href="/competition">المسابقات</Link></nav></div></header>
     <div id="content" className="flex-1">{children}</div>
-    <footer className="border-t border-gray-200 px-5 py-8"><div className="mx-auto flex max-w-5xl flex-wrap justify-between gap-5"><div><p className="font-semibold">{name}</p>{contact.center_address && <p>{contact.center_address}</p>}{phone && <div className="mt-2 flex gap-4"><a href={`tel:${phone}`} dir="ltr" className="underline">{phone}</a><a href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`} className="underline">واتساب الإدارة</a></div>}</div><div className="flex flex-wrap gap-4"><Link href="/auth/forgot" className="underline">استعادة كلمة السر</Link><Link href="/auth/confirm" className="underline">تفعيل حساب الدار</Link></div></div></footer>
+    <footer className="border-t border-gray-200 px-5 py-8"><div className="mx-auto flex max-w-5xl flex-wrap justify-between gap-5"><div><p className="font-semibold">{name}</p>{contact.center_address && <p>{contact.center_address}</p>}{phone && <div className="mt-2 flex gap-4"><a href={`tel:${phone}`} dir="ltr" className="underline">{phone}</a><a href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`} className="underline">واتساب الإدارة</a></div>}</div><div className="flex flex-wrap gap-4"><Link href="/auth/forgot" className="underline">تفعيل الحساب / نسيت كلمة السر</Link></div></div></footer>
   </body></html>;
 }

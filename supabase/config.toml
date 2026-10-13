@@ -48,6 +48,19 @@ enable_signup = true
 enable_signup = true
 enable_confirmations = false
 
+# Recovery and invite links use token_hash (verifyOtp on web /auth/confirm), so they
+# work on any device — unlike PKCE ?code= links, which only the requesting device can redeem.
+# {{ .SiteURL }} must be the public web site (hosted: https://quran-web-sage.vercel.app).
+# The hosted project does not read this file: paste the same HTML in Auth → Email Templates
+# (see docs/DEPLOY_RUNBOOK.md).
+[auth.email.template.recovery]
+subject = "استعادة كلمة السر — دار تحفيظ القرآن"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.invite]
+subject = "تفعيل حسابك في دار تحفيظ القرآن"
+content_path = "./supabase/templates/invite.html"
+
 [analytics]
 enabled = false
 
