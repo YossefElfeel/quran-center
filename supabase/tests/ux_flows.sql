@@ -6,7 +6,7 @@ declare
   v_admin uuid; v_admin_uid uuid := gen_random_uuid();
   v_teacher uuid; v_student uuid; v_curr uuid; v_level uuid; v_circle uuid; v_new_circle uuid; v_new_teacher uuid;
   v_guardian uuid; v_guardian_uid uuid := gen_random_uuid(); v_household uuid;
-  v_payment uuid; v_eval uuid; v_dev uuid; v_session uuid;
+  v_payment uuid; v_eval uuid; v_dev uuid; v_session uuid; v_complaint uuid;
   v_competition uuid; v_public_application uuid; v_duplicate_application uuid;
   v_public_phone text := '999' || lpad(floor(random()*1000000000)::bigint::text,9,'0');
   v_month date := date_trunc('month', now() at time zone 'Africa/Cairo')::date;
@@ -182,5 +182,14 @@ begin
     and route_data->>'month'=v_old_month::text) <> 1 then
     raise exception 'UX FAIL: monthly close re-run duplicated teacher notifications';
   end if;
-  raise exception 'UX OK — guardian linkage/household move, payment uniqueness/void, reason guard, returned notifications, close retry, write-freeze reason, missed-eval teacher notice and public duplicate/deadline guards (rolled back)';
+  -- Overdue complaint: one notice per manager (admin+super_admin deduped) carrying the complaint id.
+  insert into public.role_assignment(person_id,role) values(v_admin,'super_admin') on conflict do nothing;
+  insert into public.complaint(author_person_id,category,body,created_at)
+    values(v_guardian,'other','UX overdue complaint',now()-interval '3 days') returning id into v_complaint;
+  perform public.escalate_overdue_complaints();
+  if (select count(*) from public.notification where recipient_person_id=v_admin and type='complaint_overdue'
+    and route_data->>'complaint_id'=v_complaint::text) <> 1 then
+    raise exception 'UX FAIL: overdue complaint notice missing complaint_id or duplicated per role';
+  end if;
+  raise exception 'UX OK — guardian linkage/household move, payment uniqueness/void, reason guard, returned notifications, close retry, write-freeze reason, missed-eval teacher notice, complaint escalation reference and public duplicate/deadline guards (rolled back)';
 end $$;
