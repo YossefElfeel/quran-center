@@ -9,8 +9,10 @@ part 'monthly_eval_controllers.g.dart';
 @riverpod
 class CircleMonthlyEvals extends _$CircleMonthlyEvals {
   @override
-  Future<List<MonthlyEvalStudent>> build(String circleId) =>
-      ref.watch(monthlyEvalRepositoryProvider).fetchCircleEvals(circleId);
+  Future<List<MonthlyEvalStudent>> build(String circleId, {String? month}) =>
+      ref
+          .watch(monthlyEvalRepositoryProvider)
+          .fetchCircleEvals(circleId, month: month);
 
   Future<void> save({
     required String studentPersonId,
@@ -21,6 +23,7 @@ class CircleMonthlyEvals extends _$CircleMonthlyEvals {
         .read(monthlyEvalRepositoryProvider)
         .saveEval(
           studentPersonId: studentPersonId,
+          month: month,
           summary: summary,
           behavior: behavior,
         );
@@ -35,6 +38,12 @@ class PendingMonthlyEvals extends _$PendingMonthlyEvals {
   @override
   Future<List<PendingMonthlyEval>> build() =>
       ref.watch(monthlyEvalRepositoryProvider).fetchPending();
+
+  Future<void> returnForRevision(String id, String reason) async {
+    await ref.read(monthlyEvalRepositoryProvider).returnForRevision(id, reason);
+    ref.invalidateSelf();
+    await future;
+  }
 
   Future<void> approve(String id) async {
     await ref.read(monthlyEvalRepositoryProvider).approve(id);

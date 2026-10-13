@@ -1,6 +1,7 @@
+import { PersonLink } from "@/components/person-link";
 import { DeleteButton } from "@/components/admin-controls";
 import { Pager, SearchForm } from "@/components/list-controls";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { deleteEnrollment } from "./actions";
 import {
@@ -27,7 +28,7 @@ type CircleRow = {
 type EnrollRow = {
   id: string;
   status: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
   circle: { id: string; name: string } | null;
 };
 
@@ -41,12 +42,13 @@ export default async function EnrollmentPage({
   const { q, page: pageRaw } = await searchParams;
   const page = Math.max(1, Number(pageRaw) || 1);
   const offset = (page - 1) * PAGE_SIZE;
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
 
-  const { data: circleData } = await supabase
+  const { data: circleData, error: loadError1 } = await supabase
     .from("circle")
     .select("id, name, level:level_id(name, curriculum:curriculum_id(name))")
     .order("created_at");
+  if (loadError1) throw new Error('data_load_failed');
   const circles: CircleOption[] = ((circleData ?? []) as unknown as CircleRow[])
     .map((c) => {
       const lvl = c.level?.name ?? "";
@@ -59,14 +61,15 @@ export default async function EnrollmentPage({
   let enrollQuery = supabase
     .from("enrollment")
     .select(
-      "id, status, student:student_person_id!inner(full_name), circle:circle_id(id, name)",
+      "id, status, student:student_person_id!inner(id, full_name), circle:circle_id(id, name)",
       { count: "exact" },
     )
     .in("status", ["active", "paused"])
     .order("enrolled_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
   if (q) enrollQuery = enrollQuery.ilike("student.full_name", `%${q}%`);
-  const { data: enrollData, count: enrollCount } = await enrollQuery;
+  const { data: enrollData, count: enrollCount, error: loadError2 } = await enrollQuery;
+  if (loadError2) throw new Error('data_load_failed');
   const enrollments = (enrollData ?? []) as unknown as EnrollRow[];
   const totalPages = Math.ceil((enrollCount ?? 0) / PAGE_SIZE);
 
@@ -116,7 +119,7 @@ export default async function EnrollmentPage({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold">
-                    {e.student?.full_name ?? "—"}
+                    <PersonLink person={e.student} />
                   </span>
                   <span className="text-xs text-foreground/50">
                     {e.circle?.name ?? "—"} ·{" "}

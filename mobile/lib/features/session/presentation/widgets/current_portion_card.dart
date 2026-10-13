@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../domain/portion.dart';
 
 /// كارت المقطع الحالي للحلقة — يعرض المقطع أو زرّ تحديده.
@@ -20,10 +21,9 @@ class CurrentPortionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Portion? p = portion;
-    return Card(
-      margin: const EdgeInsets.all(AppSpacing.md),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: AppCard(
         child: p == null ? _Empty(onSetPortion: onSetPortion) : _Current(p),
       ),
     );

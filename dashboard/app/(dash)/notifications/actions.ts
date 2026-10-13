@@ -1,9 +1,10 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
 import { logAudit } from "@/lib/audit";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
@@ -14,13 +15,16 @@ export async function broadcast(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("broadcast", fd);
+  if (formError) return formError;
+
   const audience = String(fd.get("audience") ?? "");
   const title = String(fd.get("title") ?? "").trim();
   const body = String(fd.get("body") ?? "").trim();
   if (!title) return { ok: false, error: "العنوان مطلوب." };
   if (!audience) return { ok: false, error: "اختر الجمهور." };
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   let ids: string[] = [];
   if (audience === "all") {
     const { data } = await supabase.from("app_user").select("person_id");
@@ -60,10 +64,13 @@ export async function retractNotification(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("retractNotification", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   if (!id) return { ok: false, error: "الإشعار مطلوب." };
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("notification").delete().eq("id", id);
+  const supabase = await getDataClient();
+  const { error } = await supabase.from("notification").delete().eq("id", id).select("id").single();
   if (error) return { ok: false, error: "فشل السحب." };
   await logAudit({
     action: "notification_retracted",

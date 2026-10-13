@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/error/app_exception.dart';
 import '../../data/feedback_repository.dart';
 import '../../domain/complaint.dart';
 import '../../domain/teacher_rating_row.dart';
@@ -14,7 +15,7 @@ class MyComplaints extends _$MyComplaints {
       ref.watch(feedbackRepositoryProvider).fetchMyComplaints();
 
   Future<void> add({required String category, required String body}) async {
-    if (body.trim().isEmpty) return;
+    if (body.trim().isEmpty) throw const ValidationException();
     await ref
         .read(feedbackRepositoryProvider)
         .submitComplaint(category: category, body: body.trim());
@@ -31,7 +32,7 @@ class ComplaintInbox extends _$ComplaintInbox {
       ref.watch(feedbackRepositoryProvider).fetchInbox();
 
   Future<void> respond(String id, String response) async {
-    if (response.trim().isEmpty) return;
+    if (response.trim().isEmpty) throw const ValidationException();
     await ref.read(feedbackRepositoryProvider).respond(id, response.trim());
     ref.invalidateSelf();
     await future;

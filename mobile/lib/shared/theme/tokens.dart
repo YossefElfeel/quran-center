@@ -1,30 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// ألوان التطبيق (design tokens) — مصدر واحد للألوان.
-///
-/// القيم دي هي **لوحة Emerald Nour (Light)**. الـ widgets القديمة لسه بتستعملها
-/// مباشرةً؛ في مرحلة التحويل (P2) بننقلها تدريجيًا لـ [AppPalette] عشان الدارك
-/// يشتغل صح. للوضع الفاتح القيم هنا = نفس قيم `AppPalette.light`.
-abstract final class AppColors {
-  const AppColors._();
-
-  static const Color primary = Color(0xFF0C7C59); // زمرّدي أغنى
-  static const Color primaryDark = Color(0xFF0A5C43);
-  static const Color primaryDeep = Color(0xFF073A2B);
-  static const Color accent = Color(0xFFC8A03C); // ذهبي
-  static const Color accentHi = Color(0xFFE6C463);
-  static const Color background = Color(0xFFF7F8F5);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFEEF1EC);
-  static const Color textPrimary = Color(0xFF14241D);
-  static const Color textSecondary = Color(0xFF5B6B63);
-  static const Color border = Color(0xFFE2E7E1);
-  static const Color error = Color(0xFFC0392B);
-  static const Color success = Color(0xFF1E8E5A);
-  static const Color warning = Color(0xFFC98A1A);
-  static const Color info = Color(0xFF2D6CC0);
-}
-
 /// مقياس المسافات الموحّد.
 abstract final class AppSpacing {
   const AppSpacing._();
@@ -132,6 +107,32 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.synced,
     required this.shadowColor,
   });
+
+  Color foregroundOn(Color background) => background.computeLuminance() > .179
+      ? const Color(0xff000000)
+      : const Color(0xffffffff);
+  Color get onSuccess => foregroundOn(success);
+  Color get onWarning => foregroundOn(warning);
+  Color get onError => foregroundOn(error);
+  Color get onAccent => foregroundOn(accent);
+  Color get warningText => _accessibleText(warning);
+  Color get accentText => _accessibleText(accent);
+  Color _accessibleText(Color color) {
+    Color result = color;
+    for (int i = 0; i <= 20; i++) {
+      result = Color.lerp(color, textPrimary, i / 20)!;
+      final double a = result.computeLuminance();
+      bool readableOn(Color background) {
+        final double b = background.computeLuminance();
+        return ((a > b ? a : b) + .05) / ((a < b ? a : b) + .05) >= 4.5;
+      }
+
+      if (readableOn(surface) && readableOn(background)) {
+        return result;
+      }
+    }
+    return textPrimary;
+  }
 
   final Color primary;
   final Color primaryDeep;

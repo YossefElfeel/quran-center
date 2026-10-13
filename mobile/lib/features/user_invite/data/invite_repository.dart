@@ -1,14 +1,15 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
+import '../domain/invite_failure.dart';
 
 part 'invite_repository.g.dart';
 
 /// دعوة مستخدم (ولي أمر/معلّم/مشرف/أدمن) عبر Edge Function `invite-user`
 /// (service-role سيرفر-سايد، بيتأكد إن النده أدمن). بيرجّع رابط الدعوة عشان
-/// يتبعت للمستخدم (واتساب/إيميل) يكمّل بيه الباسورد.
+/// يتبعت للمستخدم (واتساب/إيميل) يكمّل بيه الباسورد. الفشل بيترمي كـ
+/// [InviteException] والرسالة بتتعمل في الـ presentation.
 class InviteRepository {
   InviteRepository(this._client);
 
@@ -18,6 +19,7 @@ class InviteRepository {
     required String email,
     required String fullName,
     required String role,
+    String? existingPersonId,
   }) async {
     try {
       final FunctionResponse res = await _client.functions.invoke(
@@ -26,20 +28,16 @@ class InviteRepository {
           'email': email,
           'full_name': fullName,
           'role': role,
+          'existing_person_id': ?existingPersonId,
         },
       );
       final dynamic data = res.data;
       if (data is Map && data['action_link'] is String) {
         return data['action_link'] as String;
       }
-      return null;
+      throw const InviteException(InviteFailure.linkMissing);
     } on FunctionException catch (e) {
-      if (e.status == 403) {
-        throw const PermissionDeniedException('الدعوة للأدمن بس');
-      }
-      throw const ValidationException(
-        'مش قادرين نبعت الدعوة — اتأكد من البيانات وجرّب تاني',
-      );
+      throw InviteException(InviteFailure.fromResponse(e.status, e.details));
     }
   }
 }

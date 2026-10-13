@@ -1,3 +1,27 @@
+import 'package:flutter/services.dart';
+
+/// Normalize Arabic-Indic and Persian digits without changing signs or spacing.
+String normalizeArabicDigits(String input) => input.replaceAllMapped(
+  RegExp('[٠-٩۰-۹]'),
+  (Match match) {
+    final int code = match[0]!.codeUnitAt(0);
+    return String.fromCharCode(48 + code - (code >= 0x06f0 ? 0x06f0 : 0x0660));
+  },
+);
+
+int? parseLocalizedInt(String input) =>
+    int.tryParse(normalizeArabicDigits(input).trim());
+double? parseLocalizedDouble(String input) =>
+    double.tryParse(normalizeArabicDigits(input).replaceAll('٫', '.').trim());
+
+class ArabicDigitsInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) => newValue.copyWith(text: normalizeArabicDigits(newValue.text));
+}
+
 /// تحويل الأرقام الغربية (0-9) لأرقام عربية-هندية (٠-٩) **للعرض فقط**.
 /// التخزين/الإرسال بيفضل بأرقام غربية.
 String toArabicDigits(String input) {

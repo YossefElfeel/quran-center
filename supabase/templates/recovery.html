@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>استعادة كلمة السر</title>
+  </head>
+  <body style="margin:0;padding:24px;background:#f8faf9;font-family:Tahoma,Arial,sans-serif;color:#14211b;direction:rtl;text-align:right;">
+    <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;">
+      <h1 style="margin:0 0 16px;font-size:22px;color:#0c7c59;">استعادة كلمة السر</h1>
+      <p style="margin:0 0 12px;line-height:1.8;">أهلًا، وصلنا طلب لتغيير كلمة السر لحسابك في دار تحفيظ القرآن ({{ .Email }}).</p>
+      <p style="margin:0 0 20px;line-height:1.8;">اضغط على الزرار ده وعيّن كلمة سر جديدة. الرابط بيشتغل على أي جهاز، ومرة واحدة بس.</p>
+      <p style="margin:0 0 24px;">
+        <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery"
+           style="display:inline-block;background:#0c7c59;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;">عيّن كلمة سر جديدة</a>
+      </p>
+      <p style="margin:0 0 8px;line-height:1.8;font-size:14px;color:#4b5563;">لو الزرار مش شغّال، انسخ الرابط ده وافتحه في المتصفح:</p>
+      <p style="margin:0 0 20px;font-size:13px;direction:ltr;text-align:left;word-break:break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=recovery</p>
+      <p style="margin:0;line-height:1.8;font-size:14px;color:#4b5563;">لو إنت ما طلبتش تغيير كلمة السر، تجاهل الرسالة دي وحسابك هيفضل زي ما هو.</p>
+    </div>
+  </body>
+</html>

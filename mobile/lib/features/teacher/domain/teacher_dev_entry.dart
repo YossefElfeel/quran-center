@@ -6,6 +6,8 @@ class TeacherDevEntry {
     required this.status,
     this.progress,
     this.teacherName,
+    this.approvedAt,
+    this.returnReason,
   });
 
   factory TeacherDevEntry.fromMap(Map<String, dynamic> map) {
@@ -16,7 +18,11 @@ class TeacherDevEntry {
       month: DateTime.parse(map['month'] as String),
       status: map['status'] as String,
       progress: map['memorization_progress'] as String?,
+      returnReason: map['return_reason'] as String?,
       teacherName: teacher?['full_name'] as String?,
+      approvedAt: map['approved_at'] == null
+          ? null
+          : DateTime.parse(map['approved_at'] as String),
     );
   }
 
@@ -24,7 +30,9 @@ class TeacherDevEntry {
   final DateTime month;
   final String status;
   final String? progress;
+  final String? returnReason;
   final String? teacherName;
+  final DateTime? approvedAt;
 
   bool get isApproved => status == 'approved';
 }

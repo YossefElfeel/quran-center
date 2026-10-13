@@ -13,11 +13,18 @@ class CompetitionRepository {
 
   final SupabaseClient _client;
 
-  Future<List<CompetitionRow>> fetchCompetitions() async {
+  static const int pageSize = 50;
+
+  Future<List<CompetitionRow>> fetchCompetitions({
+    int offset = 0,
+    int limit = pageSize,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('competition')
         .select('id, name, status')
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .range(offset, offset + limit - 1)
+        .timeout(const Duration(seconds: 12));
     return rows.map(CompetitionRow.fromMap).toList();
   }
 
@@ -29,8 +36,10 @@ class CompetitionRepository {
   }
 
   Future<List<CompetitionApplicationRow>> fetchApplications(
-    String competitionId,
-  ) async {
+    String competitionId, {
+    int offset = 0,
+    int limit = pageSize,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('competition_application')
         .select(
@@ -39,7 +48,9 @@ class CompetitionRepository {
           'pub:public_registration_id(name)',
         )
         .eq('competition_id', competitionId)
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: true)
+        .range(offset, offset + limit - 1)
+        .timeout(const Duration(seconds: 12));
     return rows.map(CompetitionApplicationRow.fromMap).toList();
   }
 

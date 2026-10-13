@@ -1,4 +1,7 @@
 "use client";
+import { SubmitButton } from "@/components/ui/button";
+import { FieldInput, FieldSelect } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
@@ -11,18 +14,12 @@ import {
 
 export type Option = { id: string; label: string };
 
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
-const btnSm =
-  "rounded-md border border-border px-2 py-1 text-xs hover:bg-border/40 disabled:opacity-50";
-
 export function ApplicantForm({ levels }: { levels: Option[] }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     addApplicant,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -35,18 +32,18 @@ export function ApplicantForm({ levels }: { levels: Option[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         اسم المتقدّم
-        <input name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className="text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <select name="gender" defaultValue="male" className={input}>
+        <FieldSelect feedback={state} name="gender" defaultValue="male" className="text-sm">
           <option value="male">ذكر</option>
           <option value="female">أنثى</option>
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         المستوى المستهدف
-        <select name="level_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="level_id" required defaultValue="" className="text-sm">
           <option value="" disabled>
             — اختر مستوى —
           </option>
@@ -55,11 +52,9 @@ export function ApplicantForm({ levels }: { levels: Option[] }) {
               {l.label}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "أضف لقائمة الانتظار"}
-      </button>
+      <SubmitButton className="text-sm">أضف لقائمة الانتظار</SubmitButton>
       {state?.ok === false ? (
         <span className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}
@@ -78,34 +73,33 @@ export function PlacementForm({
   levels: Option[];
   currentLevelId: string;
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     recordPlacement,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="waiting_id" value={waitingId} />
       <input type="hidden" name="student_person_id" value={studentPersonId} />
       <span className="text-xs text-foreground/50">اختبار تحديد:</span>
-      <select
+      <FieldSelect feedback={state}
         name="result_level_id"
         defaultValue={currentLevelId}
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       >
         {levels.map((l) => (
           <option key={l.id} value={l.id}>
             {l.label}
           </option>
         ))}
-      </select>
-      <input
+      </FieldSelect>
+      <FieldInput feedback={state}
         name="notes"
         placeholder="ملاحظات (اختياري)"
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       />
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "سجّل النتيجة"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">سجّل النتيجة</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}
@@ -122,16 +116,17 @@ export function AssignForm({
   studentPersonId: string;
   circles: Option[];
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     enrollFromWaiting,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="waiting_id" value={waitingId} />
       <input type="hidden" name="student_person_id" value={studentPersonId} />
       <span className="text-xs text-foreground/50">إسناد لحلقة:</span>
-      <select name="circle_id" required defaultValue="" className={`${input} py-1`}>
+      <FieldSelect feedback={state} name="circle_id" required defaultValue="" className="py-1 text-sm">
         <option value="" disabled>
           — اختر حلقة —
         </option>
@@ -140,10 +135,8 @@ export function AssignForm({
             {c.label}
           </option>
         ))}
-      </select>
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "أسنِد وفعّل"}
-      </button>
+      </FieldSelect>
+      <SubmitButton size="sm" variant="secondary">أسنِد وفعّل</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}

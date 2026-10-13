@@ -1,47 +1,53 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { PersonLink } from "@/components/person-link";
+import { getDataClient } from "@/lib/supabase/data-client";
+import { formatMonth,formatNumber } from "@/lib/format";
 
 import { approveDevelopment, approveMonthlyEval } from "./actions";
-import { ApproveButton, RatingToggle } from "./forms";
+import { ApproveButton, ReturnButton, RatingToggle } from "./forms";
 
 type DevRow = {
   id: string;
   month: string;
-  teacher: { full_name: string } | null;
+  teacher: { id: string; full_name: string } | null;
+  memorization_progress: string | null;
 };
 type MseRow = {
   id: string;
   month: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
+  summary: string | null;
+  behavior: string | null;
 };
 type RatingRow = {
   id: string;
   stars: number;
   comment: string | null;
   hidden_by_manager: boolean;
-  teacher: { full_name: string } | null;
+  teacher: { id: string; full_name: string } | null;
 };
 
 export default async function EvaluationsPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const [devRes, mseRes, ratingRes] = await Promise.all([
     supabase
       .from("teacher_development")
-      .select("id, month, teacher:teacher_person_id(full_name)")
+      .select("id, month, memorization_progress, teacher:teacher_person_id(id, full_name)")
       .eq("status", "submitted")
       .order("month", { ascending: false }),
     supabase
       .from("monthly_student_evaluation")
-      .select("id, month, student:student_person_id(full_name)")
+      .select("id, month, summary, behavior, student:student_person_id(id, full_name)")
       .eq("status", "submitted")
       .order("month", { ascending: false }),
     supabase
       .from("teacher_rating")
       .select(
-        "id, stars, comment, hidden_by_manager, teacher:teacher_person_id(full_name)",
+        "id, stars, comment, hidden_by_manager, teacher:teacher_person_id(id, full_name)",
       )
       .order("created_at", { ascending: false })
       .limit(50),
   ]);
+  if (devRes.error || mseRes.error || ratingRes.error) throw new Error("evaluations_load_failed");
   const devs = (devRes.data ?? []) as unknown as DevRow[];
   const mses = (mseRes.data ?? []) as unknown as MseRow[];
   const ratings = (ratingRes.data ?? []) as unknown as RatingRow[];
@@ -55,31 +61,31 @@ export default async function EvaluationsPage() {
         </p>
       </div>
 
-      <Section title={`اعتماد تطوّر المعلّمين (${devs.length})`}>
+      <Section title={`اعتماد تطوّر المعلّمين (${formatNumber(devs.length)})`}>
         {devs.length === 0 ? (
           <Empty>مفيش طلبات معلّقة.</Empty>
         ) : (
           devs.map((d) => (
             <Row key={d.id}>
               <span>
-                <b>{d.teacher?.full_name ?? "—"}</b> — {d.month}
+                <b><PersonLink person={d.teacher} /></b> — {formatMonth(d.month)}
               </span>
-              <ApproveButton action={approveDevelopment} id={d.id} />
+              <p className="whitespace-pre-wrap">{d.memorization_progress}</p><ApproveButton action={approveDevelopment} id={d.id} /><ReturnButton id={d.id} table="teacher_development" />
             </Row>
           ))
         )}
       </Section>
 
-      <Section title={`اعتماد التقييم الشهري للطلاب (${mses.length})`}>
+      <Section title={`اعتماد التقييم الشهري للطلاب (${formatNumber(mses.length)})`}>
         {mses.length === 0 ? (
           <Empty>مفيش طلبات معلّقة.</Empty>
         ) : (
           mses.map((m) => (
             <Row key={m.id}>
               <span>
-                <b>{m.student?.full_name ?? "—"}</b> — {m.month}
+                <b><PersonLink person={m.student} /></b> — {formatMonth(m.month)}
               </span>
-              <ApproveButton action={approveMonthlyEval} id={m.id} />
+              <div className="whitespace-pre-wrap"><p>{m.summary}</p><p>{m.behavior}</p></div><ApproveButton action={approveMonthlyEval} id={m.id} /><ReturnButton id={m.id} table="monthly_student_evaluation" />
             </Row>
           ))
         )}
@@ -92,7 +98,7 @@ export default async function EvaluationsPage() {
           ratings.map((r) => (
             <Row key={r.id}>
               <span className={r.hidden_by_manager ? "text-foreground/40" : ""}>
-                <b>{r.teacher?.full_name ?? "—"}</b> — {"★".repeat(r.stars)}
+                <b><PersonLink person={r.teacher} /></b> — {"★".repeat(r.stars)}
                 {r.comment ? ` · ${r.comment}` : ""}
                 {r.hidden_by_manager ? " (مخفي)" : ""}
               </span>

@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../../family/presentation/widgets/add_guardian_link_sheet.dart';
 import '../../domain/enrolled_student.dart';
 import '../controllers/circle_roster_controller.dart';
-import '../widgets/add_student_sheet.dart';
+import '../widgets/enroll_student_flow.dart';
 import '../widgets/student_tile.dart';
 
 /// روستر حلقة — الطلبة المسجّلين + تسجيل طالب جديد.
@@ -33,11 +36,7 @@ class CircleRosterScreen extends ConsumerWidget {
     return AppScaffold(
       title: circleName,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          builder: (BuildContext _) => AddStudentSheet(circleId: circleId),
-        ),
+        onPressed: () => enrollStudentFlow(context, ref, circleId: circleId),
         icon: const Icon(Icons.person_add),
         label: Text(l.enrEnrollStudent),
       ),
@@ -49,15 +48,38 @@ class CircleRosterScreen extends ConsumerWidget {
               ref.invalidate(circleRosterControllerProvider(circleId)),
         ),
         data: (List<EnrolledStudent> items) => items.isEmpty
-            ? EmptyState(message: l.enrRosterEmpty, icon: Icons.groups_outlined)
+            ? EmptyState(
+                message: l.enrRosterEmpty,
+                icon: Icons.groups_outlined,
+                action: AppButton(
+                  label: l.enrEnrollStudent,
+                  onPressed: () =>
+                      enrollStudentFlow(context, ref, circleId: circleId),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(circleRosterControllerProvider(circleId)),
                 child: ListView.builder(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) =>
-                      StudentTile(student: items[i]),
+                  itemBuilder: (BuildContext context, int i) => StudentTile(
+                    key: ValueKey<String>(items[i].enrollmentId),
+                    student: items[i],
+                    trailing: IconButton(
+                      tooltip: l.famLinkSheetTitle,
+                      icon: const Icon(Icons.family_restroom),
+                      // Opens the guardian sheet with this child pre-selected.
+                      onPressed: () => showAppModalSheet<void>(
+                        context: context,
+                        title: l.famLinkSheetTitle,
+                        builder: (BuildContext _) => AddGuardianLinkSheet(
+                          childPersonId: items[i].studentPersonId,
+                          childName: items[i].name,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
       ),

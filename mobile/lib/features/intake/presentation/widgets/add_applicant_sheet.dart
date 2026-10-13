@@ -5,6 +5,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_select_field.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../enrollment/domain/gender.dart';
 import '../../domain/level_option.dart';
@@ -22,6 +24,7 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
   final TextEditingController _name = TextEditingController();
   Gender _gender = Gender.male;
   String? _levelId;
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
   bool _saving = false;
 
   @override
@@ -31,22 +34,28 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
   }
 
   Future<void> _save() async {
+    if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final String name = _name.text.trim();
     final String? levelId = _levelId;
+    // الفاليديتورز بتغطّي الحالتين؛ ده حارس بس.
     if (name.isEmpty || levelId == null) return;
     setState(() => _saving = true);
     try {
       await ref
           .read(waitingListControllerProvider.notifier)
           .addApplicant(name: name, gender: _gender, levelId: levelId);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(
+          context,
+          AppL10n.of(context).commonSavedSuccessfully,
+        );
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
       final AppL10n l = AppL10n.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.itkAddApplicantError)));
+      AppSnackbar.error(context, l.itkAddApplicantError);
     }
   }
 
@@ -56,24 +65,18 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
     final AsyncValue<List<LevelOption>> levels = ref.watch(
       levelOptionsProvider,
     );
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
-      ),
+    return Form(
+      key: _form,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(
-            l.itkNewApplicant,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
+          AppTextField(
+            controller: _name,
+            label: l.itkApplicantNameLabel,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
           ),
-          const SizedBox(height: AppSpacing.lg),
-          AppTextField(controller: _name, label: l.itkApplicantNameLabel),
           const SizedBox(height: AppSpacing.lg),
           SegmentedButton<Gender>(
             segments: <ButtonSegment<Gender>>[
@@ -88,20 +91,17 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
                 setState(() => _gender = s.first),
           ),
           const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(l.itkTargetLevel),
-          ),
           levels.when(
             loading: () => const LinearProgressIndicator(),
             error: (Object e, StackTrace _) => AppErrorView(
               message: l.itkLevelsLoadError,
               onRetry: () => ref.invalidate(levelOptionsProvider),
             ),
-            data: (List<LevelOption> list) => DropdownButton<String>(
-              isExpanded: true,
+            data: (List<LevelOption> list) => AppSelectField<String>(
+              label: l.itkTargetLevel,
               value: _levelId,
-              hint: Text(l.itkChooseLevel),
+              hint: l.itkChooseLevel,
+              validator: (String? v) => v == null ? l.itkChooseLevel : null,
               items: list
                   .map(
                     (LevelOption l) => DropdownMenuItem<String>(

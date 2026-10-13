@@ -32,3 +32,13 @@ class HouseholdsController extends _$HouseholdsController {
     await future;
   }
 }
+
+/// الأسر المتأخّرة (للهوم) — مفلترة على السيرفر.
+@riverpod
+Future<List<HouseholdSummary>> overdueHouseholds(Ref ref) =>
+    ref.watch(subscriptionRepositoryProvider).fetchOverdueHouseholds();
+
+/// أسرة واحدة بالحالة (لفتح شيت الدفع من شاشة أفراد الأسرة).
+@riverpod
+Future<HouseholdSummary?> householdById(Ref ref, String id) =>
+    ref.watch(subscriptionRepositoryProvider).fetchHousehold(id);

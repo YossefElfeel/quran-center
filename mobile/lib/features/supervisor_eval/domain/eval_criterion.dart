@@ -10,12 +10,6 @@ enum EvalCriterion {
     EvalCriterion.mushafReading => 'mushaf_reading',
   };
 
-  String get labelAr => switch (this) {
-    EvalCriterion.memorization => 'الحفظ',
-    EvalCriterion.recitation => 'التلاوة',
-    EvalCriterion.mushafReading => 'القراءة من المصحف',
-  };
-
   static EvalCriterion fromDb(String value) => switch (value) {
     'recitation' => EvalCriterion.recitation,
     'mushaf_reading' => EvalCriterion.mushafReading,

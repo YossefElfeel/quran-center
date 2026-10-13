@@ -1,37 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/env/env.dart';
+import '../../../../core/error/app_exception.dart';
+import '../../../../core/settings/settings_repository.dart';
+import '../../../../shared/presentation/exception_message.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/login_controller.dart';
+import '../widgets/center_logo.dart';
 
-/// شاشة الدخول — إيميل + باسورد. النصوص من l10n (AppL10n) — أول شاشة متعرّبة بمفاتيح.
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
-
   @override
-  Widget build(BuildContext context) {
-    return AppScaffold(
-      title: AppL10n.of(context).loginTitle,
-      body: const _LoginForm(),
-    );
-  }
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginForm extends ConsumerStatefulWidget {
-  const _LoginForm();
-
-  @override
-  ConsumerState<_LoginForm> createState() => _LoginFormState();
-}
-
-class _LoginFormState extends ConsumerState<_LoginForm> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
+  bool _visible = false;
   @override
   void dispose() {
     _email.dispose();
@@ -40,7 +36,10 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
   }
 
   Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (ref.read(loginControllerProvider).isLoading ||
+        !_form.currentState!.validate()) {
+      return;
+    }
     await ref
         .read(loginControllerProvider.notifier)
         .signIn(email: _email.text.trim(), password: _password.text);
@@ -50,52 +49,190 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<void> state = ref.watch(loginControllerProvider);
-    ref.listen<AsyncValue<void>>(loginControllerProvider, (
-      AsyncValue<void>? prev,
-      AsyncValue<void> next,
-    ) {
+    ref.listen(loginControllerProvider, (_, AsyncValue<void> next) {
       if (next.hasError && !next.isLoading) {
-        ScaffoldMessenger.of(
+        final Object? error = next.error;
+        AppSnackbar.error(
           context,
-        ).showSnackBar(SnackBar(content: Text(l.loginFailed)));
+          error is AppException
+              ? error.localizedMessage(AppL10n.of(context))
+              : l.loginFailed,
+        );
       }
     });
-
-    final bool loading = state.isLoading;
-
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            TextFormField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              textDirection: TextDirection.ltr,
-              decoration: InputDecoration(
-                labelText: l.emailLabel,
-                hintText: 'name@example.com',
+    return AppScaffold(
+      title: l.loginTitle,
+      body: AutofillGroup(
+        child: Form(
+          key: _form,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: <Widget>[
+              const Center(child: CenterLogo()),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                ref.watch(publicCenterNameProvider).asData?.value ??
+                    AppSettings.defaults.centerName,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
+              const SizedBox(height: AppSpacing.xl),
+              AppTextField(
+                controller: _email,
+                label: l.emailLabel,
+                hint: 'name@example.com',
+                keyboardType: TextInputType.emailAddress,
+                textDirection: TextDirection.ltr,
+                autofillHints: const <String>[
+                  AutofillHints.username,
+                  AutofillHints.email,
+                ],
+                textInputAction: TextInputAction.next,
+                validator: (String? v) =>
+                    v == null ||
+                        !RegExp(
+                          r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                        ).hasMatch(v.trim())
+                    ? l.commonEmailInvalid
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppTextField(
+                controller: _password,
+                label: l.passwordLabel,
+                obscureText: !_visible,
+                autofillHints: const <String>[AutofillHints.password],
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                validator: (String? v) =>
+                    v == null || v.isEmpty ? l.passwordRequired : null,
+                suffix: IconButton(
+                  tooltip: _visible
+                      ? l.commonHidePassword
+                      : l.commonShowPassword,
+                  icon: Icon(
+                    _visible ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () => setState(() => _visible = !_visible),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppButton(
+                label: l.signIn,
+                isLoading: state.isLoading,
+                onPressed: _submit,
+              ),
+              TextButton(
+                onPressed: () => showAppModalSheet<void>(
+                  context: context,
+                  title: l.authResetPasswordTitle,
+                  builder: (_) => _ResetPasswordForm(initialEmail: _email.text),
+                ),
+                child: Text(l.authForgotPassword),
+              ),
+              if (Env.webUrl.isNotEmpty)
+                TextButton(
+                  onPressed: () async {
+                    try {
+                      if (!await launchUrl(
+                        Uri.parse(Env.webUrl),
+                        mode: LaunchMode.externalApplication,
+                      )) {
+                        throw StateError('launch');
+                      }
+                    } catch (_) {
+                      if (context.mounted) {
+                        AppSnackbar.error(context, l.authOpenWebsiteFailed);
+                      }
+                    }
+                  },
+                  child: Text(l.authBrowseCoursesCompetitions),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResetPasswordForm extends ConsumerStatefulWidget {
+  const _ResetPasswordForm({required this.initialEmail});
+  final String initialEmail;
+  @override
+  ConsumerState<_ResetPasswordForm> createState() => _ResetPasswordFormState();
+}
+
+class _ResetPasswordFormState extends ConsumerState<_ResetPasswordForm> {
+  late final TextEditingController _email = TextEditingController(
+    text: widget.initialEmail,
+  );
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
+  bool _busy = false;
+  bool _sent = false;
+  String? _error;
+  @override
+  void dispose() {
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    if (_busy || !_form.currentState!.validate()) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authRepositoryProvider).resetPassword(_email.text.trim());
+      if (mounted) setState(() => _sent = true);
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => _error = e is AppException
+              ? e.localizedMessage(AppL10n.of(context))
+              : AppL10n.of(context).authResetRequestFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (_sent)
+            Text(l.authResetLinkSentNote)
+          else ...<Widget>[
+            AppTextField(
+              controller: _email,
+              label: l.emailLabel,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _send(),
               validator: (String? v) =>
-                  (v == null || v.trim().isEmpty) ? l.emailRequired : null,
+                  v == null ||
+                      !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim())
+                  ? l.commonEmailInvalid
+                  : null,
             ),
             const SizedBox(height: AppSpacing.md),
-            TextFormField(
-              controller: _password,
-              obscureText: true,
-              decoration: InputDecoration(labelText: l.passwordLabel),
-              validator: (String? v) =>
-                  (v == null || v.isEmpty) ? l.passwordRequired : null,
-            ),
-            const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: loading ? l.signingIn : l.signIn,
-              onPressed: loading ? null : _submit,
+              label: l.authSendResetLink,
+              isLoading: _busy,
+              onPressed: _send,
             ),
           ],
-        ),
+          if (_error != null)
+            Text(_error!, style: TextStyle(color: context.palette.error)),
+        ],
       ),
     );
   }

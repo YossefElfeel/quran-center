@@ -4,13 +4,15 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
-import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_approval_actions.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/teacher_repository.dart';
 import '../../domain/teacher_dev_entry.dart';
 import '../controllers/teacher_controllers.dart';
 
@@ -33,32 +35,44 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(pendingDevelopmentProvider),
         ),
         data: (List<TeacherDevEntry> items) => items.isEmpty
-            ? EmptyState(message: l.tchNoPendingApprovals, icon: Icons.done_all)
+            ? EmptyState(
+                message: l.tchNoPendingApprovals,
+                icon: Icons.done_all,
+                title: l.tchAllRequestsReviewed,
+                action: TextButton(
+                  onPressed: () => ref.invalidate(pendingDevelopmentProvider),
+                  child: Text(l.tchRefreshRequests),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(pendingDevelopmentProvider),
-                child: ListView.builder(
+                child: AppPagedList<TeacherDevEntry>(
+                  items: items,
+                  loadPage: (offset) => ref
+                      .read(teacherRepositoryProvider)
+                      .fetchPendingDevelopment(offset: offset),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) {
-                    final TeacherDevEntry e = items[i];
-                    return AppListCard(
-                      leadingIcon: Icons.person,
-                      title: e.teacherName ?? l.tchTeacherFallback,
-                      subtitle:
-                          '${e.progress ?? '—'}\n'
-                          '${arabicNumber(e.month.month)}/'
-                          '${arabicNumber(e.month.year)}',
-                      trailing: AppButton(
-                        label: l.tchApprove,
-                        onPressed: () => ref
-                            .read(pendingDevelopmentProvider.notifier)
-                            .approve(e.id),
-                        variant: AppButtonVariant.tonal,
-                        expanded: false,
-                      ),
-                    );
-                  },
+                  itemBuilder:
+                      (BuildContext context, TeacherDevEntry e, int i) {
+                        return AppListCard(
+                          leadingIcon: Icons.person,
+                          title: e.teacherName ?? l.tchTeacherFallback,
+                          subtitle:
+                              '${e.progress ?? '—'}\n'
+                              '${arabicNumber(e.month.month)}/'
+                              '${arabicNumber(e.month.year)}',
+                          trailing: AppApprovalActions(
+                            subject: l.tchDevApprovalSubject,
+                            onApprove: () => ref
+                                .read(pendingDevelopmentProvider.notifier)
+                                .approve(e.id),
+                            onReturn: (String reason) => ref
+                                .read(pendingDevelopmentProvider.notifier)
+                                .returnForRevision(e.id, reason),
+                          ),
+                        );
+                      },
                 ),
               ),
       ),

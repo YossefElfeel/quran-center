@@ -42,13 +42,63 @@ class SupervisorEvalRepository {
         .eq('status', 'active')
         .order('enrolled_at', ascending: true)
         .timeout(const Duration(seconds: 12));
-    return rows.map((Map<String, dynamic> r) {
+    final List<EvalStudent> students = rows.map((Map<String, dynamic> r) {
       final Map<String, dynamic>? s = r['student'] as Map<String, dynamic>?;
       return EvalStudent(
         studentPersonId: r['student_person_id'] as String,
         fullName: (s?['full_name'] as String?) ?? '—',
       );
     }).toList();
+    if (students.isEmpty) return students;
+
+    // آخر تقييم محفوظ لكل طالب، حتى تفضل الدرجة والمستوى ظاهرين بعد إعادة
+    // فتح الشاشة أو تشغيل التطبيق من جديد.
+    final List<Map<String, dynamic>> evaluations = await _client
+        .from('supervisor_evaluation')
+        .select(
+          'created_at, '
+          'scores:eval_score(student_person_id, criterion, score)',
+        )
+        .eq('circle_id', circleId)
+        .order('created_at', ascending: false)
+        .limit(100)
+        .timeout(const Duration(seconds: 12));
+
+    final Map<String, Map<EvalCriterion, int>> latest =
+        <String, Map<EvalCriterion, int>>{};
+    final Map<String, DateTime> evaluatedAt = <String, DateTime>{};
+    for (final Map<String, dynamic> evaluation in evaluations) {
+      final List<dynamic> scoreRows =
+          evaluation['scores'] as List<dynamic>? ?? const <dynamic>[];
+      final Map<String, Map<EvalCriterion, int>> grouped =
+          <String, Map<EvalCriterion, int>>{};
+      for (final dynamic raw in scoreRows) {
+        final Map<String, dynamic> score = raw as Map<String, dynamic>;
+        final String personId = score['student_person_id'] as String;
+        grouped.putIfAbsent(
+              personId,
+              () => <EvalCriterion, int>{},
+            )[EvalCriterion.fromDb(score['criterion'] as String)] =
+            score['score'] as int;
+      }
+      for (final MapEntry<String, Map<EvalCriterion, int>> entry
+          in grouped.entries) {
+        if (latest.containsKey(entry.key)) continue;
+        latest[entry.key] = entry.value;
+        evaluatedAt[entry.key] = DateTime.parse(
+          evaluation['created_at'] as String,
+        );
+      }
+    }
+
+    return students
+        .map(
+          (EvalStudent student) => student.copyWith(
+            scores: latest[student.studentPersonId],
+            evaluatedAt: evaluatedAt[student.studentPersonId],
+          ),
+        )
+        .toList();
   }
 
   Future<String> createEvaluation({
@@ -92,7 +142,10 @@ class SupervisorEvalRepository {
 
   /// الطلبة المتعثّرين: عليهم دَيْن وعدد محاولاتهم وصل حد التعثّر أو أكتر.
   /// [threshold] بييجي من إعدادات النظام (struggle_failed_attempts).
-  Future<List<StrugglingStudent>> fetchStruggling(int threshold) async {
+  Future<List<StrugglingStudent>> fetchStruggling(
+    int threshold, {
+    int offset = 0,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('portion_ledger_entry')
         .select(
@@ -102,6 +155,9 @@ class SupervisorEvalRepository {
         .eq('state', 'failed_retry')
         .gte('attempts_count', threshold)
         .order('attempts_count', ascending: false)
+        .order('student_person_id')
+        .order('portion_id')
+        .range(offset, offset + 49)
         .timeout(const Duration(seconds: 12));
     return rows.map(StrugglingStudent.fromMap).toList();
   }

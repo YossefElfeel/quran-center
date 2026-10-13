@@ -1,5 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../env/env.dart';
+import '../error/app_exception.dart';
+import '../network/network_status.dart';
+
 /// واجهة الـ auth — تسهّل الـ mocking في الاختبارات وتعزل Supabase.
 abstract class AuthRepository {
   Session? get currentSession;
@@ -9,6 +13,7 @@ abstract class AuthRepository {
     required String password,
   });
   Future<void> signOut();
+  Future<void> resetPassword(String email);
 }
 
 /// تطبيق فعلي فوق Supabase Auth.
@@ -28,7 +33,41 @@ class SupabaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    await _client.auth.signInWithPassword(email: email, password: password);
+    try {
+      await _client.auth.signInWithPassword(email: email, password: password);
+    } on AuthException catch (e) {
+      if (e.code == 'user_banned') {
+        throw const PermissionDeniedException.reason(
+          AppErrorReason.accountSuspended,
+        );
+      }
+      if (e.code == 'invalid_credentials') {
+        throw const ValidationException.reason(
+          AppErrorReason.invalidCredentials,
+        );
+      }
+      if (e.code == 'over_request_rate_limit') {
+        throw const ValidationException.reason(AppErrorReason.tooManyAttempts);
+      }
+      if (isOfflineError(e)) throw const NetworkException();
+      throw const ValidationException.reason(AppErrorReason.signInFailed);
+    } catch (e) {
+      if (isOfflineError(e)) throw const NetworkException();
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> resetPassword(String email) {
+    if (Env.webUrl.isEmpty) {
+      throw const ValidationException.reason(
+        AppErrorReason.resetLinkNotConfigured,
+      );
+    }
+    return _client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: '${Env.webUrl}/auth/confirm',
+    );
   }
 
   @override

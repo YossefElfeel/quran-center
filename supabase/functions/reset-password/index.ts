@@ -68,9 +68,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const email = authUser?.user?.email;
   if (!email) return json({ error: 'subject has no email' }, 400);
 
+  const webUrl = (Deno.env.get('WEB_URL') ?? 'https://quran-web-sage.vercel.app').replace(/\/$/,'');
+  if (!webUrl || !/^https?:\/\//.test(webUrl)) return json({ error: 'WEB_URL not configured' }, 500);
+
   const { data: link, error: linkErr } = await admin.auth.admin.generateLink({
     type: 'recovery',
     email,
+    options: { redirectTo: `${webUrl}/auth/confirm` },
   });
   if (linkErr) return json({ error: 'failed to generate link' }, 500);
 

@@ -28,11 +28,11 @@ abstract final class AppTheme {
       primaryContainer: isDark ? p.primaryDeep : const Color(0xFFD7F0E6),
       onPrimaryContainer: isDark ? p.textPrimary : p.primaryDeep,
       secondary: p.accent,
-      onSecondary: const Color(0xFF2A1F00),
+      onSecondary: p.onAccent,
       secondaryContainer: p.accent.withValues(alpha: 0.18),
       onSecondaryContainer: isDark ? p.accentHi : const Color(0xFF4A3700),
       error: p.error,
-      onError: Colors.white,
+      onError: p.onError,
       surface: p.surface,
       onSurface: p.textPrimary,
       surfaceContainerHighest: p.surfaceVariant,
@@ -49,7 +49,7 @@ abstract final class AppTheme {
       onInverseSurface: isDark ? p.background : Colors.white,
       inversePrimary: p.primary,
       tertiary: p.info,
-      onTertiary: Colors.white,
+      onTertiary: p.onAccent,
     );
 
     final TextTheme textTheme = AppTextStyles.textTheme(
@@ -121,7 +121,7 @@ abstract final class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          minimumSize: const Size.fromHeight(AppSizes.primaryButtonHeight),
+          minimumSize: const Size(64, AppSizes.primaryButtonHeight),
           backgroundColor: p.primary,
           foregroundColor: p.onPrimary,
           disabledBackgroundColor: p.primary.withValues(alpha: 0.45),
@@ -137,7 +137,7 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(AppSizes.primaryButtonHeight),
+          minimumSize: const Size(64, AppSizes.primaryButtonHeight),
           backgroundColor: p.primary,
           foregroundColor: p.onPrimary,
           shape: RoundedRectangleBorder(
@@ -147,7 +147,7 @@ abstract final class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(AppSizes.primaryButtonHeight),
+          minimumSize: const Size(64, AppSizes.primaryButtonHeight),
           foregroundColor: p.primary,
           side: BorderSide(color: p.primary, width: 1.4),
           shape: RoundedRectangleBorder(
@@ -234,7 +234,9 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.md),
         ),
-        contentTextStyle: AppTextStyles.bodyMd.copyWith(color: Colors.white),
+        contentTextStyle: AppTextStyles.bodyMd.copyWith(
+          color: p.foregroundOn(p.textPrimary),
+        ),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{

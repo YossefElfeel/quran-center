@@ -46,3 +46,7 @@ mobile/test/**/failures/
 mobile/android/key.properties
 *.jks
 *.keystore
+
+# Local agent/tool state
+.codex/
+.pnpm-store/

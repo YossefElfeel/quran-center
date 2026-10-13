@@ -18,13 +18,13 @@ export default function HomePage() {
           href="/courses"
           className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-xl font-semibold shadow-sm transition hover:border-[var(--brand)] hover:shadow"
         >
-          📚 الكورسات المجانية
+          <span aria-hidden="true">📚</span> الكورسات المجانية
         </Link>
         <Link
           href="/competition"
           className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-xl font-semibold shadow-sm transition hover:border-[var(--brand)] hover:shadow"
         >
-          🏆 المسابقة — قدّم دلوقتي
+          <span aria-hidden="true">🏆</span> المسابقات — شوف المتاح
         </Link>
       </nav>
 

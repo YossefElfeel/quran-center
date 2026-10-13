@@ -1,3 +1,4 @@
+import { OperatorScopeNote } from "@/components/operator-scope-note";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { DeleteRowButton, TableSelect, WriteForm } from "./forms";
@@ -77,7 +78,7 @@ export default async function DataPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">وحدة التحكّم بالبيانات</h1>
+        <h1 className="text-2xl font-bold">وحدة التحكّم بالبيانات</h1><OperatorScopeNote />
         <p className="text-sm text-foreground/60">
           تصفّح أي جدول وعدّله مباشرة. الكتابة بتمرّ عبر دالة محروسة (تمنع جداول
           حسّاسة وأعمدة الرقم القومي، وتطلب سبب، وتسجّل كل عملية). ⚠️ أداة قوية —
@@ -98,7 +99,7 @@ export default async function DataPage({
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full min-w-[640px] text-right text-xs">
+          <table className="w-full min-w-[640px] text-start text-xs">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 {cols.map((c) => (

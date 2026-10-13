@@ -8,6 +8,7 @@ class AppScaffold extends StatelessWidget {
     required this.body,
     this.actions,
     this.floatingActionButton,
+    this.bottom,
     super.key,
   });
 
@@ -16,10 +17,14 @@ class AppScaffold extends StatelessWidget {
   final List<Widget>? actions;
   final Widget? floatingActionButton;
 
+  /// شريط تحت عنوان الـ AppBar (مثلاً سويتش الدورين) — جوّه الـ app bar
+  /// فبيحترم الـ status bar والـ SafeArea تلقائيًا.
+  final PreferredSizeWidget? bottom;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: actions),
+      appBar: AppBar(title: Text(title), actions: actions, bottom: bottom),
       body: SafeArea(child: body),
       floatingActionButton: floatingActionButton,
     );

@@ -1,12 +1,12 @@
 import { formatNumber } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { RevenueChart } from "./revenue-chart";
 
 type Payment = { period_month: string; amount: number };
 
 export default async function AnalyticsPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
 
   const [students, circles, households, openComplaints, paymentsRes] =
     await Promise.all([
@@ -26,6 +26,7 @@ export default async function AnalyticsPage() {
         .eq("voided", false),
     ]);
 
+  if ([students, circles, households, openComplaints, paymentsRes].some(result => result.error)) throw new Error("analytics_load_failed");
   const byMonth = new Map<string, number>();
   for (const p of (paymentsRes.data ?? []) as Payment[]) {
     const m = String(p.period_month).slice(0, 7);

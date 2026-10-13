@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../shared/theme/app_text_styles.dart';
 import '../../../shared/theme/motion.dart';
 import '../../../shared/theme/tokens.dart';
@@ -39,11 +41,27 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AppPalette p = context.palette;
-    final List<_Slide> slides = <_Slide>[
-      _Slide(Icons.dashboard_customize_outlined, l.onbTitle1, l.onbBody1),
-      _Slide(Icons.touch_app_outlined, l.onbTitle2, l.onbBody2),
-      _Slide(Icons.palette_outlined, l.onbTitle3, l.onbBody3),
-    ];
+    final List<String> roles =
+        ref.watch(currentRolesProvider).asData?.value ?? <String>[];
+    final bool teacher = roles.contains('teacher'),
+        parent = roles.contains('parent');
+    final List<_Slide> slides = teacher
+        ? <_Slide>[
+            _Slide(Icons.menu_book, l.onbTeacherTitle1, l.onbTeacherBody1),
+            _Slide(Icons.cloud_off, l.onbTeacherTitle2, l.onbTeacherBody2),
+            _Slide(Icons.trending_up, l.onbTeacherTitle3, l.onbTeacherBody3),
+          ]
+        : parent
+        ? <_Slide>[
+            _Slide(Icons.child_care, l.onbParentTitle1, l.onbParentBody1),
+            _Slide(Icons.message, l.onbParentTitle2, l.onbParentBody2),
+            _Slide(Icons.payments, l.onbParentTitle3, l.onbParentBody3),
+          ]
+        : <_Slide>[
+            _Slide(Icons.groups, l.onbAdminTitle1, l.onbAdminBody1),
+            _Slide(Icons.fact_check, l.onbAdminTitle2, l.onbAdminBody2),
+            _Slide(Icons.notifications, l.onbAdminTitle3, l.onbAdminBody3),
+          ];
     final bool last = _page == slides.length - 1;
 
     return Material(
@@ -64,36 +82,38 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                   final _Slide s = slides[i];
                   return Padding(
                     padding: const EdgeInsets.all(AppSpacing.xl),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: p.heroGradient),
-                            shape: BoxShape.circle,
-                            boxShadow: AppElevation.shadowMd(p.shadowColor),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: p.heroGradient),
+                              shape: BoxShape.circle,
+                              boxShadow: AppElevation.shadowMd(p.shadowColor),
+                            ),
+                            child: Icon(s.icon, size: 56, color: p.onHero),
                           ),
-                          child: Icon(s.icon, size: 56, color: p.onHero),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          s.title,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.headlineMd.copyWith(
-                            color: p.textPrimary,
+                          const SizedBox(height: AppSpacing.xl),
+                          Text(
+                            s.title,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.headlineMd.copyWith(
+                              color: p.textPrimary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          s.body,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.bodyLg.copyWith(
-                            color: p.textSecondary,
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            s.body,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodyLg.copyWith(
+                              color: p.textSecondary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -103,16 +123,22 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 for (int i = 0; i < slides.length; i++)
-                  AnimatedContainer(
-                    duration: AppDurations.fast,
-                    margin: const EdgeInsets.all(4),
-                    width: i == _page ? 22 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: i == _page
-                          ? p.primary
-                          : p.primary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(AppRadii.full),
+                  Semantics(
+                    label: l.onbPageIndicator('${i + 1}', '${slides.length}'),
+                    selected: i == _page,
+                    child: AnimatedContainer(
+                      duration: reduceMotion(context)
+                          ? Duration.zero
+                          : AppDurations.fast,
+                      margin: const EdgeInsets.all(4),
+                      width: i == _page ? 22 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: i == _page
+                            ? p.primary
+                            : p.primary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppRadii.full),
+                      ),
                     ),
                   ),
               ],
@@ -120,12 +146,23 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: AppButton(
-                label: last ? l.onbStart : l.onbNext,
-                icon: last ? Icons.check : Icons.arrow_back,
+                label: last
+                    ? (teacher
+                          ? l.onbTeacherFinish
+                          : parent
+                          ? l.onbParentFinish
+                          : l.onbAdminFinish)
+                    : l.onbNext,
+                icon: last ? Icons.check : Icons.arrow_forward,
                 onPressed: () {
                   if (last) {
                     _finish();
+                    if (teacher || parent) context.go('/me');
                   } else {
+                    if (reduceMotion(context)) {
+                      _controller.jumpToPage(_page + 1);
+                      return;
+                    }
                     _controller.nextPage(
                       duration: AppDurations.base,
                       curve: AppCurves.emphasized,

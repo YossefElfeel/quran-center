@@ -1,17 +1,13 @@
 "use client";
+import { SubmitButton } from "@/components/ui/button";
+import { FieldSelect, FieldInput } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
 import { addBehavioralNote, correctLedger, type FormResult } from "./actions";
 
 export type Student = { id: string; name: string };
-
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
-const btnSm =
-  "rounded-md border border-border px-2 py-1 text-xs hover:bg-border/40 disabled:opacity-50";
 
 export { DeleteButton } from "@/components/admin-controls";
 
@@ -26,23 +22,22 @@ export function LedgerControl({
   circleId: string;
   current: string;
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     correctLedger,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="student_person_id" value={studentPersonId} />
       <input type="hidden" name="portion_id" value={portionId} />
       <input type="hidden" name="circle_id" value={circleId} />
-      <select name="state" defaultValue={current} className={`${input} py-1`}>
+      <FieldSelect feedback={state} name="state" defaultValue={current} className="py-1 text-sm">
         <option value="assigned">مُسنَد</option>
         <option value="failed_retry">رسب/إعادة</option>
         <option value="passed">عدّى</option>
-      </select>
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "صحّح"}
-      </button>
+      </FieldSelect>
+      <SubmitButton size="sm" variant="secondary">صحّح</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}
@@ -57,10 +52,11 @@ export function NoteForm({
   circleId: string;
   students: Student[];
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     addBehavioralNote,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -74,7 +70,7 @@ export function NoteForm({
       <input type="hidden" name="circle_id" value={circleId} />
       <label className="flex flex-col gap-1 text-sm">
         الطالب
-        <select name="student_person_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="student_person_id" required defaultValue="" className="text-sm">
           <option value="" disabled>
             — اختر طالب —
           </option>
@@ -83,22 +79,20 @@ export function NoteForm({
               {s.name}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-1 flex-col gap-1 text-sm">
         الملاحظة
-        <input name="text" required className={input} />
+        <FieldInput feedback={state} name="text" required className="text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الظهور
-        <select name="visibility" defaultValue="internal" className={input}>
+        <FieldSelect feedback={state} name="visibility" defaultValue="internal" className="text-sm">
           <option value="internal">داخلي</option>
           <option value="parent">لولي الأمر</option>
-        </select>
+        </FieldSelect>
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "أضف ملاحظة"}
-      </button>
+      <SubmitButton className="text-sm">أضف ملاحظة</SubmitButton>
       {state?.ok === false ? (
         <span className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}

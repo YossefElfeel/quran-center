@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_select_field.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/teacher_option.dart';
 import '../controllers/circles_controller.dart';
@@ -23,6 +26,7 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _maxSize = TextEditingController(text: '30');
   String? _teacherId;
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
   bool _saving = false;
 
   @override
@@ -33,21 +37,27 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
   }
 
   Future<void> _save() async {
+    if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final String name = _name.text.trim();
-    final int maxSize = int.tryParse(_maxSize.text.trim()) ?? 30;
-    if (name.isEmpty || maxSize <= 0) return;
+    // الفاليديتور ضمن إن السعة رقم موجب؛ الفحص هنا للأمان بس.
+    final int? maxSize = parseLocalizedInt(_maxSize.text.trim());
+    if (name.isEmpty || maxSize == null || maxSize <= 0) return;
     setState(() => _saving = true);
     try {
       await ref
           .read(circlesControllerProvider(widget.levelId).notifier)
           .add(name: name, maxSize: maxSize, teacherId: _teacherId);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(
+          context,
+          AppL10n.of(context).commonSavedSuccessfully,
+        );
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context).admCircleSaveError)),
-      );
+      AppSnackbar.error(context, AppL10n.of(context).admCircleSaveError);
     }
   }
 
@@ -57,45 +67,48 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
     final AsyncValue<List<TeacherOption>> teachers = ref.watch(
       teacherOptionsProvider,
     );
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
-      ),
+    return Form(
+      key: _form,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(
-            l.admNewCircle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
+          AppTextField(
+            controller: _name,
+            label: l.admCircleNameLabel,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
           ),
-          const SizedBox(height: AppSpacing.lg),
-          AppTextField(controller: _name, label: l.admCircleNameLabel),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
             controller: _maxSize,
             keyboardType: TextInputType.number,
             label: l.admCircleMaxSizeLabel,
+            validator: (String? v) {
+              final int? size = parseLocalizedInt((v ?? '').trim());
+              return size == null || size <= 0
+                  ? l.admCircleCapacityInvalid
+                  : null;
+            },
           ),
           const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(l.admTeacherLabel),
-          ),
           teachers.when(
-            loading: () => const LinearProgressIndicator(),
+            loading: () => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(l.admTeacherLabel),
+                const SizedBox(height: AppSpacing.sm),
+                const LinearProgressIndicator(),
+              ],
+            ),
             error: (Object e, StackTrace _) => AppErrorView(
               message: l.admTeachersLoadError,
               onRetry: () => ref.invalidate(teacherOptionsProvider),
             ),
-            data: (List<TeacherOption> list) => DropdownButton<String?>(
-              isExpanded: true,
+            data: (List<TeacherOption> list) => AppSelectField<String?>(
+              label: l.admTeacherLabel,
               value: _teacherId,
-              hint: Text(l.admNoTeacher),
+              hint: l.admNoTeacher,
               items: <DropdownMenuItem<String?>>[
                 DropdownMenuItem<String?>(child: Text(l.admNoTeacher)),
                 ...list.map(

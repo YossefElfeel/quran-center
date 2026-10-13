@@ -1,4 +1,6 @@
+import { FieldInput, FieldSelect } from "@/components/ui/fields";
 import Link from "next/link";
+import { SubmitButton } from "@/components/ui/button";
 
 import { DangerZone } from "@/components/danger-zone";
 import { getSuperAdmin } from "@/lib/auth";
@@ -23,7 +25,7 @@ export default async function ImpersonationPage({
   const active = admin ? await getActiveImpersonation(admin.personId) : null;
 
   const supabase = await createSupabaseServerClient();
-  const [{ data: flagRow }, { data }] = await Promise.all([
+  const [{ data: flagRow, error: flagError }, { data, error: peopleError }] = await Promise.all([
     supabase
       .from("feature_flag")
       .select("enabled")
@@ -31,6 +33,7 @@ export default async function ImpersonationPage({
       .maybeSingle(),
     supabase.from("role_assignment").select("role, person:person_id(id, full_name)"),
   ]);
+  if (flagError || peopleError) throw new Error("impersonation_options_load_failed");
   const flagOn = flagRow?.enabled === true;
 
   // أشخاص بأدوار، باستثناء السوبر أدمن (مش بنتقمّص سوبر أدمن).
@@ -77,9 +80,7 @@ export default async function ImpersonationPage({
             بيتنسب للمستخدم ده.
           </p>
           <form action={stopImpersonation}>
-            <button className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-bold text-white hover:opacity-90">
-              إيقاف التقمّص
-            </button>
+            <SubmitButton className="bg-red-700">إيقاف التقمّص</SubmitButton>
           </form>
         </div>
       ) : !flagOn ? (
@@ -109,10 +110,10 @@ export default async function ImpersonationPage({
             ) : null}
             <label className="flex flex-col gap-1 text-sm">
               المستخدم
-              <select
+              <FieldSelect
                 name="subject_person_id"
                 required
-                className="rounded-lg border border-border bg-white px-3 py-2 outline-none focus:border-primary"
+                aria-label="المستخدم"
               >
                 <option value="">— اختر —</option>
                 {options.map(([id, name]) => (
@@ -120,22 +121,17 @@ export default async function ImpersonationPage({
                     {name}
                   </option>
                 ))}
-              </select>
+              </FieldSelect>
             </label>
             <label className="flex flex-col gap-1 text-sm">
               السبب (مطلوب)
-              <input
+              <FieldInput
                 name="reason"
                 required
-                className="rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+                aria-label="السبب"
               />
             </label>
-            <button
-              type="submit"
-              className="self-start rounded-lg bg-red-600 px-4 py-2 font-bold text-white hover:opacity-90"
-            >
-              ابدأ التقمّص
-            </button>
+            <SubmitButton variant="danger" className="self-start">ابدأ التقمّص</SubmitButton>
           </form>
         </DangerZone>
       )}

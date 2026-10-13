@@ -85,6 +85,10 @@ class HonorBoardScreen extends ConsumerWidget {
             ? EmptyState(
                 message: l.recNoTopStudents,
                 icon: Icons.emoji_events_outlined,
+                action: TextButton(
+                  onPressed: () => ref.invalidate(honorBoardProvider),
+                  child: Text(l.commonRefreshData),
+                ),
               )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(honorBoardProvider),

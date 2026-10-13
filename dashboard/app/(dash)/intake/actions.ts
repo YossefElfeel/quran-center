@@ -1,10 +1,11 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
-import { getSuperAdmin } from "@/lib/auth";
+
 import { logAudit } from "@/lib/audit";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient, getDataIdentity } from "@/lib/supabase/data-client";
 
 export type FormResult = { ok: true } | { ok: false; error: string };
 
@@ -21,11 +22,14 @@ export async function addApplicant(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("addApplicant", fd);
+  if (formError) return formError;
+
   const name = String(fd.get("name") ?? "").trim();
   const gender = String(fd.get("gender") ?? "male");
   const levelId = String(fd.get("level_id") ?? "");
   if (!name || !levelId) return { ok: false, error: "الاسم والمستوى مطلوبين." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { data: person, error: pErr } = await supabase
     .from("person")
     .insert({ full_name: name, gender, is_minor: true })
@@ -39,7 +43,7 @@ export async function addApplicant(
   });
   if (wErr) {
     // تنظيف الـ person اليتيم (مفيش معاملة ذرّية هنا — بنرجّع الحالة يدويًا).
-    await supabase.from("person").delete().eq("id", person.id as string);
+    await supabase.from("person").delete().eq("id", person.id as string).select("id").single();
     return { ok: false, error: pgMessage(wErr, "فشل الإضافة لقائمة الانتظار.") };
   }
   await logAudit({
@@ -56,17 +60,20 @@ export async function recordPlacement(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("recordPlacement", fd);
+  if (formError) return formError;
+
   const waitingId = String(fd.get("waiting_id") ?? "");
   const studentPersonId = String(fd.get("student_person_id") ?? "");
   const resultLevelId = String(fd.get("result_level_id") ?? "");
   const notes = String(fd.get("notes") ?? "").trim();
   if (!waitingId || !studentPersonId || !resultLevelId)
     return { ok: false, error: "البيانات ناقصة." };
-  const supabase = await createSupabaseServerClient();
-  const admin = await getSuperAdmin();
+  const supabase = await getDataClient();
+  const actor = await getDataIdentity();
   const { error } = await supabase.from("placement_test").insert({
     student_person_id: studentPersonId,
-    supervisor_id: admin?.personId ?? null,
+    supervisor_id: actor.personId,
     result_level_id: resultLevelId,
     notes: notes || null,
   });
@@ -74,7 +81,7 @@ export async function recordPlacement(
   const { error: uErr } = await supabase
     .from("waiting_list")
     .update({ level_id: resultLevelId })
-    .eq("id", waitingId);
+    .eq("id", waitingId).select("id").single();
   if (uErr)
     return {
       ok: false,
@@ -94,12 +101,15 @@ export async function enrollFromWaiting(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("enrollFromWaiting", fd);
+  if (formError) return formError;
+
   const waitingId = String(fd.get("waiting_id") ?? "");
   const studentPersonId = String(fd.get("student_person_id") ?? "");
   const circleId = String(fd.get("circle_id") ?? "");
   if (!waitingId || !studentPersonId || !circleId)
     return { ok: false, error: "اختر حلقة." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { error } = await supabase.from("enrollment").insert({
     student_person_id: studentPersonId,
     circle_id: circleId,
@@ -109,7 +119,7 @@ export async function enrollFromWaiting(
   const { error: uErr } = await supabase
     .from("waiting_list")
     .update({ status: "accepted" })
-    .eq("id", waitingId);
+    .eq("id", waitingId).select("id").single();
   if (uErr)
     return {
       ok: false,
@@ -129,14 +139,17 @@ export async function setWaitingStatus(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("setWaitingStatus", fd);
+  if (formError) return formError;
+
   const id = String(fd.get("id") ?? "");
   const status = String(fd.get("status") ?? "");
   if (!id || !status) return { ok: false, error: "البيانات ناقصة." };
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const { error } = await supabase
     .from("waiting_list")
     .update({ status })
-    .eq("id", id);
+    .eq("id", id).select("id").single();
   if (error) return { ok: false, error: pgMessage(error, "فشل تغيير الحالة.") };
   await logAudit({
     action: "waiting_status",

@@ -1,4 +1,5 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
@@ -18,6 +19,9 @@ export async function setCronActive(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("setCronActive", fd);
+  if (formError) return formError;
+
   const jobname = String(fd.get("jobname") ?? "");
   const active = String(fd.get("active") ?? "") === "true";
   const reason = String(fd.get("reason") ?? "").trim();
@@ -39,6 +43,9 @@ export async function runCronNow(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("runCronNow", fd);
+  if (formError) return formError;
+
   const jobname = String(fd.get("jobname") ?? "");
   const reason = String(fd.get("reason") ?? "").trim();
   if (!jobname) return { ok: false, error: "المهمّة مطلوبة." };

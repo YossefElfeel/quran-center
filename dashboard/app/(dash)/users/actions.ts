@@ -1,5 +1,7 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -20,11 +22,14 @@ export async function inviteUser(
   _prev: InviteResult | null,
   formData: FormData,
 ): Promise<InviteResult> {
+  const formError = validateAction("inviteUser", formData);
+  if (formError) return formError;
+
   const email = String(formData.get("email") ?? "").trim();
   const fullName = String(formData.get("full_name") ?? "").trim();
   const role = String(formData.get("role") ?? "");
 
-  if (!email || !fullName || !role) {
+  if (!z.object({email:z.email(),fullName:z.string().trim().min(2).max(200),role:z.enum(["teacher","supervisor","admin"])}).safeParse({email,fullName,role}).success) {
     return { ok: false, error: "كل الحقول مطلوبة." };
   }
 
@@ -43,6 +48,7 @@ export async function inviteUser(
 
   const actionLink =
     (data as { action_link?: string } | null)?.action_link ?? null;
+  if(!actionLink)return {ok:false,error:"رابط الدعوة مرجعش — راجع الإدارة وجرّب تاني."};
   return { ok: true, actionLink };
 }
 
@@ -112,6 +118,9 @@ export async function blockUser(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
+  const formError = validateAction("blockUser", formData);
+  if (formError) return formError;
+
   const targetPersonId = String(formData.get("target_person_id") ?? "");
   const block = String(formData.get("block") ?? "true") === "true";
   const reason = String(formData.get("reason") ?? "").trim();
@@ -129,6 +138,9 @@ export async function deleteUser(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
+  const formError = validateAction("deleteUser", formData);
+  if (formError) return formError;
+
   const targetPersonId = String(formData.get("target_person_id") ?? "");
   const mode = String(formData.get("mode") ?? "soft");
   const reason = String(formData.get("reason") ?? "").trim();
@@ -148,6 +160,9 @@ export async function manageRole(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
+  const formError = validateAction("manageRole", formData);
+  if (formError) return formError;
+
   const targetPersonId = String(formData.get("target_person_id") ?? "");
   const role = String(formData.get("role") ?? "");
   const op = String(formData.get("op") ?? "grant");
@@ -165,6 +180,9 @@ export async function forceLogout(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
+  const formError = validateAction("forceLogout", formData);
+  if (formError) return formError;
+
   const targetPersonId = String(formData.get("target_person_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
@@ -184,6 +202,9 @@ export async function resetPassword(
   _prev: ResetResult | null,
   formData: FormData,
 ): Promise<ResetResult> {
+  const formError = validateAction("resetPassword", formData);
+  if (formError) return formError;
+
   const targetPersonId = String(formData.get("target_person_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!targetPersonId) return { ok: false, error: "المستخدم مطلوب." };
@@ -201,5 +222,6 @@ export async function resetPassword(
   }
   const actionLink =
     (data as { action_link?: string } | null)?.action_link ?? null;
+  if (!actionLink) return { ok: false, error: "رابط الاسترجاع مرجعش — جرّب تاني." };
   return { ok: true, actionLink };
 }

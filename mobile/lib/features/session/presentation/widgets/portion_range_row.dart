@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_search_picker.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
 
@@ -28,7 +29,7 @@ class PortionRangeRow extends StatelessWidget {
     return Row(
       children: <Widget>[
         SizedBox(
-          width: 28,
+          width: 48,
           child: Text(
             title,
             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -36,19 +37,32 @@ class PortionRangeRow extends StatelessWidget {
         ),
         Expanded(
           flex: 3,
-          child: DropdownButton<int>(
-            isExpanded: true,
-            value: surah,
-            hint: Text(l.sesSurahHint),
-            items: surahs
-                .map(
-                  (SurahOption s) => DropdownMenuItem<int>(
-                    value: s.number,
-                    child: Text(s.name, overflow: TextOverflow.ellipsis),
-                  ),
-                )
-                .toList(),
-            onChanged: onSurah,
+          child: OutlinedButton(
+            onPressed: () async {
+              final SurahOption? choice =
+                  await showAppSearchPicker<SurahOption>(
+                    context: context,
+                    title: l.sesSurahHint,
+                    items: surahs,
+                    label: (SurahOption s) => s.name,
+                  );
+              if (choice != null) onSurah(choice.number);
+            },
+            child: Text(
+              surah == null
+                  ? l.sesSurahHint
+                  : surahs
+                        .firstWhere(
+                          (SurahOption s) => s.number == surah,
+                          // سورة مش في القايمة (داتا قديمة/ناقصة) — منقعش.
+                          orElse: () => SurahOption(
+                            number: surah!,
+                            name: l.sesSurahHint,
+                            ayahCount: 0,
+                          ),
+                        )
+                        .name,
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -65,9 +79,26 @@ class PortionRangeRow extends StatelessWidget {
   }
 }
 
+/// مشكلة في نطاق المقطع (الرسالة من [PortionRangeIssueLabel.label]).
+enum PortionRangeIssue {
+  incomplete,
+  startAyahOutOfRange,
+  endAyahOutOfRange,
+  endBeforeStart,
+}
+
+extension PortionRangeIssueLabel on PortionRangeIssue {
+  String label(AppL10n l) => switch (this) {
+    PortionRangeIssue.incomplete => l.sesRangeIncomplete,
+    PortionRangeIssue.startAyahOutOfRange => l.sesRangeStartAyahTooLarge,
+    PortionRangeIssue.endAyahOutOfRange => l.sesRangeEndAyahTooLarge,
+    PortionRangeIssue.endBeforeStart => l.sesRangeEndBeforeStart,
+  };
+}
+
 /// تحقّق نطاق المقطع: الخانات كاملة + الآيات في حدود السورة + الترتيب صح.
-/// بيرجّع رسالة خطأ بالعربي أو null لو سليم.
-String? portionRangeError({
+/// بيرجّع نوع المشكلة أو null لو سليم.
+PortionRangeIssue? portionRangeError({
   required List<SurahOption> surahs,
   required String name,
   required int? surahStart,
@@ -82,19 +113,19 @@ String? portionRangeError({
       ayahEnd == null ||
       ayahStart <= 0 ||
       ayahEnd <= 0) {
-    return 'املا كل الخانات صح';
+    return PortionRangeIssue.incomplete;
   }
   final SurahOption? start = _surahByNumber(surahs, surahStart);
   final SurahOption? end = _surahByNumber(surahs, surahEnd);
   if (start != null && ayahStart > start.ayahCount) {
-    return 'رقم آية البداية أكبر من آيات السورة';
+    return PortionRangeIssue.startAyahOutOfRange;
   }
   if (end != null && ayahEnd > end.ayahCount) {
-    return 'رقم آية النهاية أكبر من آيات السورة';
+    return PortionRangeIssue.endAyahOutOfRange;
   }
   if (surahEnd < surahStart ||
       (surahEnd == surahStart && ayahEnd < ayahStart)) {
-    return 'نهاية المقطع لازم تكون بعد بدايتها';
+    return PortionRangeIssue.endBeforeStart;
   }
   return null;
 }

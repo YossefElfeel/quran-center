@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/presentation/domain_labels.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../domain/enrolled_student.dart';
@@ -7,9 +9,12 @@ import '../../domain/gender.dart';
 
 /// بلاطة طالب في روستر الحلقة.
 class StudentTile extends StatelessWidget {
-  const StudentTile({required this.student, super.key});
+  const StudentTile({required this.student, this.trailing, super.key});
 
   final EnrolledStudent student;
+
+  /// إجراء اختياري على يسار البلاطة (مثلًا ربط ولي أمر من الروستر).
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +26,8 @@ class StudentTile extends StatelessWidget {
         child: Icon(isGirl ? Icons.girl : Icons.boy),
       ),
       title: student.name,
-      subtitle: student.gender?.labelAr ?? '—',
+      subtitle: student.gender?.label(AppL10n.of(context)) ?? '—',
+      trailing: trailing,
     );
   }
 }

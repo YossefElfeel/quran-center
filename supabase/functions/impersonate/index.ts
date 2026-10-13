@@ -67,7 +67,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   // 1) caller identity + super_admin check (by their own person id).
-  const { data: caller } = await userClient.auth.getUser();
+  const accessToken = authHeader.slice('Bearer '.length).trim();
+  const { data: caller } = await userClient.auth.getUser(accessToken);
   const callerUid = caller?.user?.id;
   if (!callerUid) return new Response('Unauthorized', { status: 401 });
 
@@ -79,7 +80,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const { data: callerRoles } = await admin
     .from('role_assignment').select('role').eq('person_id', callerPersonId);
   if (!(callerRoles ?? []).some((r: { role: string }) => r.role === 'super_admin')) {
-    return new Response('Forbidden', { status: 403 });
+    return new Response('Forbidden: caller is not super_admin', { status: 403 });
   }
 
   // كِل سويتش: التقمّص بالكتابة لازم يكون مفعّل صراحةً (مفتاح write_impersonation).

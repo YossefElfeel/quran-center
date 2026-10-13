@@ -12,14 +12,16 @@ class GuardianLinksController extends _$GuardianLinksController {
   Future<List<GuardianLinkRow>> build() =>
       ref.watch(familyRepositoryProvider).fetchLinks();
 
-  Future<void> createLink({
+  /// ينشئ ولي الأمر ويربطه، ويرجّع person id بتاعه.
+  Future<String> createLink({
     required String guardianName,
     required String childPersonId,
     required String relation,
     String? householdId,
     String? newHouseholdName,
+    String? phone,
   }) async {
-    await ref
+    final String personId = await ref
         .read(familyRepositoryProvider)
         .createGuardianWithHousehold(
           guardianName: guardianName,
@@ -27,8 +29,12 @@ class GuardianLinksController extends _$GuardianLinksController {
           relation: relation,
           householdId: householdId,
           newHouseholdName: newHouseholdName,
+          phone: phone,
         );
+    // The guardian now exists: return its id even if the list reload fails,
+    // so a retry never creates a second guardian/household. The reload runs
+    // separately and any failure shows on the list itself.
     ref.invalidateSelf();
-    await future;
+    return personId;
   }
 }

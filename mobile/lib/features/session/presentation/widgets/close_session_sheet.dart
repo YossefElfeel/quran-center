@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
+import '../../domain/session_write_block.dart';
 import '../controllers/surahs_controller.dart';
 import '../controllers/today_session_controller.dart';
+import '../session_write_block_label.dart';
 import 'portion_range_row.dart';
 import 'surah_load_error.dart';
 
@@ -30,6 +34,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
   int? _revSurahEnd;
   String? _error;
   bool _saving = false;
+  bool _markPresent = true;
 
   @override
   void dispose() {
@@ -40,17 +45,18 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
   }
 
   Future<void> _close(List<SurahOption> surahs) async {
+    if (_saving) return;
     final String name = _revName.text.trim();
-    final int? as = int.tryParse(_revAyahStart.text.trim());
-    final int? ae = int.tryParse(_revAyahEnd.text.trim());
+    final int? as = parseLocalizedInt(_revAyahStart.text.trim());
+    final int? ae = parseLocalizedInt(_revAyahEnd.text.trim());
     final bool anyRevision =
         name.isNotEmpty ||
-        as != null ||
-        ae != null ||
+        _revAyahStart.text.trim().isNotEmpty ||
+        _revAyahEnd.text.trim().isNotEmpty ||
         _revSurahStart != null ||
         _revSurahEnd != null;
     if (anyRevision) {
-      final String? err = portionRangeError(
+      final PortionRangeIssue? err = portionRangeError(
         surahs: surahs,
         name: name,
         surahStart: _revSurahStart,
@@ -59,7 +65,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
         ayahEnd: ae,
       );
       if (err != null) {
-        setState(() => _error = err);
+        setState(() => _error = err.label(AppL10n.of(context)));
         return;
       }
     }
@@ -68,16 +74,29 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
       _saving = true;
     });
     try {
-      await ref
+      final SessionWriteBlock? blocked = await ref
           .read(todaySessionControllerProvider(widget.circleId).notifier)
           .closeWithPlan(
+            l: AppL10n.of(context),
+            markUnrecordedPresent: _markPresent,
             revisionName: anyRevision ? name : null,
             revSurahStart: anyRevision ? _revSurahStart : null,
             revAyahStart: anyRevision ? as : null,
             revSurahEnd: anyRevision ? _revSurahEnd : null,
             revAyahEnd: anyRevision ? ae : null,
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        if (blocked != null) {
+          final AppL10n l = AppL10n.of(context);
+          AppSnackbar.info(
+            context,
+            '${blocked.label(l)} — ${l.sesCloseQueuedBlocked}',
+          );
+        } else {
+          AppSnackbar.success(context, AppL10n.of(context).sesSessionClosed);
+        }
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -89,12 +108,21 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<SurahOption>> surahsAsync = ref.watch(surahsProvider);
+    final int unrecorded =
+        ref
+            .watch(todaySessionControllerProvider(widget.circleId))
+            .asData
+            ?.value
+            .roster
+            .where((e) => !e.attendanceRecorded)
+            .length ??
+        0;
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
       child: surahsAsync.when(
         loading: () => const SizedBox(
@@ -110,9 +138,17 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
               Text(
                 l.sesCloseSession,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                style: AppTextStyles.titleSm,
+              ),
+              CheckboxListTile(
+                value: _markPresent,
+                onChanged: (bool? v) =>
+                    setState(() => _markPresent = v ?? true),
+                title: Text(
+                  l.sesMarkUnrecordedPresentPrompt(
+                    unrecorded,
+                    arabicNumber(unrecorded),
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),

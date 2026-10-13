@@ -14,12 +14,12 @@ class CircleRosterController extends _$CircleRosterController {
     return ref.watch(enrollmentRepositoryProvider).fetchByCircle(circleId);
   }
 
-  Future<void> addStudent({
+  Future<String> addStudent({
     required String name,
     required Gender gender,
     String? nationalId,
   }) async {
-    await ref
+    final String studentId = await ref
         .read(enrollmentRepositoryProvider)
         .addStudent(
           circleId: circleId,
@@ -29,5 +29,6 @@ class CircleRosterController extends _$CircleRosterController {
         );
     ref.invalidateSelf();
     await future;
+    return studentId;
   }
 }

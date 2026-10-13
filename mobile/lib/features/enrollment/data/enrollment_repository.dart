@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/error/app_exception.dart';
 import '../../../core/supabase/supabase_providers.dart';
+import '../domain/enrollable_circle.dart';
 import '../domain/enrolled_student.dart';
 import '../domain/gender.dart';
 
@@ -28,17 +29,42 @@ class EnrollmentRepository {
         .toList();
   }
 
+  /// الحلقات المتاحة للتسجيل (غير المتخرّجة) + عدد الطلبة النشطين في كل
+  /// حلقة، مرتّبة بالمنهج ← المستوى ← الاسم للتجميع في الـ picker.
+  Future<List<EnrollableCircle>> fetchEnrollableCircles() async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('circle')
+        .select(
+          'id,name,max_size,level:level_id(name,curriculum:curriculum_id(name)),enrollment(count)',
+        )
+        .neq('status', 'graduated')
+        .eq('enrollment.status', 'active')
+        .order('name')
+        .timeout(const Duration(seconds: 12));
+    final List<EnrollableCircle> circles = rows
+        .map(EnrollableCircle.fromMap)
+        .toList();
+    circles.sort((EnrollableCircle a, EnrollableCircle b) {
+      final int byCurriculum = a.curriculumName.compareTo(b.curriculumName);
+      if (byCurriculum != 0) return byCurriculum;
+      final int byLevel = a.levelName.compareTo(b.levelName);
+      if (byLevel != 0) return byLevel;
+      return a.name.compareTo(b.name);
+    });
+    return circles;
+  }
+
   /// بينشئ طالب جديد ويسجّله في الحلقة + يضبط الرقم القومي (اختياري) في معاملة
   /// واحدة ذرّية عبر RPC `enroll_student` — لو الرقم مكرّر/غلط كله بيترجع (مفيش
   /// طالب يتيم).
-  Future<void> addStudent({
+  Future<String> addStudent({
     required String circleId,
     required String name,
     required Gender gender,
     String? nationalId,
   }) async {
     try {
-      await _client.rpc<void>(
+      final dynamic studentId = await _client.rpc<dynamic>(
         'enroll_student',
         params: <String, dynamic>{
           'p_circle': circleId,
@@ -49,14 +75,13 @@ class EnrollmentRepository {
               : nationalId,
         },
       );
+      return studentId as String;
     } on PostgrestException catch (e) {
       if (e.code == '23505') {
-        throw const ValidationException(
-          'الرقم القومي ده مسجّل قبل كده لشخص تاني',
-        );
+        throw const ValidationException.reason(AppErrorReason.nationalIdTaken);
       }
       if (e.code == '22023') {
-        throw const ValidationException('الرقم القومي لازم يكون ١٤ رقم');
+        throw const ValidationException.reason(AppErrorReason.nationalIdLength);
       }
       rethrow;
     }

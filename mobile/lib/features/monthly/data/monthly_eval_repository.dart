@@ -19,7 +19,39 @@ class MonthlyEvalRepository {
   }
 
   /// طلبة الحلقة + تقييم الشهر الحالي لكل واحد (لو موجود) — للمعلّم.
-  Future<List<MonthlyEvalStudent>> fetchCircleEvals(String circleId) async {
+  Future<List<MonthlyEvalStudent>> fetchCircleEvals(
+    String circleId, {
+    String? month,
+  }) async {
+    if (month != null) {
+      // A returned historical evaluation stays editable after the student transfers.
+      // Filter through enrollment history on the server rather than today's active roster.
+      final rows = await _client
+          .from('monthly_student_evaluation')
+          .select(
+            'student_person_id, status, summary, behavior, return_reason, '
+            'student:student_person_id!inner(full_name, enrollments:enrollment!inner(circle_id))',
+          )
+          .eq('month', month)
+          .eq('student.enrollments.circle_id', circleId)
+          .order('student_person_id')
+          .timeout(const Duration(seconds: 12));
+      return rows
+          .map(
+            (row) => MonthlyEvalStudent(
+              studentPersonId: row['student_person_id'] as String,
+              studentName:
+                  (row['student'] as Map<String, dynamic>?)?['full_name']
+                      as String? ??
+                  '—',
+              status: row['status'] as String?,
+              summary: row['summary'] as String?,
+              behavior: row['behavior'] as String?,
+              returnReason: row['return_reason'] as String?,
+            ),
+          )
+          .toList();
+    }
     final List<Map<String, dynamic>> enr = await _client
         .from('enrollment')
         .select('student:student_person_id(id, full_name)')
@@ -38,8 +70,10 @@ class MonthlyEvalRepository {
         ? <Map<String, dynamic>>[]
         : await _client
               .from('monthly_student_evaluation')
-              .select('student_person_id, status, summary, behavior')
-              .eq('month', _thisMonth())
+              .select(
+                'student_person_id, status, summary, behavior, return_reason',
+              )
+              .eq('month', month ?? _thisMonth())
               .inFilter('student_person_id', ids)
               .timeout(const Duration(seconds: 12));
     final Map<String, Map<String, dynamic>> byStudent =
@@ -55,6 +89,7 @@ class MonthlyEvalRepository {
         status: e?['status'] as String?,
         summary: e?['summary'] as String?,
         behavior: e?['behavior'] as String?,
+        returnReason: e?['return_reason'] as String?,
       );
     }).toList();
   }
@@ -63,10 +98,11 @@ class MonthlyEvalRepository {
     required String studentPersonId,
     String? summary,
     String? behavior,
+    String? month,
   }) async {
     await _client.from('monthly_student_evaluation').upsert(<String, dynamic>{
       'student_person_id': studentPersonId,
-      'month': _thisMonth(),
+      'month': month ?? _thisMonth(),
       'status': 'submitted',
       'summary': summary,
       'behavior': behavior,
@@ -74,7 +110,7 @@ class MonthlyEvalRepository {
   }
 
   /// طابور الاعتماد (submitted) — للمشرف.
-  Future<List<PendingMonthlyEval>> fetchPending() async {
+  Future<List<PendingMonthlyEval>> fetchPending({int offset = 0}) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('monthly_student_evaluation')
         .select(
@@ -82,6 +118,8 @@ class MonthlyEvalRepository {
         )
         .eq('status', 'submitted')
         .order('month', ascending: false)
+        .order('id')
+        .range(offset, offset + 49)
         .timeout(const Duration(seconds: 12));
     return rows.map(PendingMonthlyEval.fromMap).toList();
   }
@@ -90,7 +128,23 @@ class MonthlyEvalRepository {
     await _client
         .from('monthly_student_evaluation')
         .update(<String, dynamic>{'status': 'approved'})
-        .eq('id', id);
+        .eq('id', id)
+        .eq('status', 'submitted')
+        .select('id')
+        .single();
+  }
+
+  Future<void> returnForRevision(String id, String reason) async {
+    await _client
+        .from('monthly_student_evaluation')
+        .update(<String, dynamic>{
+          'status': 'returned',
+          'return_reason': reason,
+        })
+        .eq('id', id)
+        .eq('status', 'submitted')
+        .select('id')
+        .single();
   }
 }
 

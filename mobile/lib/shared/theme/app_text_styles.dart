@@ -30,6 +30,13 @@ abstract final class AppTextStyles {
     fontWeight: FontWeight.w600,
   );
 
+  static const TextStyle titleSm = TextStyle(
+    fontFamily: 'Cairo',
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+  );
+
   static const TextStyle titleMd = TextStyle(
     fontFamily: fontFamily,
     fontSize: 16,

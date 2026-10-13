@@ -29,16 +29,22 @@ class ExcuseRepository {
   }
 
   /// طابور الأعذار المعلّقة (مع اسم الطالب والحلقة).
-  Future<List<PendingExcuse>> fetchPending() async {
+  Future<List<PendingExcuse>> fetchPending({
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('excuse_request')
         .select(
-          'id, enrollment_id, session_id, reason, '
+          'id, enrollment_id, session_id, reason, status, created_at, '
+          'decided_at, '
           'enrollment:enrollment_id('
           'student:student_person_id(full_name), circle:circle_id(name))',
         )
         .eq('status', 'pending')
         .order('created_at', ascending: true)
+        .order('id')
+        .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));
     return rows.map(PendingExcuse.fromMap).toList();
   }
@@ -59,6 +65,8 @@ class ExcuseRepository {
           'decided_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', excuseId)
+        .select('id')
+        .single()
         .timeout(const Duration(seconds: 12));
 
     if (approve && sessionId != null) {
@@ -88,7 +96,7 @@ class ExcuseRepository {
     final Map<String, dynamic>? row = await _client
         .from('enrollment')
         .select(
-          'circle:circle_id(teacher_id), '
+          'circle:circle_id(id,teacher_id), '
           'student:student_person_id(full_name)',
         )
         .eq('id', enrollmentId)
@@ -106,6 +114,7 @@ class ExcuseRepository {
         .insert(<String, dynamic>{
           'recipient_person_id': teacherId,
           'type': 'excuse_decided',
+          'route_data': <String, dynamic>{'circle_id': circle?['id']},
           'title': approve ? 'عذر غياب اتقبل' : 'عذر غياب اترفض',
           'body':
               'عذر غياب $studentName ${approve ? 'اتقبل' : 'اترفض'} من المشرف',

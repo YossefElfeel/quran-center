@@ -1,5 +1,6 @@
+import { PersonLink } from "@/components/person-link";
 import { DeleteButton } from "@/components/admin-controls";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { setWaitingStatus } from "./actions";
 import {
@@ -28,12 +29,13 @@ type WaitingRow = {
 };
 
 export default async function IntakePage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
 
-  const { data: levelData } = await supabase
+  const { data: levelData, error: loadError1 } = await supabase
     .from("level")
     .select("id, name, curriculum:curriculum_id(name)")
     .order("ord");
+  if (loadError1) throw new Error('data_load_failed');
   const levels: Option[] = ((levelData ?? []) as unknown as LevelRow[]).map(
     (l) => ({
       id: l.id,
@@ -41,10 +43,11 @@ export default async function IntakePage() {
     }),
   );
 
-  const { data: circleData } = await supabase
+  const { data: circleData, error: loadError2 } = await supabase
     .from("circle")
     .select("id, name, level:level_id(name, curriculum:curriculum_id(name))")
     .order("created_at");
+  if (loadError2) throw new Error('data_load_failed');
   const circles: Option[] = ((circleData ?? []) as unknown as CircleRow[])
     .map((c) => {
       const prefix = [c.level?.curriculum?.name, c.level?.name]
@@ -54,13 +57,14 @@ export default async function IntakePage() {
     })
     .sort((a, b) => a.label.localeCompare(b.label, "ar"));
 
-  const { data: waitingData } = await supabase
+  const { data: waitingData, error: loadError3 } = await supabase
     .from("waiting_list")
     .select(
       "id, status, level_id, student:student_person_id(id, full_name), level:level_id(name)",
     )
     .eq("status", "waiting")
     .order("created_at", { ascending: true });
+  if (loadError3) throw new Error('data_load_failed');
   const waiting = (waitingData ?? []) as unknown as WaitingRow[];
 
   return (
@@ -81,7 +85,7 @@ export default async function IntakePage() {
       )}
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-bold">في الانتظار ({waiting.length})</h2>
+        <h2 className="text-lg font-bold">في الانتظار ({new Intl.NumberFormat('ar-EG').format(waiting.length)})</h2>
         {waiting.length === 0 ? (
           <p className="rounded-xl border border-border bg-white px-4 py-6 text-center text-foreground/50">
             مفيش متقدّمين في الانتظار.
@@ -95,7 +99,7 @@ export default async function IntakePage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold">
-                    {w.student?.full_name ?? "—"}
+                    <PersonLink person={w.student} />
                   </span>
                   <span className="text-xs text-foreground/50">
                     المستوى: {w.level?.name ?? "—"}

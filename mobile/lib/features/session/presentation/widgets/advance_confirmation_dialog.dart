@@ -3,6 +3,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_action_sheet.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 
 /// حوار تأكيد بشري لنقل المجموعة — بيرجّع true لو المعلّم أكّد.
 Future<bool?> showAdvanceConfirmationDialog(
@@ -11,9 +13,9 @@ Future<bool?> showAdvanceConfirmationDialog(
   required int activeAtOpen,
 }) {
   final AppL10n l = AppL10n.of(context);
-  return showDialog<bool>(
+  return showAppModalSheet<bool>(
     context: context,
-    builder: (BuildContext context) => AlertDialog(
+    builder: (BuildContext context) => AppActionSheet(
       title: Text(l.sesAdvanceConfirmTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,

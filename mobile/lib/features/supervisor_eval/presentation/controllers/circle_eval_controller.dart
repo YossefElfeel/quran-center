@@ -65,7 +65,11 @@ class CircleEvalController extends _$CircleEvalController {
       students
           .map(
             (EvalStudent s) => s.studentPersonId == studentPersonId
-                ? s.copyWith(scored: true)
+                ? s.copyWith(
+                    selected: true,
+                    scores: Map<EvalCriterion, int>.unmodifiable(scores),
+                    evaluatedAt: DateTime.now(),
+                  )
                 : s,
           )
           .toList(),

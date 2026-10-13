@@ -4,25 +4,58 @@ import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/utils/arabic_date.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_inline_banner.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/teacher_repository.dart';
 import '../../domain/teacher_dev_entry.dart';
 import '../controllers/teacher_controllers.dart';
 import '../widgets/add_dev_entry_sheet.dart';
 
 /// شاشة المعلّم: مؤشّر أدائه + تطوّره (يضيف قيود يعتمدها المشرف).
-class TeacherDevelopmentScreen extends ConsumerWidget {
+class TeacherDevelopmentScreen extends ConsumerStatefulWidget {
   const TeacherDevelopmentScreen({super.key});
+
+  @override
+  ConsumerState<TeacherDevelopmentScreen> createState() =>
+      _TeacherDevelopmentScreenState();
+}
+
+class _TeacherDevelopmentScreenState
+    extends ConsumerState<TeacherDevelopmentScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(myDevelopmentProvider);
+    }
+  }
 
   void _addEntry(BuildContext context) {
     showAppModalSheet<void>(
@@ -33,7 +66,7 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<TeacherDevEntry>> state = ref.watch(
       myDevelopmentProvider,
@@ -66,17 +99,26 @@ class TeacherDevelopmentScreen extends ConsumerWidget {
                   ? EmptyState(
                       message: l.tchNoDevEntries,
                       icon: Icons.trending_up,
+                      action: TextButton(
+                        onPressed: () => ref.invalidate(myDevelopmentProvider),
+                        child: Text(l.commonRefreshData),
+                      ),
                     )
                   : AppRefreshIndicator(
                       onRefresh: () async =>
                           ref.invalidate(myDevelopmentProvider),
-                      child: ListView.builder(
+                      child: AppPagedList<TeacherDevEntry>(
+                        items: items,
+                        pageSize: TeacherRepository.developmentPageSize,
+                        loadPage: (int offset) => ref
+                            .read(teacherRepositoryProvider)
+                            .fetchMyDevelopment(offset: offset),
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.sm,
                         ),
-                        itemCount: items.length,
-                        itemBuilder: (BuildContext context, int i) =>
-                            _DevTile(entry: items[i]),
+                        itemBuilder:
+                            (BuildContext context, TeacherDevEntry e, int i) =>
+                                _DevTile(entry: e),
                       ),
                     ),
             ),
@@ -119,7 +161,7 @@ class _PassRateCard extends ConsumerWidget {
   }
 }
 
-class _DevTile extends StatelessWidget {
+class _DevTile extends ConsumerWidget {
   const _DevTile({required this.entry});
 
   final TeacherDevEntry entry;
@@ -127,7 +169,7 @@ class _DevTile extends StatelessWidget {
   String _monthLabel() =>
       '${arabicNumber(entry.month.month)}/${arabicNumber(entry.month.year)}';
 
-  void _openDetail(BuildContext context) {
+  void _openDetail(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
     showAppModalSheet<void>(
       context: context,
@@ -170,6 +212,24 @@ class _DevTile extends StatelessWidget {
                   ? AppBannerKind.success
                   : AppBannerKind.info,
             ),
+            if (entry.status == 'returned') ...<Widget>[
+              Text(l.tchRevisionRequested(entry.returnReason ?? '')),
+              AppButton(
+                label: l.tchEditAndResubmit,
+                onPressed: () => showAppModalSheet<void>(
+                  context: context,
+                  title: l.tchEditDevTitle,
+                  builder: (_) => _ResubmitDev(entry: entry),
+                ),
+              ),
+            ],
+            if (entry.approvedAt != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l.tchApprovedAt(arabicDateTimeLabel(entry.approvedAt!)),
+                style: AppTextStyles.labelSm.copyWith(color: p.textSecondary),
+              ),
+            ],
           ],
         );
       },
@@ -177,7 +237,7 @@ class _DevTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
     final AppPalette p = context.palette;
     return AppListCard(
@@ -185,7 +245,7 @@ class _DevTile extends StatelessWidget {
       iconColor: entry.isApproved ? p.success : p.accent,
       title: entry.progress ?? '—',
       subtitle: _monthLabel(),
-      onTap: () => _openDetail(context),
+      onTap: () => _openDetail(context, ref),
       trailing: AppStatusBadge(
         label: entry.isApproved ? l.tchApproved : l.tchPendingApproval,
         kind: entry.isApproved ? AppStatusKind.success : AppStatusKind.warning,
@@ -195,6 +255,71 @@ class _DevTile extends StatelessWidget {
 }
 
 /// شريحة معلومة صغيرة (أيقونة + نص) للشهر داخل تفاصيل القيد.
+class _ResubmitDev extends ConsumerStatefulWidget {
+  const _ResubmitDev({required this.entry});
+  final TeacherDevEntry entry;
+  @override
+  ConsumerState<_ResubmitDev> createState() => _ResubmitDevState();
+}
+
+class _ResubmitDevState extends ConsumerState<_ResubmitDev> {
+  late final TextEditingController _text = TextEditingController(
+    text: widget.entry.progress,
+  );
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
+  bool _busy = false;
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(widget.entry.returnReason ?? ''),
+          AppTextField(
+            controller: _text,
+            label: l.tchDevFieldLabel,
+            maxLines: 5,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? l.tchDevEditRequired : null,
+          ),
+          AppButton(
+            label: l.tchResubmit,
+            isLoading: _busy,
+            onPressed: () async {
+              if (_busy || !_form.currentState!.validate()) return;
+              setState(() => _busy = true);
+              try {
+                await ref
+                    .read(teacherRepositoryProvider)
+                    .resubmitDevelopment(widget.entry.id, _text.text.trim());
+                ref.invalidate(myDevelopmentProvider);
+                if (context.mounted) {
+                  AppSnackbar.success(context, l.commonSentForApproval);
+                  Navigator.of(context).pop();
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  AppSnackbar.error(context, l.tchResubmitFailed);
+                }
+              } finally {
+                if (mounted) setState(() => _busy = false);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MetaChip extends StatelessWidget {
   const _MetaChip({required this.icon, required this.label});
 

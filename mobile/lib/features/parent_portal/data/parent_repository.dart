@@ -50,7 +50,7 @@ class ParentRepository {
 
     final Map<String, dynamic>? enr = await _client
         .from('enrollment')
-        .select('id, circle:circle_id(name)')
+        .select('id, circle:circle_id(id,name)')
         .eq('student_person_id', studentPersonId)
         .eq('status', 'active')
         .maybeSingle()
@@ -72,7 +72,7 @@ class ParentRepository {
     // آخر تسميع حفظ (مش مراجعة) — ده مؤشّر التقدّم لولي الأمر.
     final List<Map<String, dynamic>> tasmee = await _client
         .from('daily_tasmee')
-        .select('score, passed, portion:portion_id(name)')
+        .select('score, passed, attempt_date, portion:portion_id(name)')
         .eq('enrollment_id', enrollmentId)
         .eq('kind', 'memorization')
         .order('attempt_date', ascending: false)
@@ -84,6 +84,7 @@ class ParentRepository {
       final Map<String, dynamic> t = tasmee.first;
       latest = LatestTasmee(
         score: (t['score'] as num).toInt(),
+        date: DateTime.tryParse(t['attempt_date'] as String? ?? ''),
         passed: t['passed'] as bool,
         portionName:
             ((t['portion'] as Map<String, dynamic>?)?['name'] as String?) ?? '',
@@ -92,8 +93,12 @@ class ParentRepository {
 
     final List<Map<String, dynamic>> att = await _client
         .from('attendance')
-        .select('status')
+        .select('status, session:session_id!inner(session_date)')
         .eq('enrollment_id', enrollmentId)
+        .gte(
+          'session.session_date',
+          '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-01',
+        )
         .timeout(const Duration(seconds: 12));
     int present = 0, absent = 0, excused = 0, late = 0;
     for (final Map<String, dynamic> a in att) {
@@ -109,7 +114,19 @@ class ParentRepository {
       }
     }
 
+    final String? circleId =
+        (enr?['circle'] as Map<String, dynamic>?)?['id'] as String?;
+    final Map<String, dynamic>? cycle = circleId == null
+        ? null
+        : await _client
+              .from('group_portion_cycle')
+              .select('portion:portion_id(name)')
+              .eq('circle_id', circleId)
+              .isFilter('advanced_at', null)
+              .maybeSingle();
     return ChildCard(
+      currentPortion:
+          (cycle?['portion'] as Map<String, dynamic>?)?['name'] as String?,
       circleName: circleName,
       latestTasmee: latest,
       present: present,

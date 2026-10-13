@@ -13,6 +13,7 @@ import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/center_contact_button.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../subscription/presentation/controllers/my_subscription_controller.dart';
 import '../../../subscription/presentation/widgets/pay_required_view.dart';
@@ -58,6 +59,7 @@ class _ChildrenList extends ConsumerWidget {
       data: (List<ChildSummary> items) => items.isEmpty
           ? EmptyState(
               message: l.ppNoChildrenLinked,
+              action: const CenterContactButton(),
               icon: Icons.family_restroom,
             )
           : AppRefreshIndicator(

@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../domain/guardian_link_row.dart';
 import '../domain/household_option.dart';
 import '../domain/student_option.dart';
@@ -14,13 +15,18 @@ class FamilyRepository {
 
   final SupabaseClient _client;
 
-  /// الطلبة المسجّلين (لاختيار الطفل).
-  Future<List<StudentOption>> fetchStudents() async {
+  /// الطلبة المسجّلين (لاختيار الطفل). [limit] سقف آمن للصفحة (الافتراضي
+  /// كبير عشان قايمة الاختيار الحالية تفضل كاملة لحد ما تتحوّل لبحث سيرفر).
+  Future<List<StudentOption>> fetchStudents({
+    int offset = 0,
+    int limit = 1000,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('enrollment')
         .select('student:student_person_id(id, full_name)')
         .eq('status', 'active')
         .order('enrolled_at', ascending: true)
+        .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));
     final Map<String, StudentOption> byId = <String, StudentOption>{};
     for (final Map<String, dynamic> r in rows) {
@@ -36,23 +42,39 @@ class FamilyRepository {
   }
 
   Future<List<GuardianLinkRow>> fetchLinks() async {
-    final List<Map<String, dynamic>> rows = await _client
-        .from('guardian_link')
-        .select(
-          'relation, guardian:guardian_person_id(full_name), '
-          'student:student_person_id(full_name)',
-        )
-        .order('created_at', ascending: false)
-        .timeout(const Duration(seconds: 12));
+    final List<Map<String, dynamic>> rows = List<Map<String, dynamic>>.from(
+      await _client.rpc('guardian_setup_status'),
+    );
     return rows.map(GuardianLinkRow.fromMap).toList();
   }
 
   /// الأسر المتاحة (لاختيار أسرة ولي الأمر أو إنشاء واحدة جديدة).
-  Future<List<HouseholdOption>> fetchHouseholds() async {
-    final List<Map<String, dynamic>> rows = await _client
-        .from('household')
-        .select('id, name')
+  Future<List<HouseholdOption>> fetchHouseholds() => searchHouseholds('');
+
+  Future<List<HouseholdOption>> searchHouseholds(String query) async {
+    final String term = normalizeArabicDigits(
+      query,
+    ).trim().replaceAll(RegExp(r'[,().%*]'), '');
+    final Set<String> householdIds = <String>{};
+    if (RegExp(r'^\+?[0-9\s-]{3,}$').hasMatch(term)) {
+      final members = await _client
+          .from('household_member')
+          .select('household_id, member:person_id!inner(phone)')
+          .ilike('member.phone', '%${term.replaceAll(RegExp(r'[\s-]'), '')}%')
+          .limit(200)
+          .timeout(const Duration(seconds: 12));
+      householdIds.addAll(members.map((r) => r['household_id'] as String));
+    }
+    var households = _client.from('household').select('id, name');
+    if (term.isNotEmpty) {
+      households = households.or(
+        'name.ilike.%$term%'
+        '${householdIds.isEmpty ? '' : ',id.in.(${householdIds.join(',')})'}',
+      );
+    }
+    final List<Map<String, dynamic>> rows = await households
         .order('name', ascending: true)
+        .limit(50)
         .timeout(const Duration(seconds: 12));
     return rows
         .map(
@@ -66,14 +88,15 @@ class FamilyRepository {
   /// معاملة ذرّية عبر الدالة `create_guardian_with_household` — عشان ميتقفلش
   /// بره بوابة الاشتراك (اللي بتتطلّب عضوية أسرة). لو [householdId] فاضي
   /// بتتعمل أسرة جديدة باسم [newHouseholdName] (أو اسم ولي الأمر).
-  Future<void> createGuardianWithHousehold({
+  Future<String> createGuardianWithHousehold({
     required String guardianName,
     required String childPersonId,
     required String relation,
     String? householdId,
     String? newHouseholdName,
+    String? phone,
   }) async {
-    await _client.rpc<dynamic>(
+    final dynamic personId = await _client.rpc<dynamic>(
       'create_guardian_with_household',
       params: <String, dynamic>{
         'p_guardian_name': guardianName,
@@ -81,8 +104,10 @@ class FamilyRepository {
         'p_relation': relation,
         'p_household_id': householdId,
         'p_new_household_name': newHouseholdName,
+        'p_guardian_phone': phone,
       },
     );
+    return personId as String;
   }
 }
 

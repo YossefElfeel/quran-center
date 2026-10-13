@@ -24,7 +24,19 @@ class PendingExcusesController extends _$PendingExcusesController {
           sessionId: excuse.sessionId,
           supervisorId: supervisorId,
         );
-    ref.invalidateSelf();
-    await future;
+    final List<PendingExcuse>? current = state.asData?.value;
+    if (current == null) return;
+    state = AsyncData<List<PendingExcuse>>(
+      current
+          .map(
+            (PendingExcuse item) => item.id == excuse.id
+                ? item.copyWith(
+                    status: approve ? 'approved' : 'rejected',
+                    decidedAt: DateTime.now(),
+                  )
+                : item,
+          )
+          .toList(),
+    );
   }
 }

@@ -65,6 +65,12 @@ class StrugglingStudentDetailScreen extends ConsumerWidget {
                 ? EmptyState(
                     message: l.supNoAttempts,
                     icon: Icons.record_voice_over,
+                    action: TextButton(
+                      onPressed: () => ref.invalidate(
+                        studentTasmeeHistoryProvider(studentPersonId),
+                      ),
+                      child: Text(l.commonRefreshData),
+                    ),
                   )
                 : Column(
                     mainAxisSize: MainAxisSize.min,

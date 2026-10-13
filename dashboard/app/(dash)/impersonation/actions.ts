@@ -7,12 +7,15 @@ import { redirect } from "next/navigation";
 import { getSuperAdmin } from "@/lib/auth";
 import { IMP_COOKIE } from "@/lib/supabase/impersonated";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 // بدء تقمّص بصلاحية الكتابة. بيستدعي Edge Function impersonate (اللي بيتأكد من المفتاح
 // write_impersonation، يقفل أي جلسة سابقة، يفتح جلسة مدقّقة، ويصدر توكن الموضوع). بنخزّن
 // التوكن في cookie httpOnly (٣٠ دقيقة) فالأسطح اللي بتستخدم createImpersonatedClient
 // بتتصرّف كالموضوع. الكتابة بتتنسب للموضوع، والـ act claim + الجلسة + التدقيق للمساءلة.
 export async function startImpersonation(formData: FormData) {
+  const parsed = z.object({ subject_person_id: z.uuid(), reason: z.string().trim().min(1).max(2000) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect(`/impersonation?e=${encodeURIComponent("اختار مستخدم واكتب سببًا صحيحًا.")}`);
   const subject = String(formData.get("subject_person_id") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   if (!subject) redirect(`/impersonation?e=${encodeURIComponent("اختر مستخدم.")}`);
@@ -22,8 +25,15 @@ export async function startImpersonation(formData: FormData) {
   if (!admin) redirect("/impersonation");
 
   const supabase = await createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    redirect(`/impersonation?e=${encodeURIComponent("انتهت جلسة الدخول — سجّل دخول تاني.")}`);
+  }
   const { data, error } = await supabase.functions.invoke("impersonate", {
     body: { subject_person_id: subject, reason },
+    headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
   if (error) {
@@ -36,7 +46,9 @@ export async function startImpersonation(formData: FormData) {
     }
     const msg = detail.includes("disabled")
       ? "التقمّص بالكتابة مقفول — فعّله من «المفاتيح» الأول."
-      : detail.toLowerCase().includes("super_admin")
+      : detail.includes("caller is not super_admin")
+        ? "جلسة الدخول مش متعرّف عليها كسوبر أدمن — سجّل خروج وادخل تاني."
+        : detail.toLowerCase().includes("super_admin")
         ? "مينفعش تتقمّص سوبر أدمن."
         : detail.includes("login account")
           ? "المستخدم ده ماعندوش حساب دخول."
@@ -45,11 +57,12 @@ export async function startImpersonation(formData: FormData) {
   }
 
   const token = (data as { access_token?: string } | null)?.access_token;
+  if (!token) redirect(`/impersonation?e=${encodeURIComponent("رابط التقمّص مرجعش — جرّب تاني.")}`);
   if (token) {
     const cookieStore = await cookies();
     cookieStore.set(IMP_COOKIE, token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 1800,
       path: "/",
@@ -65,11 +78,12 @@ export async function stopImpersonation() {
   if (!admin) return;
 
   const supabase = await createSupabaseServerClient();
-  await supabase
+  const { error } = await supabase
     .from("impersonation_session")
     .update({ ended_at: new Date().toISOString() })
     .eq("super_admin_person_id", admin.personId)
     .is("ended_at", null);
+  if (error) redirect(`/impersonation?e=${encodeURIComponent("تعذّر إنهاء التقمّص — جرّب تاني.")}`);
 
   const cookieStore = await cookies();
   cookieStore.delete(IMP_COOKIE);

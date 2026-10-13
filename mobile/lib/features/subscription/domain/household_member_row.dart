@@ -12,6 +12,4 @@ class HouseholdMemberRow {
 
   final String personName;
   final String role;
-
-  String get roleAr => role == 'guardian' ? 'ولي أمر' : 'طالب';
 }

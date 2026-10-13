@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/settings/settings_repository.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/presentation/domain_labels.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -16,12 +21,15 @@ import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/attendance_sheet_pdf.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/roster_entry.dart';
+import '../../domain/session_write_block.dart';
 import '../controllers/today_session_controller.dart';
+import '../session_write_block_label.dart';
 import '../widgets/advance_confirmation_dialog.dart';
 import '../widgets/advance_suggestion_banner.dart';
 import '../widgets/behavioral_note_sheet.dart';
@@ -97,14 +105,23 @@ class TodaySessionScreen extends ConsumerWidget {
   }
 }
 
-class _SessionBody extends ConsumerWidget {
+class _SessionBody extends ConsumerStatefulWidget {
   const _SessionBody({required this.circleId, required this.session});
 
   final String circleId;
   final TodaySession session;
 
+  @override
+  ConsumerState<_SessionBody> createState() => _SessionBodyState();
+}
+
+class _SessionBodyState extends ConsumerState<_SessionBody> {
+  String get circleId => widget.circleId;
+  TodaySession get session => widget.session;
+  final Set<String> _requestingExcuses = <String>{};
+
   void _openSetPortion(BuildContext context, {bool advanceMode = false}) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) =>
@@ -113,7 +130,7 @@ class _SessionBody extends ConsumerWidget {
   }
 
   void _openTasmee(BuildContext context, RosterEntry entry, bool hasRevision) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) => ScoreInputSheet(
@@ -125,7 +142,7 @@ class _SessionBody extends ConsumerWidget {
   }
 
   void _openNote(BuildContext context, RosterEntry entry) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) => BehavioralNoteSheet(
@@ -137,7 +154,7 @@ class _SessionBody extends ConsumerWidget {
   }
 
   void _openClose(BuildContext context) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) => CloseSessionSheet(circleId: circleId),
@@ -196,19 +213,72 @@ class _SessionBody extends ConsumerWidget {
     TodaySessionController notifier,
     String enrollmentId,
   ) async {
-    await notifier.requestExcuse(enrollmentId);
-    if (context.mounted) {
-      AppSnackbar.success(context, AppL10n.of(context).sesExcuseRequestSent);
+    if (_requestingExcuses.contains(enrollmentId)) return;
+    setState(() => _requestingExcuses.add(enrollmentId));
+    try {
+      // The sheet owns its text controller, so it is disposed only after the
+      // closing animation finishes (not while the sheet is still building).
+      final String? text = await showAppModalSheet<String>(
+        context: context,
+        title: AppL10n.of(context).sesRequestExcuse,
+        builder: (BuildContext _) => const _ExcuseReasonSheet(),
+      );
+      if (text == null) return;
+      try {
+        await notifier.requestExcuse(
+          enrollmentId,
+          reason: text.isEmpty ? null : text,
+        );
+      } catch (_) {
+        if (context.mounted) {
+          AppSnackbar.error(context, AppL10n.of(context).sesExcuseRequestError);
+        }
+        return;
+      }
+      if (context.mounted) {
+        AppSnackbar.success(context, AppL10n.of(context).sesExcuseRequestSent);
+      }
+    } finally {
+      if (mounted) setState(() => _requestingExcuses.remove(enrollmentId));
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     if (session.roster.isEmpty) {
       return EmptyState(
         message: l.sesNoStudentsInCircle,
         icon: Icons.groups_outlined,
+        action: TextButton(
+          onPressed: () async {
+            final roles =
+                ref.read(currentRolesProvider).asData?.value ?? <String>[];
+            if (roles.contains('admin') || roles.contains('super_admin')) {
+              await context.push<void>('/admin/circles/$circleId/students');
+              return;
+            }
+            try {
+              final settings = await ref.read(appSettingsProvider.future);
+              if (settings.centerPhone.isNotEmpty) {
+                await launchUrl(Uri(scheme: 'tel', path: settings.centerPhone));
+              } else if (context.mounted) {
+                AppSnackbar.info(context, l.sesCenterPhoneMissing);
+              }
+            } catch (_) {
+              if (context.mounted) {
+                AppSnackbar.error(context, l.sesCenterPhoneLoadError);
+              }
+            }
+          },
+          child: Text(
+            (ref.watch(currentRolesProvider).asData?.value ?? <String>[]).any(
+                  (r) => r == 'admin' || r == 'super_admin',
+                )
+                ? l.sesAddStudents
+                : l.sesContactAdministration,
+          ),
+        ),
       );
     }
     final TodaySessionController notifier = ref.read(
@@ -216,7 +286,10 @@ class _SessionBody extends ConsumerWidget {
     );
 
     if (!session.isOpen) {
-      return _ClosedView(onOpen: notifier.openSession);
+      return _ClosedView(
+        onOpen: () => notifier.openSession(l: l),
+        session: session,
+      );
     }
 
     final bool hasRevision = session.requiredRevision != null;
@@ -250,12 +323,23 @@ class _SessionBody extends ConsumerWidget {
               return StudentTile(
                 key: ValueKey<String>(e.enrollmentId),
                 entry: e,
+                excuseRequested: e.excuseRequested,
                 canRecordTasmee: session.hasPortion,
-                onAttendanceChanged: (AttendanceStatus s) =>
-                    notifier.setAttendance(e.enrollmentId, s),
+                onAttendanceChanged: (AttendanceStatus s) async {
+                  try {
+                    await notifier.setAttendance(e.enrollmentId, s, l: l);
+                  } catch (_) {
+                    if (context.mounted) {
+                      AppSnackbar.error(context, l.sesAttendanceSaveError);
+                    }
+                  }
+                },
                 onTasmee: () => _openTasmee(context, e, hasRevision),
                 onNote: () => _openNote(context, e),
-                onRequestExcuse: e.attendance == AttendanceStatus.absent
+                onRequestExcuse:
+                    e.attendance == AttendanceStatus.absent &&
+                        !e.excuseRequested &&
+                        !_requestingExcuses.contains(e.enrollmentId)
                     ? () => _requestExcuse(context, notifier, e.enrollmentId)
                     : null,
               );
@@ -275,10 +359,34 @@ class _SessionBody extends ConsumerWidget {
   }
 }
 
-class _ClosedView extends StatelessWidget {
-  const _ClosedView({required this.onOpen});
+class _ClosedView extends StatefulWidget {
+  const _ClosedView({required this.onOpen, required this.session});
+  final Future<void> Function() onOpen;
+  final TodaySession session;
+  @override
+  State<_ClosedView> createState() => _ClosedViewState();
+}
 
-  final VoidCallback onOpen;
+class _ClosedViewState extends State<_ClosedView> {
+  bool _busy = false;
+  Future<void> _open() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await widget.onOpen();
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.error(
+          context,
+          e is SessionWritesBlockedException
+              ? e.reason.label(AppL10n.of(context))
+              : AppL10n.of(context).sesOpenSessionError,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -292,20 +400,94 @@ class _ClosedView extends StatelessWidget {
           Icon(Icons.event_available, size: 64, color: p.primary),
           const SizedBox(height: AppSpacing.md),
           Text(
-            l.sesSessionStillClosed,
+            widget.session.closedToday
+                ? l.sesClosedTodaySummary(
+                    arabicNumber(widget.session.presentCount),
+                    arabicNumber(widget.session.tasmeeCount),
+                    arabicNumber(widget.session.absentCount),
+                  )
+                : l.sesSessionStillClosed,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyLg.copyWith(color: p.textPrimary),
           ),
           const SizedBox(height: AppSpacing.lg),
+          if (widget.session.closedToday)
+            AppButton(
+              label: l.sesViewDetails,
+              onPressed: () => showAppModalSheet<void>(
+                context: context,
+                title: l.sesSessionDetailsTitle,
+                builder: (_) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    for (final entry in widget.session.roster)
+                      ListTile(
+                        title: Text(entry.studentName),
+                        subtitle: Text(
+                          entry.attendanceRecorded
+                              ? entry.attendance.label(AppL10n.of(context))
+                              : l.sesAttendanceNotRecorded,
+                        ),
+                        trailing: Text(
+                          entry.tasmeeRecorded
+                              ? l.sesTasmeeRecordedMark
+                              : l.sesNoTasmee,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           AppButton(
-            label: l.sesOpenTodaySession,
+            label: widget.session.closedToday
+                ? l.sesExtraSession
+                : l.sesOpenTodaySession,
+            variant: widget.session.closedToday
+                ? AppButtonVariant.text
+                : AppButtonVariant.primary,
+            isLoading: _busy,
             icon: Icons.play_arrow,
-            onPressed: onOpen,
+            onPressed: _open,
           ),
         ],
       ),
     );
   }
+}
+
+/// شيت سبب طلب العذر — بيملك الـ controller بتاعه عشان يتشال مع الشيت نفسه.
+class _ExcuseReasonSheet extends StatefulWidget {
+  const _ExcuseReasonSheet();
+
+  @override
+  State<_ExcuseReasonSheet> createState() => _ExcuseReasonSheetState();
+}
+
+class _ExcuseReasonSheetState extends State<_ExcuseReasonSheet> {
+  final TextEditingController _reason = TextEditingController();
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      AppTextField(
+        controller: _reason,
+        label: AppL10n.of(context).sesExcuseReasonLabel,
+        maxLines: 3,
+      ),
+      const SizedBox(height: AppSpacing.md),
+      AppButton(
+        label: AppL10n.of(context).sesExcuseSubmit,
+        onPressed: () => Navigator.of(context).pop(_reason.text.trim()),
+      ),
+    ],
+  );
 }
 
 /// صف مدين في قائمة الدَيْن: اسم الطالب + حالته (متعثّر / لسه ماتسمّعش).

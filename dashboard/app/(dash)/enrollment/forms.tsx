@@ -1,4 +1,7 @@
 "use client";
+import { Button, SubmitButton } from "@/components/ui/button";
+import { FieldInput, FieldSelect, FieldTextarea } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
 
 import { useActionState, useEffect, useRef } from "react";
 
@@ -12,18 +15,12 @@ import {
 
 export type CircleOption = { id: string; label: string };
 
-const input =
-  "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary";
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60";
-const btnSm =
-  "rounded-md border border-border px-2 py-1 text-xs hover:bg-border/40 disabled:opacity-50";
-
 export function EnrollForm({ circles }: { circles: CircleOption[] }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     enrollStudent,
     null,
   );
+  useActionFeedback(state);
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) ref.current?.reset();
@@ -36,18 +33,18 @@ export function EnrollForm({ circles }: { circles: CircleOption[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         اسم الطالب
-        <input name="name" required className={input} />
+        <FieldInput feedback={state} name="name" required className="text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         النوع
-        <select name="gender" defaultValue="male" className={input}>
+        <FieldSelect feedback={state} name="gender" defaultValue="male" className="text-sm">
           <option value="male">ذكر</option>
           <option value="female">أنثى</option>
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الحلقة
-        <select name="circle_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="circle_id" required defaultValue="" className="text-sm">
           <option value="" disabled>
             — اختر حلقة —
           </option>
@@ -56,20 +53,18 @@ export function EnrollForm({ circles }: { circles: CircleOption[] }) {
               {c.label}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الرقم القومي (اختياري)
-        <input
+        <FieldInput feedback={state}
           name="national_id"
           inputMode="numeric"
           dir="ltr"
-          className={`${input} w-44`}
+          className="w-44 text-sm"
         />
       </label>
-      <button className={btn} disabled={pending}>
-        {pending ? "…" : "سجّل الطالب"}
-      </button>
+      <SubmitButton className="text-sm">سجّل الطالب</SubmitButton>
       {state?.ok === false ? (
         <span className="w-full text-sm text-red-600">{state.error}</span>
       ) : null}
@@ -88,38 +83,37 @@ export function EnrollmentControls({
   currentStatus: string;
   circles: CircleOption[];
 }) {
-  const [state, action, pending] = useActionState<FormResult | null, FormData>(
+  const [state, action] = useActionState<FormResult | null, FormData>(
     updateEnrollment,
     null,
   );
+  useActionFeedback(state);
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="id" value={enrollmentId} />
-      <select
+      <FieldSelect feedback={state}
         name="circle_id"
         defaultValue={currentCircleId}
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       >
         {circles.map((c) => (
           <option key={c.id} value={c.id}>
             {c.label}
           </option>
         ))}
-      </select>
-      <select
+      </FieldSelect>
+      <FieldSelect feedback={state}
         name="status"
         defaultValue={currentStatus}
-        className={`${input} py-1`}
+        className="py-1 text-sm"
       >
         <option value="active">نشط</option>
         <option value="paused">موقوف مؤقتًا</option>
         <option value="graduated">متخرّج</option>
         <option value="dropped">منسحب</option>
         <option value="transferred">منقول</option>
-      </select>
-      <button className={btnSm} disabled={pending}>
-        {pending ? "…" : "حفظ"}
-      </button>
+      </FieldSelect>
+      <SubmitButton size="sm" variant="secondary">حفظ</SubmitButton>
       {state?.ok === false ? (
         <span className="text-xs text-red-600">{state.error}</span>
       ) : null}
@@ -132,6 +126,7 @@ export function BulkEnrollForm({ circles }: { circles: CircleOption[] }) {
     bulkEnroll,
     null,
   );
+  useActionFeedback(state);
   return (
     <form
       action={action}
@@ -139,7 +134,7 @@ export function BulkEnrollForm({ circles }: { circles: CircleOption[] }) {
     >
       <label className="flex flex-col gap-1 text-sm">
         الحلقة
-        <select name="circle_id" required defaultValue="" className={input}>
+        <FieldSelect feedback={state} name="circle_id" required defaultValue="" className="text-sm">
           <option value="" disabled>
             — اختر حلقة —
           </option>
@@ -148,20 +143,20 @@ export function BulkEnrollForm({ circles }: { circles: CircleOption[] }) {
               {c.label}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         الأسماء (كل سطر: الاسم[,ذكر/أنثى]) — حتى ١٠٠
-        <textarea
+        <FieldTextarea feedback={state}
           name="rows"
           rows={5}
           placeholder={"محمد علي\nسارة أحمد,أنثى"}
-          className={input}
+          className="text-sm"
         />
       </label>
-      <button className={`${btn} self-start`} disabled={pending}>
+      <Button className="self-start text-sm" disabled={pending} aria-busy={pending}>
         {pending ? "بنسجّل…" : "سجّل الكل"}
-      </button>
+      </Button>
       {state?.ok === false ? (
         <span className="text-sm text-red-600">{state.error}</span>
       ) : null}

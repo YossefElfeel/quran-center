@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/parent_comment.dart';
@@ -21,8 +23,8 @@ class ChildCommentsSection extends ConsumerWidget {
     final AsyncValue<List<ParentComment>> state = ref.watch(
       childCommentsControllerProvider(studentPersonId),
     );
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -30,8 +32,7 @@ class ChildCommentsSection extends ConsumerWidget {
           children: <Widget>[
             Text(
               l.ppYourCommentsToTeacher,
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTextStyles.labelSm.copyWith(
                 color: context.palette.textSecondary,
               ),
             ),
@@ -163,18 +164,11 @@ class _CommentTile extends StatelessWidget {
                 color: context.palette.textSecondary,
               ),
               const SizedBox(width: AppSpacing.xs),
-              Text(
-                comment.authorName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
+              Text(comment.authorName, style: AppTextStyles.labelLg),
               const Spacer(),
               Text(
                 _shortDate(comment.createdAt),
-                style: TextStyle(
-                  fontSize: 11,
+                style: AppTextStyles.labelSm.copyWith(
                   color: context.palette.textSecondary,
                 ),
               ),

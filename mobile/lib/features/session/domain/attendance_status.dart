@@ -14,13 +14,6 @@ enum AttendanceStatus {
     AttendanceStatus.late => 'late',
   };
 
-  String get labelAr => switch (this) {
-    AttendanceStatus.present => 'حاضر',
-    AttendanceStatus.absent => 'غايب',
-    AttendanceStatus.absentExcused => 'غايب بعذر',
-    AttendanceStatus.late => 'متأخّر',
-  };
-
   static AttendanceStatus fromDb(String value) {
     switch (value) {
       case 'present':

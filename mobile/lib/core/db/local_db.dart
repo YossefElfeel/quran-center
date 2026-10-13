@@ -74,6 +74,19 @@ class LocalDb extends _$LocalDb implements OutboxStore {
     return row?.payloadJson;
   }
 
+  /// Preserve optimistic work while this circle still has operations waiting
+  /// to sync. Dead (permanently failed) rows are excluded: they never sync, so
+  /// counting them would pin a stale cached session until the teacher discards
+  /// them from the sync sheet.
+  Future<bool> hasUnsyncedSession(String circleId) async {
+    final QueryRow row = await customSelect(
+      "SELECT count(*) AS n FROM outbox_entries WHERE status = 'pending' "
+      "AND json_extract(payload_json, '\$.circle_id') = ?",
+      variables: <Variable<Object>>[Variable<String>(circleId)],
+    ).getSingle();
+    return row.read<int>('n') > 0;
+  }
+
   @override
   Future<void> enqueue(OutboxOp op) async {
     await into(outboxEntries).insert(
@@ -203,6 +216,9 @@ class LocalDb extends _$LocalDb implements OutboxStore {
     type: OutboxOpType.fromDb(row.opType),
     attempts: row.attempts,
     lastError: row.lastError,
+    displayLabel:
+        OutboxOp.decodePayload(row.payloadJson)['display_label'] as String?,
+    sessionId: OutboxOp.decodePayload(row.payloadJson)['session_id'] as String?,
   );
 
   OutboxOp _toOp(OutboxEntry row) => OutboxOp(

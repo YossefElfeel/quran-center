@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../theme/app_text_styles.dart';
 import '../theme/tokens.dart';
@@ -74,7 +75,7 @@ Future<bool> showAppConfirmSheet({
             ),
           const SizedBox(height: AppSpacing.sm),
           AppButton(
-            label: cancelLabel ?? 'إلغاء',
+            label: cancelLabel ?? AppL10n.of(context).cancel,
             variant: AppButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(false),
           ),

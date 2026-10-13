@@ -9,6 +9,8 @@ class AppSettings {
     required this.subscriptionAmount,
     required this.graceDays,
     required this.circleMaxSize,
+    this.centerPhone = '',
+    this.centerName = 'دار تحفيظ القرآن',
   });
 
   factory AppSettings.fromMap(Map<String, Object?> m) => AppSettings(
@@ -23,6 +25,8 @@ class AppSettings {
     subscriptionAmount: _asNum(m['subscription_amount_egp'], 10),
     graceDays: _asInt(m['subscription_grace_days'], 7),
     circleMaxSize: _asInt(m['circle_max_size'], 30),
+    centerPhone: m['center_phone'] as String? ?? '',
+    centerName: m['center_name'] as String? ?? 'دار تحفيظ القرآن',
   );
 
   /// قيم افتراضية نقية (تستخدمها الـ providers كـ fallback أثناء التحميل/الخطأ).
@@ -39,6 +43,8 @@ class AppSettings {
   final num subscriptionAmount;
   final int graceDays;
   final int circleMaxSize;
+  final String centerPhone;
+  final String centerName;
 
   static int _asInt(Object? v, int fallback) => v is num
       ? v.toInt()

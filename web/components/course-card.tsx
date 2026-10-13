@@ -32,7 +32,7 @@ export function CourseCard({ course }: { course: Course }) {
           rel="noopener noreferrer"
           className="mt-4 inline-block font-semibold text-[var(--brand)]"
         >
-          ▶ اتفرّج على الفيديو
+          <span aria-hidden="true">▶</span> اتفرّج على الفيديو
         </a>
       ) : null}
     </article>

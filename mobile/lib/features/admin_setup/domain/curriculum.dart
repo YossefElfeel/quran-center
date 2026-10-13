@@ -9,11 +9,6 @@ enum CurriculumType {
     CurriculumType.arabicFoundation => 'arabic_foundation',
   };
 
-  String get labelAr => switch (this) {
-    CurriculumType.quran => 'قرآن',
-    CurriculumType.arabicFoundation => 'تأسيس عربي',
-  };
-
   static CurriculumType fromDb(String value) => switch (value) {
     'arabic_foundation' => CurriculumType.arabicFoundation,
     _ => CurriculumType.quran,

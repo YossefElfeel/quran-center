@@ -1,6 +1,9 @@
 "use client";
+import { FieldTextarea, FieldInput } from "@/components/ui/fields";
 
 import { useActionState, useEffect, useState } from "react";
+import { Dialog } from "./ui/dialog";
+import { toast } from "./ui/feedback";
 
 // نتيجة موحّدة (نفس شكل FormResult/ActionResult في باقي اللوحة).
 export type DangerResult = { ok: true } | { ok: false; error: string };
@@ -78,42 +81,8 @@ export function DangerAction({
   );
 }
 
-function DangerModal({
-  title,
-  tone,
-  onClose,
-  children,
-}: {
-  title: string;
-  tone: "danger" | "warn";
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  const ring = tone === "danger" ? "border-red-200" : "border-amber-200";
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      onClick={onClose}
-    >
-      <div
-        className={`w-full max-w-sm rounded-xl border ${ring} bg-white p-5 shadow-lg`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h3 className="font-bold">{title}</h3>
-          <button
-            type="button"
-            className="text-foreground/50 hover:text-foreground"
-            onClick={onClose}
-            aria-label="إغلاق"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex flex-col gap-3">{children}</div>
-      </div>
-    </div>
-  );
+function DangerModal({title,onClose,children}: {title:string;tone:'danger'|'warn';onClose:()=>void;children:React.ReactNode}) {
+  return <Dialog title={title} onClose={onClose}><div className="flex flex-col gap-3">{children}</div></Dialog>;
 }
 
 function DangerForm({
@@ -147,7 +116,7 @@ function DangerForm({
   const [confirm, setConfirm] = useState("");
 
   useEffect(() => {
-    if (state?.ok) onDone();
+    if (state?.ok) { toast("تم التنفيذ"); onDone(); }
   }, [state, onDone]);
 
   const reasonOk = !requireReason || reason.trim().length > 0;
@@ -175,7 +144,7 @@ function DangerForm({
       ) : null}
       {children}
       {requireReason ? (
-        <textarea
+        <FieldTextarea feedback={state}
           name="reason"
           required
           rows={2}
@@ -186,7 +155,7 @@ function DangerForm({
         />
       ) : null}
       {confirmWord ? (
-        <input
+        <FieldInput feedback={state}
           name="confirm"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}

@@ -39,11 +39,19 @@ class TeacherRepository {
   }
 
   /// تطوّري أنا (RLS بيرجّع بتاعي بس).
-  Future<List<TeacherDevEntry>> fetchMyDevelopment() async {
+  static const int developmentPageSize = 50;
+
+  Future<List<TeacherDevEntry>> fetchMyDevelopment({
+    int offset = 0,
+    int limit = developmentPageSize,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
-        .select('id, month, status, memorization_progress')
+        .select(
+          'id, month, status, memorization_progress, approved_at, return_reason',
+        )
         .order('month', ascending: false)
+        .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
   }
@@ -73,15 +81,19 @@ class TeacherRepository {
   }
 
   /// طابور اعتماد التطوّر (للمشرف).
-  Future<List<TeacherDevEntry>> fetchPendingDevelopment() async {
+  Future<List<TeacherDevEntry>> fetchPendingDevelopment({
+    int offset = 0,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_development')
         .select(
-          'id, month, status, memorization_progress, '
+          'id, month, status, memorization_progress, approved_at, '
           'teacher:teacher_person_id(full_name)',
         )
         .eq('status', 'submitted')
         .order('month', ascending: false)
+        .order('id')
+        .range(offset, offset + 49)
         .timeout(const Duration(seconds: 12));
     return rows.map(TeacherDevEntry.fromMap).toList();
   }
@@ -90,7 +102,36 @@ class TeacherRepository {
     await _client
         .from('teacher_development')
         .update(<String, dynamic>{'status': 'approved'})
-        .eq('id', id);
+        .eq('id', id)
+        .select('id, status')
+        .single()
+        .timeout(const Duration(seconds: 12));
+  }
+
+  Future<void> returnDevelopment(String id, String reason) async {
+    await _client
+        .from('teacher_development')
+        .update(<String, dynamic>{
+          'status': 'returned',
+          'return_reason': reason,
+        })
+        .eq('id', id)
+        .eq('status', 'submitted')
+        .select('id')
+        .single();
+  }
+
+  Future<void> resubmitDevelopment(String id, String progress) async {
+    await _client
+        .from('teacher_development')
+        .update(<String, dynamic>{
+          'status': 'submitted',
+          'memorization_progress': progress,
+        })
+        .eq('id', id)
+        .eq('status', 'returned')
+        .select('id')
+        .single();
   }
 }
 

@@ -1,5 +1,35 @@
 # دليل التشغيل والنشر (Deploy Runbook)
 
+## UX release — 2026-10-13
+
+Public URL: `https://quran-web-sage.vercel.app`. Dashboard: `https://quran-dashboard-kohl.vercel.app`.
+
+The user explicitly approved the two prepared hosted UX migrations and three matching Edge functions on 2026-10-13. Do not publish the new competition page before its columns and submission RPC are applied.
+
+The user also explicitly approved public source publication. The feature branch and seven stacked draft phase PRs ([14–20](https://github.com/YossefElfeel/quran-center/pulls)) are published. Vercel deployment remains authorized after backend readiness.
+
+Supabase migration MCP calls failed with an expired request-state error. After the user selected `YossefElfeel`, browser fallback applied both exact migration files transactionally with matching migration-history entries. Hosted rollback regression reported **UX OK**, with zero fixtures left. All three Edge functions are active with the intended JWT flags: invite 13, reset 10, public application 12.
+
+The two `20261012...ux_*.sql` migrations and matching functions are deployed. Hosted rollback smoke checks cover duplicate payments, returned-evaluation notifications, family/login linking, session close retry, service-only public submission, duplicate reuse and deadline rejection. Endpoint authorization/CORS guards passed. Preserve JWT verification for `invite-user`/`reset-password` and the existing disabled flag for public submission. `WEB_URL` can override the verified public domain; `ALLOWED_ORIGINS` should include the actual public site.
+
+The [Auth Site URL and redirect](https://supabase.com/dashboard/project/quzqenavfoqsjupbtiix/auth/url-configuration) have been saved for the public domain and its exact `/auth/confirm` route. Existing redirects were retained. Custom SMTP remains a user handoff: create a [Google app password](https://myaccount.google.com/apppasswords) with 2-Step Verification enabled, then enter it directly in the prepared [Supabase SMTP form](https://supabase.com/dashboard/project/quzqenavfoqsjupbtiix/auth/smtp) and save. Gmail uses `smtp.gmail.com`, port `465`, and the full sender address as username. Never paste credentials into chat or commit them. Verify recovery delivery only to an explicitly authorized test account, and preserve the confirmation URL in templates. `generateLink` returns a link for sharing; it does not send an invitation email. Both admin UIs state this explicitly. See [Google's app-password help](https://support.google.com/accounts/answer/185833) and [Supabase SMTP guidance](https://supabase.com/docs/guides/auth/auth-smtp).
+
+### UX review fixes — hosted steps (not applied yet)
+
+1. **Migration** `supabase/migrations/20261013120000_ux_review_fixes.sql` (after `20261013065851`): replaces `update_guardian_details` (household change now moves the guardian), adds `session_writes_blocked()` (returns `freeze_sessions` | `maintenance_mode` | null; authenticated only), and redefines `run_monthly_close` so a missed evaluation also notifies the circle teacher with `route_data = {circle_id, month}`. Apply transactionally with its migration-history entry, then run `supabase/tests/ux_flows.sql` (expects `UX OK`, everything rolls back) and the security/performance advisors.
+2. **Auth email templates (password reset from the app — H1).** The mobile app uses PKCE, so the default `?code=` link only works on the device that requested it. Switch the hosted templates to `token_hash` links that work on any device:
+   - Supabase Dashboard → **Authentication → URL Configuration**: confirm **Site URL** = `https://quran-web-sage.vercel.app` (the public web site, not the dashboard) and that `https://quran-web-sage.vercel.app/auth/confirm` stays in the redirect allow-list.
+   - **Authentication → Email Templates → Reset Password**: subject `استعادة كلمة السر — دار تحفيظ القرآن`; body = paste `supabase/templates/recovery.html`. The link must stay `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`.
+   - **Authentication → Email Templates → Invite user**: subject `تفعيل حسابك في دار تحفيظ القرآن`; body = paste `supabase/templates/invite.html` (link `...&type=invite`).
+   - Save, then send one real reset to an authorized test account, open it on a **different** device, set the password on the web, and sign in on the phone.
+   - Local `supabase start` reads the same files via `[auth.email.template.*]` in `supabase/config.toml`.
+
+Local frontend `.env.local` files use the public Supabase URL/anon key. Optional web configuration: `NEXT_PUBLIC_WEB_URL`, `NEXT_PUBLIC_PLAY_STORE_URL` (leave blank until a listing exists), and `NEXT_PUBLIC_APPLICATION_REVIEW_DAYS` (set only for a confirmed center timeframe). Keep `.env.local` out of Git.
+
+Build/QA evidence and the exact remaining checklist are in [UX_IMPLEMENTATION.md](./UX_IMPLEMENTATION.md). Hosted backend release is complete and both canonical production aliases are live at frontend commit `8bdb40d`. Per-app `vercel.json` files use pinned pnpm 11.3.0 commands from each application's root. Both apps pass lint/build and production audit with zero reported vulnerabilities after the Next.js 16.3.8 patch. Five public routes return HTTP 200; browser checks await the required extension update. FCM is deferred per the plan.
+
+The expanded fresh-install regression exposed uniqueness indexes that existed on hosted Supabase but were missing from the repository migration history. `20261013065851_ux_public_submission_indexes.sql` adds normalized-phone and competition/public-registration uniqueness without deleting or rewriting records. Its fresh-database CI passed, including direct duplicate insertion guards. Before applying it to a populated deployment, inspect existing index definitions/names and duplicate counts; preserve any equivalent hosted indexes and reconcile migration history. This third migration has not been applied to hosted Supabase. The current hosted submission flow already passed its rollback regression.
+
 > خطوات **عمليّة** للبنود الخارجية/الحسّاسة اللي الكود فيها جاهز بس محتاجة إجراء منك
 > (تدوير مفاتيح، نشر، توجلات لوحة، مراجعة أمنية). مرتّبة بالأولوية. آخر تحديث: 2026-06-19.
 >

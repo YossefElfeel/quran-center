@@ -7,9 +7,4 @@ enum EvalSelection {
     EvalSelection.random => 'random',
     EvalSelection.manual => 'manual',
   };
-
-  String get labelAr => switch (this) {
-    EvalSelection.random => 'عشوائي',
-    EvalSelection.manual => 'يدوي',
-  };
 }

@@ -5,6 +5,8 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_select_field.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../domain/circle_option.dart';
 import '../controllers/waiting_list_controller.dart';
 
@@ -29,7 +31,10 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
   String? _circleId;
   bool _saving = false;
 
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
+
   Future<void> _save() async {
+    if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final String? circleId = _circleId;
     if (circleId == null) return;
     setState(() => _saving = true);
@@ -41,14 +46,15 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
             studentPersonId: widget.studentPersonId,
             circleId: circleId,
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(context, AppL10n.of(context).itkStudentPlaced);
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
       final AppL10n l = AppL10n.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.itkEnrollError)));
+      AppSnackbar.error(context, l.itkEnrollError);
     }
   }
 
@@ -58,23 +64,13 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
     final AsyncValue<List<CircleOption>> circles = ref.watch(
       circlesOfLevelProvider(widget.levelId),
     );
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
-      ),
+    final bool hasChoices = circles.asData?.value.isNotEmpty ?? false;
+    return Form(
+      key: _form,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(
-            l.itkAssignToCircle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppSpacing.lg),
           circles.when(
             loading: () => const LinearProgressIndicator(),
             error: (Object e, StackTrace _) => AppErrorView(
@@ -84,10 +80,12 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
             ),
             data: (List<CircleOption> list) => list.isEmpty
                 ? Text(l.itkNoCirclesInLevel)
-                : DropdownButton<String>(
-                    isExpanded: true,
+                : AppSelectField<String>(
+                    label: l.itkAssignToCircle,
                     value: _circleId,
-                    hint: Text(l.itkChooseCircle),
+                    hint: l.itkChooseCircle,
+                    validator: (String? v) =>
+                        v == null ? l.itkChooseCircle : null,
                     items: list
                         .map(
                           (CircleOption c) => DropdownMenuItem<String>(
@@ -102,7 +100,10 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: _saving ? l.itkAssigning : l.itkConfirmAssignment,
-            onPressed: _saving ? null : _save,
+            // مقفول لحد ما يختار حلقة (بدل الرجوع الصامت).
+            onPressed: _saving || !hasChoices || _circleId == null
+                ? null
+                : _save,
           ),
         ],
       ),

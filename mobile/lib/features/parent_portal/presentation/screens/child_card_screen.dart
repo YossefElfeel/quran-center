@@ -8,6 +8,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_avatar.dart';
@@ -15,20 +16,26 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_hero.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_segmented_control.dart';
+import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/progress_card_pdf.dart';
 import '../../../feedback/presentation/widgets/rate_teacher_sheet.dart';
 import '../../../media/presentation/widgets/child_media_section.dart';
 import '../../domain/child_card.dart';
+import '../../domain/child_history.dart';
 import '../controllers/child_card_controller.dart';
+import '../controllers/child_history_controllers.dart';
 import '../widgets/child_certificates_section.dart';
 import '../widgets/child_comments_section.dart';
 import '../widgets/child_consent_section.dart';
 import '../widgets/child_journey_section.dart';
 import '../widgets/child_monthly_plan_section.dart';
+import 'child_history_screen.dart';
 
 /// كارت متابعة الطفل: الحلقة + آخر تسميع + ملخّص الحضور.
-class ChildCardScreen extends ConsumerWidget {
+class ChildCardScreen extends ConsumerStatefulWidget {
   const ChildCardScreen({
     required this.studentPersonId,
     required this.childName,
@@ -37,6 +44,14 @@ class ChildCardScreen extends ConsumerWidget {
 
   final String studentPersonId;
   final String childName;
+  @override
+  ConsumerState<ChildCardScreen> createState() => _ChildCardScreenState();
+}
+
+class _ChildCardScreenState extends ConsumerState<ChildCardScreen> {
+  int _tab = 0;
+  String get studentPersonId => widget.studentPersonId;
+  String get childName => widget.childName;
 
   Future<void> _printProgressCard(BuildContext context, WidgetRef ref) async {
     final ChildCard? card = ref
@@ -44,24 +59,27 @@ class ChildCardScreen extends ConsumerWidget {
         .asData
         ?.value;
     if (card == null) return;
+    final AppL10n l = AppL10n.of(context);
     final ByteData fontData = await rootBundle.load('assets/fonts/Cairo.ttf');
     final LatestTasmee? lt = card.latestTasmee;
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat _) => buildProgressCardPdf(
         studentName: childName,
-        circleName: card.circleName ?? 'الحلقة',
+        circleName: card.circleName ?? l.ppCircle,
         present: card.present,
         absent: card.absent,
         excused: card.excused,
         late: card.late,
-        latestScore: lt != null ? '${arabicNumber(lt.score)}/١٠' : null,
+        latestScore: lt != null
+            ? '${arabicNumber(lt.score)}/${arabicNumber(10)}'
+            : null,
         fontData: fontData,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<ChildCard> state = ref.watch(
       childCardProvider(studentPersonId),
@@ -77,7 +95,7 @@ class ChildCardScreen extends ConsumerWidget {
         IconButton(
           tooltip: l.ppRateTeacher,
           icon: const Icon(Icons.star_rate),
-          onPressed: () => showModalBottomSheet<void>(
+          onPressed: () => showAppModalSheet<void>(
             context: context,
             isScrollControlled: true,
             builder: (BuildContext _) =>
@@ -114,11 +132,18 @@ class ChildCardScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
+              // الملخّص مرّة واحدة فوق التبويبات (مش جوّه كل تبويب).
               _InfoCard(
                 icon: Icons.groups,
                 title: l.ppCircle,
                 value: card.circleName ?? l.ppNotInCircle,
               ),
+              if (card.currentPortion != null)
+                _InfoCard(
+                  icon: Icons.menu_book,
+                  title: l.ppCurrentPortion,
+                  value: card.currentPortion!,
+                ),
               if (lt != null)
                 _InfoCard(
                   icon: Icons.record_voice_over,
@@ -136,22 +161,50 @@ class ChildCardScreen extends ConsumerWidget {
                     Routes.parentChildHistory(studentPersonId, childName),
                   ),
                 ),
-              _AttendanceCard(
-                card: card,
-                onTap: () => context.push(
-                  Routes.parentChildHistory(studentPersonId, childName, tab: 1),
+              const SizedBox(height: AppSpacing.md),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: AppSegmentedControl<int>(
+                  segments: [
+                    (value: 0, label: l.ppTabProgress),
+                    (value: 1, label: l.ppTabAttendance),
+                    (value: 2, label: l.ppCertificates),
+                    (value: 3, label: l.ppTabMediaConsent),
+                    (value: 4, label: l.ppTabNotes),
+                  ],
+                  selected: _tab,
+                  onChanged: (int v) => setState(() => _tab = v),
                 ),
               ),
-              ChildCertificatesSection(
-                studentPersonId: studentPersonId,
-                childName: childName,
-              ),
-              ChildMonthlyPlanSection(studentPersonId: studentPersonId),
-              ChildJourneySection(studentPersonId: studentPersonId),
-              if (card.isGirl)
+              const SizedBox(height: AppSpacing.md),
+              if (_tab == 1) ...<Widget>[
+                _AttendanceCard(card: card),
+                _AttendanceHistoryList(
+                  studentPersonId: studentPersonId,
+                  onViewAll: () => context.push(
+                    Routes.parentChildHistory(
+                      studentPersonId,
+                      childName,
+                      tab: 1,
+                    ),
+                  ),
+                ),
+              ],
+              if (_tab == 2)
+                ChildCertificatesSection(
+                  studentPersonId: studentPersonId,
+                  childName: childName,
+                ),
+              if (_tab == 0)
+                ChildMonthlyPlanSection(studentPersonId: studentPersonId),
+              if (_tab == 0)
+                ChildJourneySection(studentPersonId: studentPersonId),
+              if (_tab == 3 && card.isGirl)
                 ChildConsentSection(studentPersonId: studentPersonId),
-              ChildMediaSection(studentPersonId: studentPersonId),
-              ChildCommentsSection(studentPersonId: studentPersonId),
+              if (_tab == 3)
+                ChildMediaSection(studentPersonId: studentPersonId),
+              if (_tab == 4)
+                ChildCommentsSection(studentPersonId: studentPersonId),
             ],
           );
         },
@@ -217,7 +270,7 @@ class _InfoCard extends StatelessWidget {
                   hint,
                   style: AppTextStyles.labelSm.copyWith(color: p.primary),
                 ),
-              Icon(Icons.chevron_left, color: p.textSecondary),
+              Icon(AppIcons.drillIn, color: p.textSecondary),
             ],
           ],
         ),
@@ -227,10 +280,9 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _AttendanceCard extends StatelessWidget {
-  const _AttendanceCard({required this.card, this.onTap});
+  const _AttendanceCard({required this.card});
 
   final ChildCard card;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +291,6 @@ class _AttendanceCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: AppCard(
-        onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -247,19 +298,12 @@ class _AttendanceCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    l.ppAttendance,
+                    l.ppAttendanceCurrentMonth,
                     style: AppTextStyles.labelSm.copyWith(
                       color: p.textSecondary,
                     ),
                   ),
                 ),
-                if (onTap != null) ...<Widget>[
-                  Text(
-                    l.ppViewAttendanceLog,
-                    style: AppTextStyles.labelSm.copyWith(color: p.primary),
-                  ),
-                  Icon(Icons.chevron_left, size: 18, color: p.textSecondary),
-                ],
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -284,6 +328,55 @@ class _AttendanceCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// آخر تسجيلات الحضور (من نفس بيانات شاشة السجل) + رابط للسجل الكامل.
+class _AttendanceHistoryList extends ConsumerWidget {
+  const _AttendanceHistoryList({
+    required this.studentPersonId,
+    required this.onViewAll,
+  });
+
+  final String studentPersonId;
+  final VoidCallback onViewAll;
+
+  static const int _maxRows = 20;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
+    final AsyncValue<List<AttendanceHistoryEntry>> state = ref.watch(
+      childAttendanceHistoryProvider(studentPersonId),
+    );
+    return state.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: LinearProgressIndicator(),
+      ),
+      error: (Object e, StackTrace _) => AppErrorView(
+        message: l.ppHistoryLoadError,
+        onRetry: () =>
+            ref.invalidate(childAttendanceHistoryProvider(studentPersonId)),
+      ),
+      data: (List<AttendanceHistoryEntry> items) => items.isEmpty
+          ? EmptyState(
+              message: l.ppNoAttendanceYet,
+              icon: Icons.event_available,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                for (final AttendanceHistoryEntry e in items.take(_maxRows))
+                  AttendanceHistoryRow(entry: e),
+                if (items.length > _maxRows)
+                  TextButton(
+                    onPressed: onViewAll,
+                    child: Text(l.ppViewAttendanceLog),
+                  ),
+              ],
+            ),
     );
   }
 }

@@ -5,8 +5,10 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -35,8 +37,9 @@ class CirclesScreen extends ConsumerWidget {
     return AppScaffold(
       title: levelName,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet<void>(
+        onPressed: () => showAppModalSheet<void>(
           context: context,
+          title: l.admNewCircle,
           isScrollControlled: true,
           builder: (BuildContext _) => AddCircleSheet(levelId: levelId),
         ),
@@ -50,7 +53,17 @@ class CirclesScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(circlesControllerProvider(levelId)),
         ),
         data: (List<Circle> items) => items.isEmpty
-            ? EmptyState(message: l.admCirclesEmpty)
+            ? EmptyState(
+                message: l.admCirclesEmpty,
+                action: AppButton(
+                  label: l.admNewCircle,
+                  onPressed: () => showAppModalSheet<void>(
+                    context: context,
+                    title: l.admNewCircle,
+                    builder: (_) => AddCircleSheet(levelId: levelId),
+                  ),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(circlesControllerProvider(levelId)),

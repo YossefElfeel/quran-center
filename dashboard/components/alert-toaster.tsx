@@ -47,7 +47,7 @@ export function AlertToaster() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-[60] flex flex-col gap-2">
+    <div className="fixed bottom-4 start-4 z-[60] flex flex-col gap-2">
       {toasts.map((t) => (
         <div
           key={t.id}

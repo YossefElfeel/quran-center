@@ -3,6 +3,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../domain/portion.dart';
 
 /// شريط المراجعة المطلوبة النهارده (من خطة الحصة السابقة) — تذكير للمعلّم.
@@ -16,14 +17,13 @@ class RequiredRevisionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AppPalette p = context.palette;
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      color: p.accent.withValues(alpha: AppOpacity.badgeTint),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      child: AppCard(
+        color: p.accent.withValues(alpha: AppOpacity.badgeTint),
         child: Row(
           children: <Widget>[
             Icon(Icons.replay, color: p.accent),

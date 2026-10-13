@@ -10,12 +10,14 @@ Future<T?> showAppModalSheet<T>({
   required WidgetBuilder builder,
   String? title,
   bool isScrollControlled = true,
+  bool scrollable = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
     builder: (BuildContext ctx) => AppModalSheet(
       title: title,
+      scrollable: scrollable,
       child: Builder(builder: builder),
     ),
   );
@@ -23,10 +25,16 @@ Future<T?> showAppModalSheet<T>({
 
 /// محتوى الـ sheet: عنوان اختياري + جسم قابل للتمرير + هامش لوحة المفاتيح.
 class AppModalSheet extends StatelessWidget {
-  const AppModalSheet({required this.child, this.title, super.key});
+  const AppModalSheet({
+    required this.child,
+    this.title,
+    this.scrollable = true,
+    super.key,
+  });
 
   final Widget child;
   final String? title;
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
@@ -50,15 +58,20 @@ class AppModalSheet extends StatelessWidget {
               ),
             ),
           Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
-              child: child,
-            ),
+            child: scrollable
+                ? SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                      AppSpacing.lg,
+                      AppSpacing.lg,
+                    ),
+                    child: child,
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    child: child,
+                  ),
           ),
         ],
       ),

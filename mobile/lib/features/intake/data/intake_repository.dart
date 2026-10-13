@@ -15,7 +15,10 @@ class IntakeRepository {
 
   final SupabaseClient _client;
 
-  Future<List<WaitingApplicant>> fetchWaiting() async {
+  Future<List<WaitingApplicant>> fetchWaiting({
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('waiting_list')
         .select(
@@ -24,6 +27,8 @@ class IntakeRepository {
         )
         .eq('status', 'waiting')
         .order('created_at', ascending: true)
+        .order('id')
+        .range(offset, offset + limit - 1)
         .timeout(const Duration(seconds: 12));
     return rows.map(WaitingApplicant.fromMap).toList();
   }

@@ -41,11 +41,11 @@ class TeacherDocsRepository {
     String? mime,
   }) async {
     if (bytes.length > maxUploadBytes) {
-      throw const ValidationException('الملف أكبر من ٢٠ ميجا — اختار ملف أصغر');
+      throw const ValidationException.reason(AppErrorReason.fileTooLarge);
     }
     final User? user = _client.auth.currentUser;
     if (user == null) {
-      throw const ValidationException('انتهت الجلسة — سجّل دخول تاني');
+      throw const ValidationException.reason(AppErrorReason.sessionExpired);
     }
     final String path = '${user.id}/${const Uuid().v4()}.$ext';
     try {
@@ -57,7 +57,7 @@ class TeacherDocsRepository {
             fileOptions: FileOptions(contentType: mime),
           );
     } catch (_) {
-      throw const ValidationException('مش قادرين نرفع الملف — جرّب تاني');
+      throw const ValidationException.reason(AppErrorReason.fileUploadFailed);
     }
     try {
       await _client.from('teacher_document').insert(<String, dynamic>{
@@ -72,7 +72,7 @@ class TeacherDocsRepository {
       try {
         await _client.storage.from(_bucket).remove(<String>[path]);
       } catch (_) {}
-      throw const ValidationException('مش قادرين نسجّل المستند — جرّب تاني');
+      throw const ValidationException.reason(AppErrorReason.documentSaveFailed);
     }
   }
 

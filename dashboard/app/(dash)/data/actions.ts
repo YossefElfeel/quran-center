@@ -1,4 +1,5 @@
 "use server";
+import { validateAction } from "@/lib/action-schemas";
 
 import { revalidatePath } from "next/cache";
 
@@ -31,6 +32,9 @@ export async function deleteRow(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("deleteRow", fd);
+  if (formError) return formError;
+
   const table = String(fd.get("table") ?? "");
   const id = String(fd.get("id") ?? "");
   const reason = String(fd.get("reason") ?? "").trim();
@@ -45,6 +49,9 @@ export async function writeJson(
   _p: FormResult | null,
   fd: FormData,
 ): Promise<FormResult> {
+  const formError = validateAction("writeJson", fd);
+  if (formError) return formError;
+
   const table = String(fd.get("table") ?? "");
   const op = String(fd.get("op") ?? "");
   const reason = String(fd.get("reason") ?? "").trim();

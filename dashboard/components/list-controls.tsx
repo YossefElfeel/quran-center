@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { formatNumber } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { FieldInput } from "@/components/ui/fields";
 
 // نموذج بحث (GET) — بيحدّث ?q= ويصفّر الصفحة. بيحافظ على فلاتر تانية عبر hidden.
 export function SearchForm({
@@ -15,15 +18,16 @@ export function SearchForm({
       {Object.entries(hidden ?? {}).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
-      <input
+      <FieldInput
+        aria-label={placeholder}
         name="q"
         defaultValue={q ?? ""}
         placeholder={placeholder}
-        className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+        className="flex-1 text-sm"
       />
-      <button className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:opacity-90">
+      <Button type="submit" className="text-sm">
         بحث
-      </button>
+      </Button>
     </form>
   );
 }
@@ -49,7 +53,7 @@ export function Pager({
   return (
     <div className="flex items-center justify-between gap-3 text-sm text-foreground/60">
       <span>
-        صفحة {page} من {totalPages || 1}
+        صفحة {formatNumber(page)} من {formatNumber(totalPages || 1)}
       </span>
       <div className="flex gap-2">
         {page > 1 ? (

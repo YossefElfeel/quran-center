@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/tokens.dart';
 
 /// شريط ملخّص المقطع الحالي: عدّوا كام / عليهم دَيْن كام. قابل للنقر → قائمة
@@ -47,7 +48,7 @@ class DebtStrip extends StatelessWidget {
             ),
             if (onTap != null) ...<Widget>[
               const Spacer(),
-              Icon(Icons.chevron_left, color: p.textSecondary, size: 20),
+              Icon(AppIcons.drillIn, color: p.textSecondary, size: 20),
             ],
           ],
         ),

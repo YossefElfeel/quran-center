@@ -1,7 +1,10 @@
 import { stopImpersonation } from "@/app/(dash)/impersonation/actions";
 import { signOut } from "@/app/login/actions";
 import { AlertToaster } from "@/components/alert-toaster";
-import { Sidebar } from "@/components/sidebar";
+import { ToastProvider } from "@/components/ui/feedback";
+import { SubmitButton } from "@/components/ui/button";
+import { ImpersonationCountdown } from "@/components/impersonation-countdown";
+import { ResponsiveSidebar } from "@/components/responsive-sidebar";
 import { getSuperAdmin } from "@/lib/auth";
 import { getActiveImpersonation } from "@/lib/impersonation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -45,6 +48,7 @@ export default async function DashLayout({
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <AlertToaster />
+      <ToastProvider />
       {maintenance ? (
         <div className="bg-amber-500 px-6 py-2 text-center text-sm font-bold text-white">
           🛠️ وضع الصيانة مفعّل — كتابة الجلسات والمدفوعات متجمّدة لكل المستخدمين
@@ -55,26 +59,18 @@ export default async function DashLayout({
         <div className="flex items-center justify-between gap-3 bg-red-600 px-6 py-2 text-sm font-bold text-white">
           <span>
             🔴 بتتصرّف كـ «{impersonation.subjectName}» — كل تغيير بيتنسب لك (مدقّق،
-            ٣٠ دقيقة)
+            ٣٠ دقيقة) <ImpersonationCountdown expiresAt={new Date(impersonation.startedAt).getTime() + 1800000} />
           </span>
           <form action={stopImpersonation}>
-            <button className="rounded bg-white/20 px-3 py-1 hover:bg-white/30">
-              إيقاف
-            </button>
+            <SubmitButton className="bg-white/20">إيقاف</SubmitButton>
           </form>
         </div>
       ) : null}
       <div className="flex min-h-0 flex-1">
-        <aside className="w-56 shrink-0 border-l border-border bg-white/50">
-        <div className="border-b border-border p-4">
-          <p className="font-bold text-primary">لوحة السوبر أدمن</p>
-          <p className="truncate text-xs text-foreground/50">{admin.email}</p>
-        </div>
-        <Sidebar />
-      </aside>
+        <ResponsiveSidebar email={admin.email ?? ""} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border px-6 py-3">
+        <header className="flex items-center justify-between border-b border-border pe-6 ps-16 py-3 lg:ps-6">
           <span className="text-sm text-foreground/60">
             مركز تحفيظ القرآن الكريم
           </span>
@@ -84,7 +80,7 @@ export default async function DashLayout({
             </button>
           </form>
         </header>
-          <main className="min-w-0 flex-1 p-6">{children}</main>
+          <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
         </div>
       </div>
     </div>

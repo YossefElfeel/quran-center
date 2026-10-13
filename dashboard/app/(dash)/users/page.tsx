@@ -1,3 +1,9 @@
+import { OperatorScopeNote } from "@/components/operator-scope-note";
+import { RowActions } from "@/components/ui/row-actions";
+import { Button } from "@/components/ui/button";
+import { FieldSelect } from "@/components/ui/fields";
+import Link from "next/link";
+import { formatNumber } from "@/lib/format";
 import { Pager, SearchForm } from "@/components/list-controls";
 import { getSuperAdmin } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -35,9 +41,11 @@ const PAGE_SIZE = 25;
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; role?: string }>;
 }) {
-  const { q, page: pageRaw } = await searchParams;
+  const { q, page: pageRaw, role: roleRaw } = await searchParams;
+  // Only known roles reach the query; anything else means "everyone".
+  const role = roleRaw === "student" || (roleRaw && Object.hasOwn(ROLE_LABEL, roleRaw)) ? roleRaw : undefined;
   const page = Math.max(1, Number(pageRaw) || 1);
   const from = (page - 1) * PAGE_SIZE;
 
@@ -46,27 +54,30 @@ export default async function UsersPage({
   let query = supabase
     .from("person")
     .select(
-      "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment!inner(role)",
+      role === "student" ? "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment(role),enrollment!inner(id,status)" : role ? "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment!inner(role)" : "id, full_name, lifecycle_status, blocked_reason, deactivated_reason, role_assignment(role)",
       { count: "exact" },
     )
     .order("full_name")
     .range(from, from + PAGE_SIZE - 1);
+  if(role === "student") query=query.eq("enrollment.status","active");
+  else if(role) query=query.eq("role_assignment.role",role);
   if (q) query = query.ilike("full_name", `%${q}%`);
-  const { data, count } = await query;
+  const { data, count, error: loadError1 } = await query;
+  if (loadError1) throw new Error('data_load_failed');
   const rows = (data ?? []) as unknown as PersonRow[];
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
-        <h1 className="text-2xl font-bold">المستخدمون والأدوار</h1>
+        <h1 className="text-2xl font-bold">المستخدمون والأدوار</h1><OperatorScopeNote />
         <p className="text-sm text-foreground/60">
           تحكّم كامل: منح/سحب الأدوار، الحظر/فك الحظر، الإيقاف والحذف. كل عملية
-          بتتسجّل في سجل التدقيق. ({count ?? 0} مستخدم)
+          بتتسجّل في سجل التدقيق. ({formatNumber(count)} مستخدم)
         </p>
-        <SearchForm q={q} placeholder="ابحث بالاسم…" />
+        <SearchForm q={q} placeholder="ابحث بالاسم…" hidden={role ? { role } : undefined} /><form className="flex flex-wrap items-end gap-3"><input type="hidden" name="q" value={q??""}/><label className="flex items-center gap-3">الدور<FieldSelect name="role" defaultValue={role??""} className="w-auto"><option value="">كل الناس</option><option value="student">الطلاب</option>{Object.entries(ROLE_LABEL).map(([key,label])=><option key={key} value={key}>{label}</option>)}</FieldSelect></label><Button type="submit" variant="secondary">تصفية</Button></form>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full min-w-[640px] text-right text-sm">
+          <table className="w-full min-w-[640px] text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">الاسم</th>
@@ -94,7 +105,7 @@ export default async function UsersPage({
                   const roles = (r.role_assignment ?? []).map((x) => x.role);
                   return (
                     <tr key={r.id} className="border-b border-border/60">
-                      <td className="px-4 py-2">{r.full_name}</td>
+                      <td className="px-4 py-2"><Link href={`/users/${r.id}`} className="text-primary underline">{r.full_name}</Link></td>
                       <td className="px-4 py-2">
                         <div className="flex flex-wrap gap-1">
                           {roles.length === 0 ? (
@@ -119,7 +130,7 @@ export default async function UsersPage({
                           {badge.label}
                         </span>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2"><RowActions>
                         <UserActions
                           personId={r.id}
                           fullName={r.full_name}
@@ -127,7 +138,7 @@ export default async function UsersPage({
                           roles={roles}
                           isSelf={r.id === admin?.personId}
                         />
-                      </td>
+                      </RowActions></td>
                     </tr>
                   );
                 })
@@ -135,7 +146,7 @@ export default async function UsersPage({
             </tbody>
           </table>
         </div>
-        <Pager page={page} totalPages={totalPages} params={q ? { q } : {}} />
+        <Pager page={page} totalPages={totalPages} params={{ ...(q ? { q } : {}), ...(role ? { role } : {}) }} />
       </section>
 
       <section className="flex flex-col gap-3">

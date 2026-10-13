@@ -4,14 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/settings/settings_repository.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_section_header.dart';
+import '../../data/supervisor_eval_repository.dart';
 import '../../domain/circle_pass_rate.dart';
 import '../../domain/struggling_student.dart';
 import '../controllers/circle_pass_rates_controller.dart';
@@ -50,8 +53,7 @@ class _CirclesSection extends ConsumerWidget {
       circlePassRatesProvider,
     );
     return state.when(
-      loading: () =>
-          const SizedBox(height: 240, child: AppListSkeleton(itemCount: 3)),
+      loading: () => const AppListSkeleton(itemCount: 3, shrinkWrap: true),
       error: (Object e, StackTrace _) => AppErrorView(
         message: l.supCirclesLoadError,
         onRetry: () => ref.invalidate(circlePassRatesProvider),
@@ -115,8 +117,7 @@ class _StrugglingSection extends ConsumerWidget {
       strugglingStudentsProvider,
     );
     return state.when(
-      loading: () =>
-          const SizedBox(height: 240, child: AppListSkeleton(itemCount: 3)),
+      loading: () => const AppListSkeleton(itemCount: 3, shrinkWrap: true),
       error: (Object e, StackTrace _) => AppErrorView(
         message: l.supListLoadError,
         onRetry: () => ref.invalidate(strugglingStudentsProvider),
@@ -125,11 +126,16 @@ class _StrugglingSection extends ConsumerWidget {
         if (items.isEmpty) {
           return _EmptyNote(l.supNoStrugglingStudents);
         }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: items
-              .map((StrugglingStudent s) => _StrugglingTile(student: s))
-              .toList(),
+        return AppPagedList<StrugglingStudent>(
+          shrinkWrap: true,
+          items: items,
+          loadPage: (offset) async => ref
+              .read(supervisorEvalRepositoryProvider)
+              .fetchStruggling(
+                (await ref.read(appSettingsProvider.future)).struggleThreshold,
+                offset: offset,
+              ),
+          itemBuilder: (_, student, _) => _StrugglingTile(student: student),
         );
       },
     );

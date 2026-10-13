@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_async_form_sheet.dart';
+import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/dispose_with.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../recognition/data/recognition_repository.dart';
 import '../../domain/monthly_eval.dart';
@@ -17,11 +23,13 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
   const CircleMonthlyEvalScreen({
     required this.circleId,
     required this.circleName,
+    this.month,
     super.key,
   });
 
   final String circleId;
   final String circleName;
+  final String? month;
 
   Future<void> _edit(
     BuildContext context,
@@ -35,18 +43,30 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
     final TextEditingController behavior = TextEditingController(
       text: s.behavior ?? '',
     );
-    final bool? ok = await showDialog<bool>(
+    await showAppModalSheet<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(l.monEvalStudentTitle(s.studentName)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
+      title: l.monEvalStudentTitle(s.studentName),
+      builder: (BuildContext context) => DisposeWith(
+        notifiers: <ChangeNotifier>[summary, behavior],
+        child: AppAsyncFormSheet(
+          submitLabel: l.monSubmitForApproval,
+          successMessage: l.commonSentForApproval,
+          onSubmit: () => ref
+              .read(circleMonthlyEvalsProvider(circleId, month: month).notifier)
+              .save(
+                studentPersonId: s.studentPersonId,
+                summary: summary.text.trim(),
+                behavior: behavior.text.trim(),
+              ),
+          fields: <Widget>[
             AppTextField(
               controller: summary,
               minLines: 2,
               maxLines: 4,
               label: l.monPerformanceSummaryLabel,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? l.monSummaryRequired
+                  : null,
             ),
             const SizedBox(height: AppSpacing.sm),
             AppTextField(
@@ -57,36 +77,20 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.monSubmitForApproval),
-          ),
-        ],
       ),
     );
-    final String sm = summary.text;
-    final String bh = behavior.text;
-    summary.dispose();
-    behavior.dispose();
-    if (ok == true) {
-      await ref
-          .read(circleMonthlyEvalsProvider(circleId).notifier)
-          .save(studentPersonId: s.studentPersonId, summary: sm, behavior: bh);
-    }
   }
 
   Future<void> _pickTop(BuildContext context, WidgetRef ref) async {
     final AppL10n l = AppL10n.of(context);
     final List<MonthlyEvalStudent> students =
-        ref.read(circleMonthlyEvalsProvider(circleId)).asData?.value ??
+        ref
+            .read(circleMonthlyEvalsProvider(circleId, month: month))
+            .asData
+            ?.value ??
         <MonthlyEvalStudent>[];
     if (students.isEmpty) return;
-    await showModalBottomSheet<void>(
+    await showAppModalSheet<void>(
       context: context,
       builder: (BuildContext sheetContext) => SafeArea(
         child: ListView(
@@ -97,10 +101,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
               child: Text(
                 l.monPickTopTitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.titleMd,
               ),
             ),
             for (final MonthlyEvalStudent s in students)
@@ -120,10 +121,9 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                   ref.invalidate(honorBoardProvider);
                   if (sheetContext.mounted) Navigator.of(sheetContext).pop();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(l.monTopStudentSnack(s.studentName)),
-                      ),
+                    AppSnackbar.success(
+                      context,
+                      l.monTopStudentSnack(s.studentName),
                     );
                   }
                 },
@@ -138,7 +138,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<MonthlyEvalStudent>> state = ref.watch(
-      circleMonthlyEvalsProvider(circleId),
+      circleMonthlyEvalsProvider(circleId, month: month),
     );
     return AppScaffold(
       title: l.monEvalScreenTitle(circleName),
@@ -153,12 +153,20 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
         loading: () => const AppLoader(),
         error: (Object e, StackTrace _) => AppErrorView(
           message: l.monLoadStudentsFailed,
-          onRetry: () => ref.invalidate(circleMonthlyEvalsProvider(circleId)),
+          onRetry: () => ref.invalidate(
+            circleMonthlyEvalsProvider(circleId, month: month),
+          ),
         ),
         data: (List<MonthlyEvalStudent> items) => items.isEmpty
             ? EmptyState(
                 message: l.monNoStudentsInCircle,
                 icon: Icons.groups_outlined,
+                action: TextButton(
+                  onPressed: () => ref.invalidate(
+                    circleMonthlyEvalsProvider(circleId, month: month),
+                  ),
+                  child: Text(l.commonRefreshData),
+                ),
               )
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -167,28 +175,41 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                   final MonthlyEvalStudent s = items[i];
                   final (String label, Color color) = s.isApproved
                       ? (l.monStatusApproved, context.palette.success)
+                      : s.status == 'returned'
+                      ? (l.monStatusReturned, context.palette.warningText)
                       : s.isSubmitted
                       ? (l.monStatusSubmitted, context.palette.accent)
                       : (l.monStatusPending, context.palette.textSecondary);
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
+                  return Padding(
+                    key: ValueKey<String>(s.studentPersonId),
+                    padding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.xs,
                       horizontal: AppSpacing.md,
                     ),
-                    child: ListTile(
-                      title: Text(s.studentName),
-                      subtitle: Text(
-                        label,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.bold,
+                    child: AppCard(
+                      padding: EdgeInsets.zero,
+                      child: ListTile(
+                        title: Text(s.studentName),
+                        subtitle: Text(
+                          [
+                            label,
+                            if (s.returnReason != null)
+                              l.monReturnReason(s.returnReason!),
+                            if (s.summary != null) s.summary!,
+                          ].join('\n'),
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      trailing: TextButton(
-                        onPressed: s.isApproved
-                            ? null
-                            : () => _edit(context, ref, s),
-                        child: Text(s.isSubmitted ? l.monEdit : l.monEvaluate),
+                        trailing: TextButton(
+                          onPressed: s.isApproved
+                              ? null
+                              : () => _edit(context, ref, s),
+                          child: Text(
+                            s.isSubmitted ? l.monEdit : l.monEvaluate,
+                          ),
+                        ),
                       ),
                     ),
                   );

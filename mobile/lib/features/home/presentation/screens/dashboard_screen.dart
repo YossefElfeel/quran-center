@@ -1,209 +1,256 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../app/shell/sync_status_sheet.dart';
 import '../../../../core/auth/auth_providers.dart';
-import '../../../../shared/theme/app_text_styles.dart';
-import '../../../../shared/theme/motion.dart';
+import '../../../../core/settings/settings_repository.dart';
+import '../../../../core/supabase/supabase_providers.dart';
+import '../../../../core/sync/outbox_store.dart';
+import '../../../../core/sync/sync_status_provider.dart';
+import '../../../../core/utils/arabic_date.dart';
+import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_list_card.dart';
+import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
-import '../../../../shared/widgets/app_stat_pill.dart';
+import '../../../../shared/widgets/app_search_picker.dart';
+import '../../../../shared/widgets/app_section_header.dart';
+import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../admin_setup/domain/circle.dart';
+import '../../../enrollment/presentation/widgets/enroll_student_flow.dart';
+import '../../../excuse/presentation/controllers/pending_excuses_controller.dart';
+import '../../../intake/presentation/controllers/waiting_list_controller.dart';
 import '../../../monthly/presentation/controllers/monthly_eval_controllers.dart';
-import '../../../more/favorites_provider.dart';
-import '../../../more/feature_catalog.dart';
-import '../../../notifications/presentation/controllers/notifications_controller.dart';
+import '../../../parent_portal/domain/child_card.dart';
+import '../../../parent_portal/domain/child_summary.dart';
+import '../../../parent_portal/presentation/controllers/child_card_controller.dart';
 import '../../../parent_portal/presentation/controllers/my_children_controller.dart';
+import '../../../session/domain/roster_entry.dart';
 import '../../../session/presentation/controllers/my_circles_controller.dart';
+import '../../../session/presentation/controllers/today_session_controller.dart';
+import '../../../subscription/data/subscription_repository.dart';
+import '../../../subscription/domain/household_summary.dart';
+import '../../../subscription/presentation/controllers/households_controller.dart';
+import '../../../subscription/presentation/controllers/my_subscription_controller.dart';
+import '../../../subscription/presentation/widgets/record_payment_sheet.dart';
 import '../../../supervisor_eval/presentation/controllers/struggling_controller.dart';
+import '../../../teacher/presentation/controllers/teacher_controllers.dart';
 
-const List<String> _supervisorRoles = <String>[
-  'supervisor',
-  'admin',
-  'super_admin',
-];
+final FutureProvider<String> homeNameProvider = FutureProvider((Ref ref) async {
+  final String? id = await ref.watch(currentPersonIdProvider.future);
+  if (id == null) return '';
+  final Map<String, dynamic>? person = await ref
+      .watch(supabaseClientProvider)
+      .from('person')
+      .select('full_name')
+      .eq('id', id)
+      .maybeSingle();
+  return (person?['full_name'] as String? ?? '').split(' ').first;
+});
 
-String _roleLabel(AppL10n l, String role) {
-  switch (role) {
-    case 'super_admin':
-      return l.roleSuperAdmin;
-    case 'admin':
-      return l.roleAdmin;
-    case 'supervisor':
-      return l.roleSupervisor;
-    case 'teacher':
-      return l.roleTeacher;
-    case 'parent':
-      return l.roleParent;
-    default:
-      return role;
-  }
-}
-
-/// الداشبورد — يستبدل قائمة الأزرار القديمة: hero + إجراءات سريعة + نظرة عامة.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
-    final AsyncValue<String?> personIdAsync = ref.watch(
-      currentPersonIdProvider,
-    );
-    final AsyncValue<List<String>> rolesAsync = ref.watch(currentRolesProvider);
-
+    final AsyncValue<List<String>> roles = ref.watch(currentRolesProvider);
+    final String name = ref.watch(homeNameProvider).asData?.value ?? '';
+    final AppSettings settings =
+        ref.watch(appSettingsProvider).asData?.value ?? AppSettings.defaults;
+    final DateTime today = DateTime.now();
+    final HijriCalendar hijri = HijriCalendar.fromDate(today);
     return Scaffold(
-      body: personIdAsync.when(
-        loading: () => AppLoader(message: l.loading),
-        error: (Object e, StackTrace _) => AppErrorView(
-          message: l.genericError,
-          onRetry: () => ref.invalidate(currentPersonIdProvider),
-        ),
-        data: (String? personId) {
-          if (personId == null) {
-            return _SuspendedBody(
-              onSignOut: () => ref.read(authRepositoryProvider).signOut(),
-            );
-          }
-          return rolesAsync.when(
-            loading: () => AppLoader(message: l.loading),
-            error: (Object e, StackTrace _) => AppErrorView(
-              message: l.genericError,
-              onRetry: () => ref.invalidate(currentRolesProvider),
-            ),
-            data: (List<String> roles) => _DashboardBody(roles: roles),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _DashboardBody extends ConsumerWidget {
-  const _DashboardBody({required this.roles});
-
-  final List<String> roles;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bool noMotion = reduceMotion(context);
-
-    Widget anim(Widget child, int i) => noMotion
-        ? child
-        : child
-              .animate()
-              .fadeIn(duration: AppDurations.base, delay: (i * 70).ms)
-              .slideY(begin: 0.08, curve: AppCurves.emphasized);
-
-    return AppRefreshIndicator(
-      onRefresh: () async {
-        ref
-          ..invalidate(currentRolesProvider)
-          ..invalidate(unreadCountProvider)
-          ..invalidate(myCirclesProvider)
-          ..invalidate(myChildrenProvider)
-          ..invalidate(strugglingStudentsProvider)
-          ..invalidate(pendingMonthlyEvalsProvider);
-      },
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          _HeroHeader(roles: roles),
-          anim(_QuickActions(roles: roles), 1),
-          anim(_SummarySection(roles: roles), 2),
-          const SizedBox(height: AppSpacing.xl),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroHeader extends StatelessWidget {
-  const _HeroHeader({required this.roles});
-
-  final List<String> roles;
-
-  String _greeting(AppL10n l) {
-    final int h = DateTime.now().hour;
-    if (h < 12) return l.greetingMorning;
-    if (h < 18) return l.greetingAfternoon;
-    return l.greetingEvening;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final AppL10n l = AppL10n.of(context);
-    final AppPalette p = context.palette;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: p.heroGradient,
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-        ),
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(AppRadii.xl),
-        ),
-        boxShadow: AppElevation.shadowMd(p.shadowColor),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.lg,
+      body: SafeArea(
+        child: roles.when(
+          loading: () => const AppListSkeleton(),
+          error: (_, _) => AppErrorView(
+            message: l.homeAccountLoadError,
+            onRetry: () => ref.invalidate(currentRolesProvider),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          _greeting(l),
-                          style: AppTextStyles.headlineMd.copyWith(
-                            color: p.onHero,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          l.welcome,
-                          style: AppTextStyles.bodyMd.copyWith(
-                            color: p.onHero.withValues(alpha: 0.85),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const _HeroBell(),
-                  const _HeroSettings(),
-                ],
-              ),
-              if (roles.isNotEmpty) ...<Widget>[
-                const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.xs,
-                  children: <Widget>[
-                    for (final String r in roles)
-                      _HeroRoleChip(label: _roleLabel(l, r)),
-                  ],
+          data: (List<String> roles) => AppRefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(homeNameProvider);
+              ref.invalidate(myCirclesProvider);
+              ref.invalidate(myChildrenProvider);
+              ref.invalidate(overdueHouseholdsProvider);
+              ref.invalidate(mySubscriptionActiveProvider);
+              ref.invalidate(pendingMonthlyEvalsProvider);
+              ref.invalidate(pendingDevelopmentProvider);
+              ref.invalidate(pendingExcusesControllerProvider);
+              ref.invalidate(strugglingStudentsProvider);
+              ref.invalidate(waitingListControllerProvider);
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: <Widget>[
+                Text(
+                  name.isEmpty ? l.welcome : l.homeGreeting(name),
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
+                Text(settings.centerName),
+                Text(
+                  l.homeDateLine(
+                    arabicNumber(today.day),
+                    arabicMonthLabel(today),
+                    arabicNumber(hijri.hDay),
+                    arabicNumber(hijri.hMonth),
+                    arabicNumber(hijri.hYear),
+                  ),
+                  style: TextStyle(color: context.palette.textSecondary),
+                ),
+                const SizedBox(height: 24),
+                if (roles.contains('teacher')) ...<Widget>[
+                  AppSectionHeader(title: l.homeTodaySessions),
+                  ref
+                      .watch(myCirclesProvider)
+                      .when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (_, _) => _Retry(
+                          message: l.homeCirclesLoadError,
+                          onRetry: () => ref.invalidate(myCirclesProvider),
+                        ),
+                        data: (List<Circle> circles) => Column(
+                          children: <Widget>[
+                            if (circles.isEmpty) Text(l.homeNoCircleAssigned),
+                            for (final Circle circle in circles)
+                              _TeacherCircle(circle: circle),
+                          ],
+                        ),
+                      ),
+                  const _SyncButton(),
+                ],
+                if (roles.contains('parent')) ...<Widget>[
+                  AppSectionHeader(title: l.homeFollowChildren),
+                  AppListCard(
+                    title: l.homeMySubscription,
+                    leadingIcon: Icons.payments_outlined,
+                    onTap: () => context.push('/parent/subscription'),
+                  ),
+                  ref
+                      .watch(myChildrenProvider)
+                      .when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (_, _) => _Retry(
+                          message: l.homeChildrenLoadError,
+                          onRetry: () => ref.invalidate(myChildrenProvider),
+                        ),
+                        data: (List<ChildSummary> children) => Column(
+                          children: <Widget>[
+                            if (children.isEmpty)
+                              AppListCard(
+                                title: l.homeContactAdminToLinkChildren,
+                                onTap: () =>
+                                    context.push('/parent/subscription'),
+                              ),
+                            for (final ChildSummary child in children)
+                              _HomeChild(child: child),
+                          ],
+                        ),
+                      ),
+                ],
+                if (roles.any(
+                  (String r) => <String>['admin', 'super_admin'].contains(r),
+                )) ...<Widget>[
+                  AppSectionHeader(title: l.homeCenterManagement),
+                  AppButton(
+                    label: l.enrEnrollStudent,
+                    icon: Icons.person_add,
+                    onPressed: () => enrollStudentFlow(context, ref),
+                  ),
+                  const SizedBox(height: 12),
+                  AppButton(
+                    label: l.homeRecordPayment,
+                    icon: Icons.payments,
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () => _recordPaymentFlow(context, ref),
+                  ),
+                  _Queue(
+                    state: ref.watch(waitingListControllerProvider),
+                    title: l.navWaitingList,
+                    route: Routes.adminWaiting,
+                    alwaysShow: true,
+                  ),
+                  AppSectionHeader(title: l.homeOverdueSubscriptions),
+                  ref
+                      .watch(overdueHouseholdsProvider)
+                      .when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (_, _) => _Retry(
+                          message: l.homeSubscriptionsLoadError,
+                          onRetry: () =>
+                              ref.invalidate(overdueHouseholdsProvider),
+                        ),
+                        data: (List<HouseholdSummary> households) => Column(
+                          children: <Widget>[
+                            if (households.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.xs,
+                                ),
+                                child: Text(l.homeNoOverdueSubscriptions),
+                              ),
+                            for (final HouseholdSummary h in households)
+                              AppListCard(
+                                title: h.name,
+                                subtitle: l.homeMonthlyAmount(
+                                  arabicNumber(h.monthlyAmount),
+                                ),
+                                onTap: () => context.push(
+                                  Routes.householdMembers(h.id, h.name),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                ],
+                if (roles.any(
+                  (String r) => <String>[
+                    'supervisor',
+                    'admin',
+                    'super_admin',
+                  ].contains(r),
+                )) ...<Widget>[
+                  AppSectionHeader(title: l.homeNeedsYourDecision),
+                  _Queue(
+                    state: ref.watch(pendingExcusesControllerProvider),
+                    title: l.homeAbsenceExcuses,
+                    route: Routes.supervisorExcuses,
+                  ),
+                  _Queue(
+                    state: ref.watch(pendingMonthlyEvalsProvider),
+                    title: l.homeMonthlyEvals,
+                    route: Routes.supervisorMonthlyEval,
+                  ),
+                  _Queue(
+                    state: ref.watch(pendingDevelopmentProvider),
+                    title: l.navTeacherDev,
+                    route: Routes.supervisorDevApproval,
+                  ),
+                ],
+                // `/supervisor/attention` بيستدعي RPC للمشرف — مش للمعلّم لوحده.
+                if (roles.any(
+                  (String r) => <String>[
+                    'supervisor',
+                    'admin',
+                    'super_admin',
+                  ].contains(r),
+                ))
+                  _Queue(
+                    state: ref.watch(strugglingStudentsProvider),
+                    title: l.homeStrugglingStudents,
+                    route: Routes.supervisorAttention,
+                  ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -211,350 +258,184 @@ class _HeroHeader extends StatelessWidget {
   }
 }
 
-class _HeroRoleChip extends StatelessWidget {
-  const _HeroRoleChip({required this.label});
-
-  final String label;
-
+class _Queue<T> extends StatelessWidget {
+  const _Queue({
+    required this.state,
+    required this.title,
+    required this.route,
+    this.alwaysShow = false,
+  });
+  final AsyncValue<List<T>> state;
+  final String title, route;
+  final bool alwaysShow;
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm + 2,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: context.palette.onHero.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(AppRadii.full),
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.labelSm.copyWith(
-          color: context.palette.onHero,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroBell extends ConsumerWidget {
-  const _HeroBell();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final int count = ref.watch(unreadCountProvider).asData?.value ?? 0;
-    final Widget bell = IconButton(
-      tooltip: AppL10n.of(context).notificationsTooltip,
-      color: context.palette.onHero,
-      icon: const Icon(Icons.notifications_outlined),
-      onPressed: () => context.go(Routes.notifications),
-    );
-    return count == 0 ? bell : Badge.count(count: count, child: bell);
-  }
-}
-
-class _HeroSettings extends StatelessWidget {
-  const _HeroSettings();
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: AppL10n.of(context).settingsTitle,
-      color: context.palette.onHero,
-      icon: const Icon(Icons.settings_outlined),
-      onPressed: () => context.push(Routes.settings),
-    );
-  }
-}
-
-class _QuickActions extends ConsumerWidget {
-  const _QuickActions({required this.roles});
-
-  final List<String> roles;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AppL10n l = AppL10n.of(context);
-    final List<String> favs = ref.watch(favoritesProvider);
-    final List<FeatureItem> visible = featuresFor(roles);
-
-    // المفضّلة أولاً، ثم باقي الميزات — بحد أقصى ٦ مربّعات.
-    final List<FeatureItem> ordered = <FeatureItem>[
-      for (final String route in favs)
-        ...visible.where((FeatureItem f) => f.route == route),
-      ...visible.where((FeatureItem f) => !favs.contains(f.route)),
-    ].take(6).toList();
-
-    if (ordered.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-        0,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(l.quickActions, style: AppTextStyles.titleMd),
-          const SizedBox(height: AppSpacing.sm),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 190,
-              mainAxisSpacing: AppSpacing.sm,
-              crossAxisSpacing: AppSpacing.sm,
-              childAspectRatio: 1.5,
-            ),
-            itemCount: ordered.length,
-            itemBuilder: (BuildContext context, int i) =>
-                _QuickTile(item: ordered[i]),
+  Widget build(BuildContext context) => state.when(
+    loading: () => const LinearProgressIndicator(),
+    error: (_, _) => Text(AppL10n.of(context).homeQueueLoadError(title)),
+    data: (List<T> rows) => rows.isEmpty && !alwaysShow
+        ? const SizedBox.shrink()
+        : AppListCard(
+            title:
+                '$title (${arabicNumber(rows.length)}${rows.length >= 50 ? '+' : ''})',
+            onTap: () => context.push(route),
           ),
-        ],
-      ),
-    );
-  }
+  );
 }
 
-class _QuickTile extends StatelessWidget {
-  const _QuickTile({required this.item});
-
-  final FeatureItem item;
-
+class _Retry extends StatelessWidget {
+  const _Retry({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
   @override
-  Widget build(BuildContext context) {
-    final AppPalette p = context.palette;
-    return AppCard(
-      onTap: () => context.push(item.route),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: p.primary.withValues(alpha: AppOpacity.badgeTint),
-              borderRadius: BorderRadius.circular(AppRadii.md),
-            ),
-            child: Icon(item.icon, color: p.primary, size: 22),
-          ),
-          Text(
-            item.label(AppL10n.of(context)),
-            style: AppTextStyles.labelLg.copyWith(color: p.textPrimary),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummarySection extends StatelessWidget {
-  const _SummarySection({required this.roles});
-
-  final List<String> roles;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppL10n l = AppL10n.of(context);
-    final bool isTeacher = roles.contains('teacher');
-    final bool isParent = roles.contains('parent');
-    final bool isSupervisor = roles.any(_supervisorRoles.contains);
-
-    final List<Widget> tiles = <Widget>[
-      const _UnreadStat(),
-      if (isTeacher) const _MyCirclesStat(),
-      if (isParent) const _MyChildrenStat(),
-      if (isSupervisor) ...<Widget>[
-        const _AttentionStat(),
-        const _PendingApprovalsStat(),
-      ],
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-        0,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(l.overview, style: AppTextStyles.titleMd),
-          const SizedBox(height: AppSpacing.sm),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 240,
-              mainAxisSpacing: AppSpacing.sm,
-              crossAxisSpacing: AppSpacing.sm,
-              mainAxisExtent: 80,
-            ),
-            itemCount: tiles.length,
-            itemBuilder: (BuildContext context, int i) => tiles[i],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// أداة مساعدة: `AsyncValue<int>` ← AppStatPill بمؤشّر تحميل بسيط.
-Widget _statTile(
-  BuildContext context,
-  AsyncValue<int> value, {
-  required String label,
-  required IconData icon,
-  Color? color,
-  VoidCallback? onTap,
-}) {
-  return value.when(
-    data: (int v) => AppStatPill(
-      value: v,
-      label: label,
-      icon: icon,
-      color: color,
-      onTap: onTap,
-    ),
-    loading: () =>
-        AppStatPill(value: 0, label: label, icon: icon, color: color),
-    error: (Object e, StackTrace _) => AppStatPill(
-      value: 0,
-      label: label,
-      icon: icon,
-      color: color,
-      onTap: onTap,
+  Widget build(BuildContext context) => ListTile(
+    title: Text(message),
+    trailing: TextButton(
+      onPressed: onRetry,
+      child: Text(AppL10n.of(context).retry),
     ),
   );
 }
 
-class _UnreadStat extends ConsumerWidget {
-  const _UnreadStat();
+/// "تسجيل دفعة" من الهوم: اختيار الأسرة (بحث) ← شيت الدفعة.
+Future<void> _recordPaymentFlow(BuildContext context, WidgetRef ref) async {
+  final AppL10n l = AppL10n.of(context);
+  final SubscriptionRepository repo = ref.read(subscriptionRepositoryProvider);
+  final HouseholdSummary? household =
+      await showAppServerSearchPicker<HouseholdSummary>(
+        context: context,
+        title: l.homePickHousehold,
+        searchLabel: l.homeSearchHouseholdName,
+        search: (String q) => repo.fetchHouseholds(query: q),
+        label: (HouseholdSummary h) => h.name,
+      );
+  if (household == null || !context.mounted) return;
+  await showAppModalSheet<void>(
+    context: context,
+    title: l.homeRecordPayment,
+    builder: (_) =>
+        RecordPaymentSheet(household: household, feedbackContext: context),
+  );
+  if (context.mounted) ref.invalidate(overdueHouseholdsProvider);
+}
+
+/// زرار حالة المزامنة للمعلّم + عدد العمليات المعلّقة (لو فيه).
+class _SyncButton extends ConsumerWidget {
+  const _SyncButton();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
-    return _statTile(
-      context,
-      ref.watch(unreadCountProvider),
-      label: l.statUnread,
-      icon: Icons.notifications_outlined,
-      color: context.palette.info,
-      onTap: () => context.go(Routes.notifications),
-    );
-  }
-}
-
-class _MyCirclesStat extends ConsumerWidget {
-  const _MyCirclesStat();
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AppL10n l = AppL10n.of(context);
-    return _statTile(
-      context,
-      ref.watch(myCirclesProvider).whenData((List<dynamic> v) => v.length),
-      label: l.statMyCircles,
-      icon: Icons.menu_book_outlined,
-      onTap: () => context.go(Routes.primaryTab),
-    );
-  }
-}
-
-class _MyChildrenStat extends ConsumerWidget {
-  const _MyChildrenStat();
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AppL10n l = AppL10n.of(context);
-    return _statTile(
-      context,
-      ref.watch(myChildrenProvider).whenData((List<dynamic> v) => v.length),
-      label: l.statMyChildren,
-      icon: Icons.child_care_outlined,
-      onTap: () => context.go(Routes.primaryTab),
-    );
-  }
-}
-
-class _AttentionStat extends ConsumerWidget {
-  const _AttentionStat();
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AppL10n l = AppL10n.of(context);
-    return _statTile(
-      context,
-      ref
-          .watch(strugglingStudentsProvider)
-          .whenData((List<dynamic> v) => v.length),
-      label: l.statNeedsAttention,
-      icon: Icons.warning_amber,
-      color: context.palette.warning,
-      onTap: () => context.push(Routes.supervisorAttention),
-    );
-  }
-}
-
-class _PendingApprovalsStat extends ConsumerWidget {
-  const _PendingApprovalsStat();
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AppL10n l = AppL10n.of(context);
-    return _statTile(
-      context,
-      ref
-          .watch(pendingMonthlyEvalsProvider)
-          .whenData((List<dynamic> v) => v.length),
-      label: l.navMonthlyEvalApproval,
-      icon: Icons.assignment_turned_in,
-      onTap: () => context.push(Routes.supervisorMonthlyEval),
-    );
-  }
-}
-
-class _SuspendedBody extends StatelessWidget {
-  const _SuspendedBody({required this.onSignOut});
-
-  final VoidCallback onSignOut;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppL10n l = AppL10n.of(context);
-    final AppPalette p = context.palette;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(Icons.lock_outline, size: 64, color: p.primary),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              l.accountSuspendedTitle,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.titleLg.copyWith(color: p.textPrimary),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              l.accountSuspendedMessage,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMd.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: l.logout,
-              icon: Icons.logout,
-              expanded: false,
-              onPressed: onSignOut,
-            ),
-          ],
+    final SyncStatus? status = ref.watch(syncStatusProvider).asData?.value;
+    final int pending = status?.pending ?? 0;
+    final bool failed = status?.hasFailures ?? false;
+    final String label = pending > 0
+        ? l.homeSyncPendingSemantics(arabicNumber(pending))
+        : failed
+        ? l.homeSyncFailedSemantics
+        : l.syncStatusTitle;
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: TextButton.icon(
+        onPressed: () => SyncStatusSheet.show(context),
+        icon: Badge(
+          isLabelVisible: pending > 0 || failed,
+          backgroundColor: failed ? context.palette.error : null,
+          label: Text(pending > 0 ? arabicNumber(pending) : '!'),
+          child: const Icon(Icons.sync),
+        ),
+        label: Text(
+          pending > 0
+              ? l.homeSyncPendingLabel(arabicNumber(pending))
+              : l.syncStatusTitle,
         ),
       ),
+    );
+  }
+}
+
+class _HomeChild extends ConsumerWidget {
+  const _HomeChild({required this.child});
+  final ChildSummary child;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
+    final AsyncValue<ChildCard> state = ref.watch(
+      childCardProvider(child.studentPersonId),
+    );
+    // الاشتراك على مستوى الأسرة — نفس الحالة لكل طفل في نفس الحساب.
+    final bool? subscribed = ref
+        .watch(mySubscriptionActiveProvider)
+        .asData
+        ?.value;
+    return AppListCard(
+      title: child.fullName,
+      leadingIcon: Icons.child_care,
+      subtitle: state.when(
+        loading: () => l.homeLoadingProgress,
+        error: (_, _) => l.homeProgressLoadError,
+        data: (ChildCard card) {
+          final String? portion = card.currentPortion;
+          final String portionLine = portion == null || portion.trim().isEmpty
+              ? l.homeNoPortion
+              : l.homeCurrentPortion(portion);
+          final String attendance = l.homeMonthAttendance(
+            arabicNumber(card.present + card.late),
+            arabicNumber(card.present + card.late + card.absent + card.excused),
+          );
+          return '$portionLine\n$attendance';
+        },
+      ),
+      trailing: subscribed == null
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                AppStatusBadge(
+                  label: subscribed
+                      ? l.homeSubscriptionActive
+                      : l.homeSubscriptionOverdue,
+                  kind: subscribed
+                      ? AppStatusKind.success
+                      : AppStatusKind.warning,
+                ),
+                Icon(AppIcons.drillIn, color: context.palette.textSecondary),
+              ],
+            ),
+      onTap: () => context.push(
+        Routes.parentChild(child.studentPersonId, child.fullName),
+      ),
+    );
+  }
+}
+
+/// كارت حلقة في الهوم — بيودّي لشاشة الحصة بس؛ فتح الحصة نفسه قرار المعلّم
+/// من جوّه الشاشة (مش side effect للنقر هنا).
+class _TeacherCircle extends ConsumerWidget {
+  const _TeacherCircle({required this.circle});
+  final Circle circle;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppL10n l = AppL10n.of(context);
+    final AsyncValue<TodaySession> state = ref.watch(
+      todaySessionControllerProvider(circle.id),
+    );
+    return AppListCard(
+      title: circle.name,
+      leadingIcon: Icons.menu_book,
+      subtitle: state.when(
+        loading: () => l.homeLoadingSession,
+        error: (_, _) => l.homeSessionLoadError,
+        data: (TodaySession s) => s.isOpen
+            ? l.homeSessionOpen
+            : s.closedToday
+            ? l.homeSessionClosed(
+                arabicNumber(s.presentCount),
+                arabicNumber(s.tasmeeCount),
+              )
+            : l.homeSessionNotOpened,
+      ),
+      onTap: () => context.push<void>(Routes.session(circle.id, circle.name)),
     );
   }
 }

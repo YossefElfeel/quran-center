@@ -5,9 +5,12 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/intake_repository.dart';
 import '../../domain/waiting_applicant.dart';
 import '../controllers/waiting_list_controller.dart';
 import '../widgets/add_applicant_sheet.dart';
@@ -28,8 +31,9 @@ class WaitingListScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.itkWaitingListTitle,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet<void>(
+        onPressed: () => showAppModalSheet<void>(
           context: context,
+          title: l.itkNewApplicant,
           isScrollControlled: true,
           builder: (BuildContext _) => const AddApplicantSheet(),
         ),
@@ -43,36 +47,54 @@ class WaitingListScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(waitingListControllerProvider),
         ),
         data: (List<WaitingApplicant> items) => items.isEmpty
-            ? EmptyState(message: l.itkNoApplicants, icon: Icons.inbox_outlined)
+            ? EmptyState(
+                message: l.itkNoApplicants,
+                icon: Icons.inbox_outlined,
+                action: TextButton(
+                  onPressed: () => showAppModalSheet<void>(
+                    context: context,
+                    title: l.itkNewApplicant,
+                    builder: (_) => const AddApplicantSheet(),
+                  ),
+                  child: Text(l.itkNewApplicant),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(waitingListControllerProvider),
-                child: ListView.builder(
+                child: AppPagedList<WaitingApplicant>(
+                  items: items,
+                  loadPage: (offset) => ref
+                      .read(intakeRepositoryProvider)
+                      .fetchWaiting(offset: offset),
                   padding: const EdgeInsets.all(AppSpacing.md),
-                  itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) {
-                    final WaitingApplicant a = items[i];
-                    return ApplicantTile(
-                      applicant: a,
-                      onPlacement: () => showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (BuildContext _) => PlacementSheet(
-                          waitingId: a.waitingId,
-                          studentPersonId: a.personId,
-                        ),
-                      ),
-                      onEnroll: () => showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (BuildContext _) => EnrollSheet(
-                          waitingId: a.waitingId,
-                          studentPersonId: a.personId,
-                          levelId: a.levelId,
-                        ),
-                      ),
-                    );
-                  },
+
+                  itemBuilder:
+                      (BuildContext context, WaitingApplicant item, int i) {
+                        final WaitingApplicant a = item;
+                        return ApplicantTile(
+                          applicant: a,
+                          onPlacement: () => showAppModalSheet<void>(
+                            context: context,
+                            title: l.itkPlacementTest,
+                            isScrollControlled: true,
+                            builder: (BuildContext _) => PlacementSheet(
+                              waitingId: a.waitingId,
+                              studentPersonId: a.personId,
+                            ),
+                          ),
+                          onEnroll: () => showAppModalSheet<void>(
+                            context: context,
+                            title: l.itkAssignToCircle,
+                            isScrollControlled: true,
+                            builder: (BuildContext _) => EnrollSheet(
+                              waitingId: a.waitingId,
+                              studentPersonId: a.personId,
+                              levelId: a.levelId,
+                            ),
+                          ),
+                        );
+                      },
                 ),
               ),
       ),

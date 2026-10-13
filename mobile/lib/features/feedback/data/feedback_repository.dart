@@ -30,23 +30,34 @@ class FeedbackRepository {
   }
 
   /// شكاويّ أنا (RLS: الكاتب يشوف بتاعته).
-  Future<List<Complaint>> fetchMyComplaints() async {
+  Future<List<Complaint>> fetchMyComplaints({
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('complaint')
-        .select('id, category, body, status, manager_response, created_at')
-        .order('created_at', ascending: false);
+        .select(
+          'id, category, body, status, manager_response, '
+          'created_at, responded_at',
+        )
+        .order('created_at', ascending: false)
+        .order('id')
+        .range(offset, offset + limit - 1);
     return rows.map(Complaint.fromMap).toList();
   }
 
   /// صندوق الشكاوى (المدير يشوف الكل).
-  Future<List<Complaint>> fetchInbox() async {
+  Future<List<Complaint>> fetchInbox({int offset = 0, int limit = 50}) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('complaint')
         .select(
           'id, category, body, status, manager_response, created_at, '
+          'responded_at, '
           'author:author_person_id(full_name)',
         )
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .order('id')
+        .range(offset, offset + limit - 1);
     return rows.map(Complaint.fromMap).toList();
   }
 
@@ -58,11 +69,16 @@ class FeedbackRepository {
           'status': 'answered',
           'responded_at': DateTime.now().toUtc().toIso8601String(),
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id')
+        .single();
   }
 
   /// تقييمات المحفّظين (المدير/المشرف يقروا — المعلّم مستبعد عبر RLS).
-  Future<List<TeacherRatingRow>> fetchTeacherRatings() async {
+  Future<List<TeacherRatingRow>> fetchTeacherRatings({
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_rating')
         .select(
@@ -70,7 +86,9 @@ class FeedbackRepository {
           'teacher:teacher_person_id(full_name)',
         )
         .order('teacher_person_id', ascending: true)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .order('id')
+        .range(offset, offset + limit - 1);
     return rows.map(TeacherRatingRow.fromMap).toList();
   }
 
@@ -82,9 +100,9 @@ class FeedbackRepository {
         .eq('id', id);
   }
 
-  /// ولي الأمر يقيّم محفّظ ابنه (بيستنتج المعلّم من حلقة الطفل النشطة).
-  /// بيرجّع null لو نجح، أو رسالة خطأ بالعربي (مفيش معلّم / قيّم قبل كده).
-  Future<String?> rateChildTeacher({
+  /// ولي الأمر يقيّم معلّم ابنه (بيستنتج المعلّم من حلقة الطفل النشطة).
+  /// بيرجّع null لو نجح، أو سبب الفشل (مفيش معلّم / قيّم قبل كده).
+  Future<RateTeacherFailure?> rateChildTeacher({
     required String studentPersonId,
     required int stars,
     String? comment,
@@ -97,7 +115,7 @@ class FeedbackRepository {
         .maybeSingle();
     final String? teacherId =
         (enr?['circle'] as Map<String, dynamic>?)?['teacher_id'] as String?;
-    if (teacherId == null) return 'الطفل مش في حلقة بمعلّم دلوقتي';
+    if (teacherId == null) return RateTeacherFailure.noTeacher;
     try {
       await _client.from('teacher_rating').insert(<String, dynamic>{
         'teacher_person_id': teacherId,
@@ -107,10 +125,19 @@ class FeedbackRepository {
       });
       return null;
     } on PostgrestException catch (e) {
-      if (e.code == '23505') return 'قيّمت المحفّظ الشهر ده بالفعل';
+      if (e.code == '23505') return RateTeacherFailure.alreadyRated;
       rethrow;
     }
   }
+}
+
+/// سبب فشل تقييم المعلّم (الواجهة بتحوّله لرسالة).
+enum RateTeacherFailure {
+  /// الطفل مش في حلقة نشطة ليها معلّم.
+  noTeacher,
+
+  /// ولي الأمر قيّم المعلّم الشهر ده بالفعل.
+  alreadyRated,
 }
 
 @riverpod

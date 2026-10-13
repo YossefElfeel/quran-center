@@ -1,5 +1,7 @@
+import { PersonLink } from "@/components/person-link";
+import { RowActions } from "@/components/ui/row-actions";
 import { formatDateTime } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { deleteMedia } from "./actions";
 import { DeleteButton, RetainToggle } from "./forms";
@@ -11,30 +13,31 @@ type MediaRow = {
   type: string;
   retained: boolean;
   created_at: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
 };
 type ConsentRow = {
   id: string;
   scope: string;
   revoked_at: string | null;
   granted_at: string;
-  student: { full_name: string } | null;
+  student: { id: string; full_name: string } | null;
 };
 
 export default async function MediaPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
   const [mediaRes, consentRes] = await Promise.all([
     supabase
       .from("media")
-      .select("id, type, retained, created_at, student:student_person_id(full_name)")
+      .select("id, type, retained, created_at, student:student_person_id(id, full_name)")
       .order("created_at", { ascending: false })
       .limit(100),
     supabase
       .from("consent_record")
-      .select("id, scope, revoked_at, granted_at, student:student_person_id(full_name)")
+      .select("id, scope, revoked_at, granted_at, student:student_person_id(id, full_name)")
       .order("granted_at", { ascending: false })
       .limit(50),
   ]);
+  if (mediaRes.error || consentRes.error) throw new Error("media_load_failed");
   const media = (mediaRes.data ?? []) as unknown as MediaRow[];
   const consents = (consentRes.data ?? []) as unknown as ConsentRow[];
 
@@ -50,7 +53,7 @@ export default async function MediaPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">الوسائط</h2>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full min-w-[640px] text-right text-sm">
+          <table className="w-full min-w-[640px] text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">الطالب</th>
@@ -70,7 +73,7 @@ export default async function MediaPage() {
               ) : (
                 media.map((m) => (
                   <tr key={m.id} className="border-b border-border/60">
-                    <td className="px-4 py-2">{m.student?.full_name ?? "—"}</td>
+                    <td className="px-4 py-2"><PersonLink person={m.student} /></td>
                     <td className="px-4 py-2">{TYPE_LABEL[m.type] ?? m.type}</td>
                     <td className="px-4 py-2">
                       {m.retained ? (
@@ -82,7 +85,7 @@ export default async function MediaPage() {
                     <td className="px-4 py-2 text-foreground/50">
                       {formatDateTime(m.created_at)}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2"><RowActions>
                       <div className="flex flex-wrap items-center gap-2">
                         <RetainToggle id={m.id} retained={m.retained} />
                         <DeleteButton
@@ -92,7 +95,7 @@ export default async function MediaPage() {
                           confirmMessage="حذف الوسيط نهائيًا؟"
                         />
                       </div>
-                    </td>
+                    </RowActions></td>
                   </tr>
                 ))
               )}
@@ -104,7 +107,7 @@ export default async function MediaPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">الموافقات</h2>
         <div className="overflow-x-auto rounded-xl border border-border bg-white">
-          <table className="w-full text-right text-sm">
+          <table className="w-full text-start text-sm">
             <thead className="border-b border-border bg-background/50 text-foreground/60">
               <tr>
                 <th className="px-4 py-2 font-medium">الطالب</th>
@@ -122,7 +125,7 @@ export default async function MediaPage() {
               ) : (
                 consents.map((c) => (
                   <tr key={c.id} className="border-b border-border/60">
-                    <td className="px-4 py-2">{c.student?.full_name ?? "—"}</td>
+                    <td className="px-4 py-2"><PersonLink person={c.student} /></td>
                     <td className="px-4 py-2">
                       {TYPE_LABEL[c.scope] ?? c.scope}
                     </td>

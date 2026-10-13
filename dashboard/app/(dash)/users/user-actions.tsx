@@ -1,4 +1,8 @@
 "use client";
+import { FieldTextarea, FieldInput } from "@/components/ui/fields";
+import { useActionFeedback } from "@/components/ui/feedback";
+import { Dialog } from "@/components/ui/dialog";
+import { Button, SubmitButton } from "@/components/ui/button";
 
 import { useActionState, useEffect, useState } from "react";
 
@@ -29,11 +33,6 @@ type AdminAction = (
   fd: FormData,
 ) => Promise<ActionResult>;
 
-const btn =
-  "rounded-md border border-border px-2 py-1 text-xs transition-colors hover:bg-border/40 disabled:opacity-50";
-const btnDanger =
-  "rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50";
-
 export function UserActions({
   personId,
   fullName,
@@ -54,18 +53,18 @@ export function UserActions({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1">
-      <button className={btn} onClick={() => setOpen("roles")}>
+      <Button type="button" size="sm" variant="secondary" onClick={() => setOpen("roles")}>
         الأدوار
-      </button>
+      </Button>
 
       {!isSelf && status === "active" ? (
         <>
-          <button className={btn} onClick={() => setOpen("block")}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => setOpen("block")}>
             حظر
-          </button>
-          <button className={btn} onClick={() => setOpen("deactivate")}>
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => setOpen("deactivate")}>
             إيقاف
-          </button>
+          </Button>
           <ResetPasswordButton personId={personId} fullName={fullName} />
           <DangerAction
             action={forceLogout}
@@ -91,9 +90,9 @@ export function UserActions({
       {isSelf ? (
         <span className="text-xs text-foreground/40">(أنت)</span>
       ) : (
-        <button className={btnDanger} onClick={() => setOpen("delete")}>
+        <Button type="button" size="sm" variant="danger" onClick={() => setOpen("delete")}>
           حذف نهائي
-        </button>
+        </Button>
       )}
 
       {open === "block" ? (
@@ -138,38 +137,8 @@ export function UserActions({
   );
 }
 
-function Modal({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-xl border border-border bg-white p-5 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h3 className="font-bold">{title}</h3>
-          <button
-            className="text-foreground/50 hover:text-foreground"
-            onClick={onClose}
-            aria-label="إغلاق"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex flex-col gap-3">{children}</div>
-      </div>
-    </div>
-  );
+function Modal({title,onClose,children}: {title:string;onClose:()=>void;children:React.ReactNode}) {
+  return <Dialog title={title} onClose={onClose}><div className="space-y-3">{children}</div></Dialog>;
 }
 
 function ReasonForm({
@@ -185,10 +154,11 @@ function ReasonForm({
   submitLabel: string;
   placeholder: string;
 }) {
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ActionResult | null,
     FormData
   >(action, null);
+  useActionFeedback(state);
   useEffect(() => {
     if (state?.ok) onDone();
   }, [state, onDone]);
@@ -198,20 +168,14 @@ function ReasonForm({
       {Object.entries(hidden).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
-      <textarea
+      <FieldTextarea feedback={state}
         name="reason"
         required
         rows={3}
         placeholder={placeholder}
-        className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+        className="text-sm"
       />
-      <button
-        type="submit"
-        disabled={pending}
-        className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-      >
-        {pending ? "…" : submitLabel}
-      </button>
+      <SubmitButton className="self-start text-sm">{submitLabel}</SubmitButton>
       {state?.ok === false ? (
         <p className="text-sm text-red-600">{state.error}</p>
       ) : null}
@@ -228,10 +192,11 @@ function DeleteForm({
   fullName: string;
   onDone: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ActionResult | null,
     FormData
   >(deleteUser, null);
+  useActionFeedback(state);
   const [confirm, setConfirm] = useState("");
   useEffect(() => {
     if (state?.ok) onDone();
@@ -245,28 +210,28 @@ function DeleteForm({
         ⚠️ حذف نهائي لا رجعة فيه. لو فيه سجلّ مرتبط استخدم الإيقاف. اكتب الاسم
         الكامل للتأكيد.
       </p>
-      <textarea
+      <FieldTextarea feedback={state}
         name="reason"
         required
         rows={2}
         placeholder="سبب الحذف (مطلوب)"
-        className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+        className="text-sm"
       />
-      <input
+      <FieldInput feedback={state}
         name="confirm"
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         placeholder={fullName}
         autoComplete="off"
-        className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-red-400"
+        className="text-sm focus:border-red-400"
       />
-      <button
-        type="submit"
-        disabled={pending || confirm.trim() !== fullName}
-        className="self-start rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      <SubmitButton
+        variant="danger"
+        disabled={confirm.trim() !== fullName}
+        className="self-start text-sm"
       >
-        {pending ? "…" : "احذف نهائيًا"}
-      </button>
+        احذف نهائيًا
+      </SubmitButton>
       {state?.ok === false ? (
         <p className="text-sm text-red-600">{state.error}</p>
       ) : null}
@@ -312,12 +277,13 @@ function RoleToggle({
   has: boolean;
   isSelf: boolean;
 }) {
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ActionResult | null,
     FormData
   >(manageRole, null);
+  useActionFeedback(state);
   // الواجهة بتمنع سحب السوبر أدمن من نفسك (السيرفر بيمنع برضه).
-  const disabled = pending || (isSelf && role.value === "super_admin" && has);
+  const disabled = isSelf && role.value === "super_admin" && has;
 
   return (
     <form action={formAction} className="flex items-center justify-between gap-2">
@@ -329,50 +295,44 @@ function RoleToggle({
         {state?.ok === false ? (
           <span className="text-xs text-red-600">{state.error}</span>
         ) : null}
-        <button
-          type="submit"
+        <SubmitButton
+          size="sm"
+          variant={has ? "primary" : "secondary"}
           disabled={disabled}
-          className={
-            has
-              ? "rounded-md bg-primary/10 px-3 py-1 text-xs text-primary disabled:opacity-50"
-              : "rounded-md border border-border px-3 py-1 text-xs disabled:opacity-50"
-          }
         >
-          {pending ? "…" : has ? "مفعّل ✓ (للسحب)" : "امنح"}
-        </button>
+          {has ? "مفعّل ✓ (للسحب)" : "امنح"}
+        </SubmitButton>
       </div>
     </form>
   );
 }
 
 function UnblockForm({ personId }: { personId: string }) {
-  const [, formAction, pending] = useActionState<ActionResult | null, FormData>(
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(
     blockUser,
     null,
   );
+  useActionFeedback(state, "الحظر اتفك");
   return (
     <form action={formAction} className="inline">
       <input type="hidden" name="target_person_id" value={personId} />
       <input type="hidden" name="block" value="false" />
-      <button type="submit" disabled={pending} className={btn}>
-        {pending ? "…" : "فك الحظر"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">فك الحظر</SubmitButton>
     </form>
   );
 }
 
 function RestoreForm({ personId }: { personId: string }) {
-  const [, formAction, pending] = useActionState<ActionResult | null, FormData>(
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(
     deleteUser,
     null,
   );
+  useActionFeedback(state, "الحساب اتفعّل");
   return (
     <form action={formAction} className="inline">
       <input type="hidden" name="target_person_id" value={personId} />
       <input type="hidden" name="mode" value="restore" />
-      <button type="submit" disabled={pending} className={btn}>
-        {pending ? "…" : "استرجاع"}
-      </button>
+      <SubmitButton size="sm" variant="secondary">استرجاع</SubmitButton>
     </form>
   );
 }
@@ -385,16 +345,17 @@ function ResetPasswordButton({
   fullName: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState<
+  const [state, formAction] = useActionState<
     ResetResult | null,
     FormData
   >(resetPassword, null);
+  useActionFeedback(state);
 
   return (
     <>
-      <button className={btn} onClick={() => setOpen(true)}>
+      <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(true)}>
         كلمة السر
-      </button>
+      </Button>
       {open ? (
         <Modal title={`إعادة كلمة سر «${fullName}»`} onClose={() => setOpen(false)}>
           <form action={formAction} className="flex flex-col gap-3">
@@ -402,20 +363,14 @@ function ResetPasswordButton({
             <p className="text-xs text-foreground/60">
               بيتولّد رابط استرجاع — انسخه وابعته للمستخدم بنفسك (مش بيتبعت تلقائيًا).
             </p>
-            <textarea
+            <FieldTextarea feedback={state}
               name="reason"
               required
               rows={2}
               placeholder="السبب (مطلوب)"
-              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+              className="text-sm"
             />
-            <button
-              type="submit"
-              disabled={pending}
-              className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              {pending ? "…" : "ولّد الرابط"}
-            </button>
+            <SubmitButton className="self-start text-sm">ولّد الرابط</SubmitButton>
             {state?.ok === false ? (
               <p className="text-sm text-red-600">{state.error}</p>
             ) : null}

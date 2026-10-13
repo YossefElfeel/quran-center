@@ -1,6 +1,7 @@
+import { RowActions } from "@/components/ui/row-actions";
 import Link from "next/link";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { deleteCurriculum } from "./actions";
 import { CurriculumForm, DeleteButton } from "./forms";
@@ -13,11 +14,12 @@ const TYPE_LABEL: Record<string, string> = {
 type Row = { id: string; name: string; type: string };
 
 export default async function AcademicsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const supabase = await getDataClient();
+  const { data, error: loadError1 } = await supabase
     .from("curriculum")
     .select("id, name, type")
     .order("created_at");
+  if (loadError1) throw new Error('data_load_failed');
   const rows = (data ?? []) as Row[];
 
   return (
@@ -25,14 +27,14 @@ export default async function AcademicsPage() {
       <div>
         <h1 className="text-2xl font-bold">المناهج والحلقات</h1>
         <p className="text-sm text-foreground/60">
-          منهج ← مستويات ← حلقات. اضغط على منهج علشان تدير مستوياته.
+          منهج → مستويات → حلقات. اضغط على منهج علشان تدير مستوياته.
         </p>
       </div>
 
       <CurriculumForm />
 
-      <div className="overflow-hidden rounded-xl border border-border bg-white">
-        <table className="w-full text-right text-sm">
+      <div className="overflow-x-auto rounded-xl border border-border bg-white">
+        <table className="w-full text-start text-sm">
           <thead className="border-b border-border bg-background/50 text-foreground/60">
             <tr>
               <th className="px-4 py-2 font-medium">المنهج</th>
@@ -59,14 +61,14 @@ export default async function AcademicsPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-2">{TYPE_LABEL[c.type] ?? c.type}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2"><RowActions>
                     <DeleteButton
                       action={deleteCurriculum}
                       hidden={{ id: c.id }}
                       label="حذف"
                       confirmMessage={`حذف منهج «${c.name}» وكل مستوياته؟`}
                     />
-                  </td>
+                  </RowActions></td>
                 </tr>
               ))
             )}

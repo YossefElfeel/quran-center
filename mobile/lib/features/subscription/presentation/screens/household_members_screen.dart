@@ -6,18 +6,25 @@ import '../../../../core/utils/arabic_date.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/subscription_repository.dart';
 import '../../domain/household_member_row.dart';
 import '../../domain/payment_row.dart';
 import '../controllers/household_members_controller.dart';
 import '../controllers/household_payments_controller.dart';
+import '../controllers/households_controller.dart';
+import '../subscription_labels.dart';
 import '../widgets/add_household_member_sheet.dart';
+import '../widgets/record_payment_sheet.dart';
 
 /// أفراد أسرة (أولياء أمور + طلبة) — للأدمن.
 class HouseholdMembersScreen extends ConsumerWidget {
@@ -31,7 +38,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
   final String householdName;
 
   void _add(BuildContext context) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) =>
@@ -57,6 +64,32 @@ class HouseholdMembersScreen extends ConsumerWidget {
       title: householdName,
       actions: <Widget>[
         IconButton(
+          tooltip: l.subsRecordPaymentTitle,
+          icon: const Icon(Icons.payments_outlined),
+          onPressed: () async {
+            try {
+              final household = await ref.read(
+                householdByIdProvider(householdId).future,
+              );
+              if (household == null) throw StateError('household not found');
+              if (!context.mounted) return;
+              await showAppModalSheet<void>(
+                context: context,
+                title: l.subsRecordPaymentTitle,
+                builder: (_) => RecordPaymentSheet(
+                  household: household,
+                  feedbackContext: context,
+                ),
+              );
+              ref.invalidate(householdPaymentsProvider(householdId));
+            } catch (_) {
+              if (context.mounted) {
+                AppSnackbar.error(context, l.subsHouseholdLoadError);
+              }
+            }
+          },
+        ),
+        IconButton(
           tooltip: l.subsPaymentHistory,
           icon: const Icon(Icons.receipt_long),
           onPressed: () => _openPayments(context),
@@ -75,7 +108,14 @@ class HouseholdMembersScreen extends ConsumerWidget {
               ref.invalidate(householdMembersControllerProvider(householdId)),
         ),
         data: (List<HouseholdMemberRow> items) => items.isEmpty
-            ? EmptyState(message: l.subsNoMembers, icon: Icons.group_add)
+            ? EmptyState(
+                message: l.subsNoMembers,
+                icon: Icons.group_add,
+                action: AppButton(
+                  label: l.subsAddMember,
+                  onPressed: () => _add(context),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(
                   householdMembersControllerProvider(householdId),
@@ -90,7 +130,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
                           ? Icons.person
                           : Icons.child_care,
                       title: m.personName,
-                      subtitle: m.roleAr,
+                      subtitle: m.roleLabel(l),
                     );
                   },
                 ),
@@ -132,11 +172,16 @@ class _PaymentsSheet extends ConsumerWidget {
             ),
           );
         }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            for (final PaymentRow pay in items) _PaymentRowTile(payment: pay),
-          ],
+        return SizedBox(
+          height: MediaQuery.sizeOf(context).height * .55,
+          child: AppPagedList<PaymentRow>(
+            items: items,
+            pageSize: 24,
+            loadPage: (offset) => ref
+                .read(subscriptionRepositoryProvider)
+                .fetchPaymentHistory(householdId, offset: offset),
+            itemBuilder: (_, payment, _) => _PaymentRowTile(payment: payment),
+          ),
         );
       },
     );

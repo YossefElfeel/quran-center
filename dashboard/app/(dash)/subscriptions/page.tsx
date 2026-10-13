@@ -1,5 +1,7 @@
-import { formatDateTime, formatNumber } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { RowActions } from "@/components/ui/row-actions";
+import Link from "next/link";
+import { currentCairoMonth, formatDateTime, formatNumber } from "@/lib/format";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { HouseholdForm, PaymentForm, VoidButton } from "./forms";
 
@@ -13,8 +15,8 @@ type Payment = {
 };
 
 export default async function SubscriptionsPage() {
-  const supabase = await createSupabaseServerClient();
-  const [{ data: households }, { data: payments }] = await Promise.all([
+  const supabase = await getDataClient();
+  const [{ data: households,error:householdError }, { data: payments,error:paymentError }] = await Promise.all([
     supabase.from("household").select("id, name, monthly_amount"),
     supabase
       .from("subscription_payment")
@@ -23,6 +25,7 @@ export default async function SubscriptionsPage() {
       .order("period_month", { ascending: false }),
   ]);
 
+  if(householdError||paymentError)throw new Error("data_load_failed");
   const lastByHousehold = new Map<string, Payment>();
   for (const p of (payments ?? []) as Payment[]) {
     if (!lastByHousehold.has(p.household_id)) {
@@ -30,16 +33,12 @@ export default async function SubscriptionsPage() {
     }
   }
 
-  // بداية الشهر الحالي (UTC) — لو آخر دفعة لشهر أقدم → متأخّر.
-  const now = new Date();
-  const monthStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-  );
+  const monthStart = currentCairoMonth();
 
   const rows = ((households ?? []) as Household[])
     .map((h) => {
       const last = lastByHousehold.get(h.id) ?? null;
-      const active = last ? new Date(last.period_month) >= monthStart : false;
+      const active = last ? last.period_month >= monthStart : false;
       return { ...h, last, active };
     })
     .sort((a, b) => Number(a.active) - Number(b.active));
@@ -56,7 +55,7 @@ export default async function SubscriptionsPage() {
       <HouseholdForm />
 
       <div className="overflow-x-auto rounded-xl border border-border bg-white">
-        <table className="w-full text-right text-sm">
+        <table className="w-full text-start text-sm">
           <thead className="border-b border-border bg-background/50 text-foreground/60">
             <tr>
               <th className="px-4 py-2 font-medium">الأسرة</th>
@@ -79,7 +78,7 @@ export default async function SubscriptionsPage() {
             ) : (
               rows.map((h) => (
                 <tr key={h.id} className="border-b border-border/60">
-                  <td className="px-4 py-2">{h.name}</td>
+                  <td className="px-4 py-2"><Link href={`/subscriptions/${h.id}`} className="text-primary underline">{h.name}</Link></td>
                   <td className="px-4 py-2">
                     {formatNumber(h.monthly_amount)} ج.م
                   </td>
@@ -97,7 +96,7 @@ export default async function SubscriptionsPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2"><RowActions>
                     <div className="flex flex-wrap items-center gap-2">
                       <PaymentForm
                         householdId={h.id}
@@ -105,7 +104,7 @@ export default async function SubscriptionsPage() {
                       />
                       {h.last ? <VoidButton paymentId={h.last.id} /> : null}
                     </div>
-                  </td>
+                  </RowActions></td>
                 </tr>
               ))
             )}

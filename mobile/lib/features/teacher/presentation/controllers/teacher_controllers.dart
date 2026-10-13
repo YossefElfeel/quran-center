@@ -17,8 +17,10 @@ String _thisMonth() {
 @riverpod
 class MyDevelopment extends _$MyDevelopment {
   @override
-  Future<List<TeacherDevEntry>> build() =>
-      ref.watch(teacherRepositoryProvider).fetchMyDevelopment();
+  Future<List<TeacherDevEntry>> build() {
+    ref.watch(authStateProvider);
+    return ref.watch(teacherRepositoryProvider).fetchMyDevelopment();
+  }
 
   Future<void> add(String progress) async {
     final String trimmed = progress.trim();
@@ -79,8 +81,15 @@ class PendingDevelopment extends _$PendingDevelopment {
   Future<List<TeacherDevEntry>> build() =>
       ref.watch(teacherRepositoryProvider).fetchPendingDevelopment();
 
+  Future<void> returnForRevision(String id, String reason) async {
+    await ref.read(teacherRepositoryProvider).returnDevelopment(id, reason);
+    ref.invalidateSelf();
+    await future;
+  }
+
   Future<void> approve(String id) async {
     await ref.read(teacherRepositoryProvider).approveDevelopment(id);
+    ref.invalidate(myDevelopmentProvider);
     ref.invalidateSelf();
     await future;
   }

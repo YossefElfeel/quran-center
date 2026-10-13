@@ -8,7 +8,11 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/media_repository.dart';
 import '../../domain/image_watermark.dart';
 import '../../domain/media_item.dart';
@@ -34,7 +38,6 @@ class ChildMediaSection extends ConsumerWidget {
     ImageSource source,
   ) async {
     final AppL10n l = AppL10n.of(context);
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     try {
       final XFile? picked = await ImagePicker().pickImage(
         source: source,
@@ -51,7 +54,8 @@ class ChildMediaSection extends ConsumerWidget {
         bytes: raw,
         watermark: 'Quran Center • $stamp',
       );
-      messenger.showSnackBar(SnackBar(content: Text(l.ppMediaUploading)));
+      if (!context.mounted) return;
+      AppSnackbar.info(context, l.ppMediaUploading);
       await ref
           .read(mediaRepositoryProvider)
           .uploadMedia(
@@ -61,15 +65,15 @@ class ChildMediaSection extends ConsumerWidget {
             watermarked: true,
           );
       ref.invalidate(childMediaProvider(studentPersonId));
-      messenger.showSnackBar(SnackBar(content: Text(l.ppMediaUploaded)));
+      if (context.mounted) AppSnackbar.success(context, l.ppMediaUploaded);
     } catch (_) {
-      messenger.showSnackBar(SnackBar(content: Text(l.ppMediaUploadError)));
+      if (context.mounted) AppSnackbar.error(context, l.ppMediaUploadError);
     }
   }
 
   void _showSourceSheet(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       builder: (BuildContext sheetCtx) => SafeArea(
         child: Column(
@@ -107,10 +111,9 @@ class ChildMediaSection extends ConsumerWidget {
         ref.watch(currentRolesProvider).asData?.value ?? const <String>[];
     final bool canUpload = roles.any(_uploaderRoles.contains);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -119,8 +122,7 @@ class ChildMediaSection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppMediaSection,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: AppTextStyles.labelSm.copyWith(
                     color: context.palette.textSecondary,
                   ),
                 ),
@@ -186,13 +188,25 @@ class _MediaTile extends ConsumerWidget {
 
   final MediaItem item;
 
-  Future<void> _openVideo(WidgetRef ref) async {
-    final String url = await ref.read(mediaSignedUrlProvider(item.id).future);
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  Future<void> _openVideo(BuildContext context, WidgetRef ref) async {
+    final AppL10n l = AppL10n.of(context);
+    try {
+      final String url = await ref.read(mediaSignedUrlProvider(item.id).future);
+      final Uri? uri = Uri.tryParse(url);
+      final bool ok =
+          uri != null &&
+          uri.hasScheme &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        AppSnackbar.error(context, l.videoOpenError);
+      }
+    } catch (_) {
+      if (context.mounted) AppSnackbar.error(context, l.videoOpenError);
+    }
   }
 
   void _openPhoto(BuildContext context, String url) {
-    showDialog<void>(
+    showAppModalSheet<void>(
       context: context,
       builder: (BuildContext _) => Dialog(
         child: InteractiveViewer(child: CachedNetworkImage(imageUrl: url)),
@@ -204,7 +218,7 @@ class _MediaTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (item.isVideo) {
       return _TileFrame(
-        onTap: () => _openVideo(ref),
+        onTap: () => _openVideo(context, ref),
         child: const ColoredBox(
           color: Colors.black12,
           child: Center(child: Icon(Icons.play_circle_fill, size: 30)),

@@ -8,12 +8,16 @@ class DeadLetterEntry {
     required this.type,
     required this.attempts,
     this.lastError,
+    this.displayLabel,
+    this.sessionId,
   });
 
   final String id;
   final OutboxOpType type;
   final int attempts;
   final String? lastError;
+  final String? displayLabel;
+  final String? sessionId;
 }
 
 /// لقطة عن حالة الطابور — لمؤشّر المزامنة في القشرة.

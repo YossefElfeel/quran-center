@@ -5,13 +5,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_async_form_sheet.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/dispose_with.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../domain/course.dart';
 import '../controllers/courses_controller.dart';
@@ -22,10 +25,17 @@ class CoursesScreen extends ConsumerWidget {
 
   Future<void> _open(BuildContext context, String url) async {
     final AppL10n l = AppL10n.of(context);
-    final Uri uri = Uri.tryParse(url) ?? Uri();
-    final bool ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      AppSnackbar.error(context, l.videoOpenError);
+    try {
+      final Uri? uri = Uri.tryParse(url);
+      final bool ok =
+          uri != null &&
+          uri.hasScheme &&
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        AppSnackbar.error(context, l.videoOpenError);
+      }
+    } catch (_) {
+      if (context.mounted) AppSnackbar.error(context, l.videoOpenError);
     }
   }
 
@@ -34,41 +44,50 @@ class CoursesScreen extends ConsumerWidget {
     final TextEditingController title = TextEditingController();
     final TextEditingController url = TextEditingController();
     final TextEditingController desc = TextEditingController();
-    final bool? ok = await showDialog<bool>(
+    await showAppModalSheet<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(l.courseNew),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            AppTextField(controller: title, label: l.courseTitleLabel),
-            AppTextField(controller: url, label: l.courseUrlLabel),
-            AppTextField(controller: desc, label: l.courseDescLabel),
+      title: l.courseNew,
+      builder: (BuildContext context) => DisposeWith(
+        notifiers: <ChangeNotifier>[title, url, desc],
+        child: AppAsyncFormSheet(
+          submitLabel: l.add,
+          successMessage: l.courseAdded,
+          onSubmit: () => ref
+              .read(coursesProvider.notifier)
+              .add(
+                title: title.text.trim(),
+                videoUrl: url.text.trim(),
+                description: desc.text.trim(),
+              ),
+          fields: <Widget>[
+            AppTextField(
+              controller: title,
+              label: l.courseTitleLabel,
+              validator: (v) =>
+                  (v?.trim().length ?? 0) < 2 ? l.courseTitleRequired : null,
+            ),
+            AppTextField(
+              controller: url,
+              label: l.courseUrlLabel,
+              keyboardType: TextInputType.url,
+              validator: (v) {
+                final uri = Uri.tryParse(v?.trim() ?? '');
+                return uri == null ||
+                        !['http', 'https'].contains(uri.scheme) ||
+                        uri.host.isEmpty
+                    ? l.courseInvalidUrl
+                    : null;
+              },
+            ),
+            AppTextField(
+              controller: desc,
+              label: l.courseDescLabel,
+              maxLines: 3,
+            ),
           ],
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.add),
-          ),
-        ],
       ),
     );
-    final String t = title.text;
-    final String u = url.text;
-    final String d = desc.text;
-    title.dispose();
-    url.dispose();
-    desc.dispose();
-    if (ok == true) {
-      await ref
-          .read(coursesProvider.notifier)
-          .add(title: t, videoUrl: u, description: d);
-    }
   }
 
   @override
@@ -96,7 +115,20 @@ class CoursesScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(coursesProvider),
         ),
         data: (List<Course> items) => items.isEmpty
-            ? EmptyState(message: l.noCourses, icon: Icons.ondemand_video)
+            ? EmptyState(
+                message: l.noCourses,
+                icon: Icons.ondemand_video,
+                action: TextButton(
+                  onPressed: () {
+                    if (isAdmin) {
+                      _add(context, ref);
+                    } else {
+                      ref.invalidate(coursesProvider);
+                    }
+                  },
+                  child: Text(isAdmin ? l.courseNew : l.commonRefresh),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(coursesProvider),
                 child: ListView.builder(

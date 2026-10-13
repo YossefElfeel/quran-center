@@ -1,0 +1,1 @@
+export default function Loading() { return <div role="status" aria-label="جاري تحميل البيانات" className="space-y-5 animate-pulse"><div className="h-8 w-48 rounded bg-border" /><div className="h-60 rounded bg-border/50" /></div>; }
