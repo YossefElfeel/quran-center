@@ -93,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         !RegExp(
                           r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
                         ).hasMatch(v.trim())
-                    ? 'اكتب إيميل صحيح'
+                    ? l.commonEmailInvalid
                     : null,
               ),
               const SizedBox(height: AppSpacing.md),
@@ -107,7 +107,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 validator: (String? v) =>
                     v == null || v.isEmpty ? l.passwordRequired : null,
                 suffix: IconButton(
-                  tooltip: _visible ? 'إخفاء كلمة السر' : 'إظهار كلمة السر',
+                  tooltip: _visible
+                      ? l.commonHidePassword
+                      : l.commonShowPassword,
                   icon: Icon(
                     _visible ? Icons.visibility_off : Icons.visibility,
                   ),
@@ -123,10 +125,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextButton(
                 onPressed: () => showAppModalSheet<void>(
                   context: context,
-                  title: 'استعادة كلمة السر',
+                  title: l.authResetPasswordTitle,
                   builder: (_) => _ResetPasswordForm(initialEmail: _email.text),
                 ),
-                child: const Text('نسيت كلمة السر؟'),
+                child: Text(l.authForgotPassword),
               ),
               if (Env.webUrl.isNotEmpty)
                 TextButton(
@@ -140,11 +142,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                     } catch (_) {
                       if (context.mounted) {
-                        AppSnackbar.error(context, 'تعذّر فتح الموقع');
+                        AppSnackbar.error(context, l.authOpenWebsiteFailed);
                       }
                     }
                   },
-                  child: const Text('تصفّح الكورسات والمسابقات'),
+                  child: Text(l.authBrowseCoursesCompetitions),
                 ),
             ],
           ),
@@ -189,7 +191,7 @@ class _ResetPasswordFormState extends ConsumerState<_ResetPasswordForm> {
         setState(
           () => _error = e is AppException
               ? e.localizedMessage(AppL10n.of(context))
-              : 'تعذّر إرسال الطلب — راجع الاتصال وجرّب تاني',
+              : AppL10n.of(context).authResetRequestFailed,
         );
       }
     } finally {
@@ -198,39 +200,40 @@ class _ResetPasswordFormState extends ConsumerState<_ResetPasswordForm> {
   }
 
   @override
-  Widget build(BuildContext context) => Form(
-    key: _form,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        if (_sent)
-          const Text(
-            'لو الإيميل مسجّل هيوصلك رابط. راجع الوارد والبريد غير المرغوب فيه.',
-          )
-        else ...<Widget>[
-          AppTextField(
-            controller: _email,
-            label: 'الإيميل',
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _send(),
-            validator: (String? v) =>
-                v == null ||
-                    !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim())
-                ? 'اكتب إيميل صحيح'
-                : null,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
-            label: 'ابعت رابط استعادة',
-            isLoading: _busy,
-            onPressed: _send,
-          ),
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (_sent)
+            Text(l.authResetLinkSentNote)
+          else ...<Widget>[
+            AppTextField(
+              controller: _email,
+              label: l.emailLabel,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _send(),
+              validator: (String? v) =>
+                  v == null ||
+                      !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim())
+                  ? l.commonEmailInvalid
+                  : null,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: l.authSendResetLink,
+              isLoading: _busy,
+              onPressed: _send,
+            ),
+          ],
+          if (_error != null)
+            Text(_error!, style: TextStyle(color: context.palette.error)),
         ],
-        if (_error != null)
-          Text(_error!, style: TextStyle(color: context.palette.error)),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }

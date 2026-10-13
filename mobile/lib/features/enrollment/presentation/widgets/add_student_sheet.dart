@@ -100,14 +100,16 @@ class _AddStudentSheetState extends ConsumerState<AddStudentSheet> {
             controller: _name,
             label: l.enrStudentNameLabel,
             validator: (String? v) =>
-                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+                v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
           ),
           const SizedBox(height: AppSpacing.lg),
           TextField(
             controller: _natId,
             keyboardType: TextInputType.number,
             inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩۰-۹]')),
+              FilteringTextInputFormatter.allow(
+                RegExp(r'[0-9٠-٩۰-۹]'), // l10n-ignore: digit filter regex
+              ),
               LengthLimitingTextInputFormatter(14),
             ],
             decoration: InputDecoration(

@@ -51,10 +51,11 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
             studentPersonId: widget.entry.studentPersonId,
             score: score,
             idempotencyKey: _idemKey,
+            l: AppL10n.of(context),
             kind: _kind,
           );
       if (mounted) {
-        AppSnackbar.success(context, 'التسميع اتسجّل');
+        AppSnackbar.success(context, AppL10n.of(context).sesTasmeeRecorded);
         Navigator.of(context).pop();
       }
     } catch (_) {

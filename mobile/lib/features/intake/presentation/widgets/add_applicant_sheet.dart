@@ -45,7 +45,10 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
           .read(waitingListControllerProvider.notifier)
           .addApplicant(name: name, gender: _gender, levelId: levelId);
       if (mounted) {
-        AppSnackbar.success(context, 'اتحفظ بنجاح');
+        AppSnackbar.success(
+          context,
+          AppL10n.of(context).commonSavedSuccessfully,
+        );
         Navigator.of(context).pop();
       }
     } catch (_) {
@@ -72,7 +75,7 @@ class _AddApplicantSheetState extends ConsumerState<AddApplicantSheet> {
             controller: _name,
             label: l.itkApplicantNameLabel,
             validator: (String? v) =>
-                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+                v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
           ),
           const SizedBox(height: AppSpacing.lg),
           SegmentedButton<Gender>(

@@ -1,4 +1,5 @@
 import 'package:drift/native.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,6 +19,8 @@ import 'package:quran_center/features/session/domain/roster_entry.dart';
 import 'package:quran_center/features/session/domain/session_write_block.dart';
 import 'package:quran_center/features/subscription/domain/payment_amount.dart';
 import 'package:quran_center/features/user_invite/domain/invite_failure.dart';
+import 'package:quran_center/features/user_invite/presentation/user_invite_labels.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 class _MockFamilyRepository extends Mock implements FamilyRepository {}
 
@@ -212,8 +215,9 @@ void main() {
       InviteFailure.linkFailed,
     );
     expect(InviteFailure.fromResponse(502, null), InviteFailure.unknown);
+    final AppL10n l = lookupAppL10n(const Locale('ar'));
     final Set<String> messages = <String>{
-      for (final InviteFailure f in InviteFailure.values) f.message,
+      for (final InviteFailure f in InviteFailure.values) f.message(l),
     };
     expect(messages.length, InviteFailure.values.length);
   });

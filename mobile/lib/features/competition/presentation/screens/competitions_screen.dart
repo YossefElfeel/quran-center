@@ -35,7 +35,7 @@ class CompetitionsScreen extends ConsumerWidget {
         notifiers: <ChangeNotifier>[name],
         child: AppAsyncFormSheet(
           submitLabel: l.add,
-          successMessage: 'المسابقة اتضافت',
+          successMessage: l.cmpCompetitionAdded,
           onSubmit: () =>
               ref.read(competitionsProvider.notifier).create(name.text.trim()),
           fields: [
@@ -44,7 +44,7 @@ class CompetitionsScreen extends ConsumerWidget {
               autofocus: true,
               label: l.cmpCompetitionName,
               validator: (v) =>
-                  (v?.trim().length ?? 0) < 2 ? 'اكتب اسم المسابقة' : null,
+                  (v?.trim().length ?? 0) < 2 ? l.cmpNameRequired : null,
             ),
           ],
         ),
@@ -88,7 +88,7 @@ class CompetitionsScreen extends ConsumerWidget {
                       ref.invalidate(competitionsProvider);
                     }
                   },
-                  child: Text(isAdmin ? l.cmpNewCompetition : 'تحديث'),
+                  child: Text(isAdmin ? l.cmpNewCompetition : l.commonRefresh),
                 ),
               )
             : AppRefreshIndicator(

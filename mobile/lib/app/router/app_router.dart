@@ -136,8 +136,10 @@ GoRouter appRouter(Ref ref) {
 
       GoRoute(
         path: '/parent/subscription',
-        builder: (_, _) =>
-            const AppScaffold(title: 'اشتراكي', body: SubscriptionStatusView()),
+        builder: (BuildContext context, _) => AppScaffold(
+          title: AppL10n.of(context).routeMySubscriptionTitle,
+          body: const SubscriptionStatusView(),
+        ),
       ),
 
       // باقي الشاشات (كاملة الشاشة على الـ root navigator — تُفتح بـ push).
@@ -199,7 +201,9 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             HouseholdMembersScreen(
               householdId: state.pathParameters['householdId']!,
-              householdName: state.uri.queryParameters['name'] ?? 'الأسرة',
+              householdName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).routeHouseholdFallback,
             ),
       ),
       GoRoute(
@@ -211,7 +215,9 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             TodaySessionScreen(
               circleId: state.pathParameters['circleId']!,
-              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+              circleName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).commonCircle,
             ),
       ),
       GoRoute(
@@ -219,7 +225,9 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             MonthlyPlanEditorScreen(
               circleId: state.pathParameters['circleId']!,
-              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+              circleName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).commonCircle,
             ),
       ),
       GoRoute(
@@ -233,7 +241,9 @@ GoRouter appRouter(Ref ref) {
                   ? state.uri.queryParameters['month']
                   : null,
               circleId: state.pathParameters['circleId']!,
-              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+              circleName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).commonCircle,
             ),
       ),
       GoRoute(
@@ -284,7 +294,9 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             CircleScoresScreen(
               circleId: state.pathParameters['circleId']!,
-              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+              circleName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).commonCircle,
             ),
       ),
       GoRoute(
@@ -341,7 +353,9 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             CompetitionResultsScreen(
               competitionId: state.pathParameters['id']!,
-              competitionName: state.uri.queryParameters['name'] ?? 'المسابقة',
+              competitionName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).routeCompetitionFallback,
             ),
       ),
       GoRoute(
@@ -349,14 +363,18 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             CompetitionDetailScreen(
               competitionId: state.pathParameters['id']!,
-              competitionName: state.uri.queryParameters['name'] ?? 'المسابقة',
+              competitionName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).routeCompetitionFallback,
             ),
       ),
       GoRoute(
         path: Routes.parentChildPattern,
         builder: (BuildContext context, GoRouterState state) => ChildCardScreen(
           studentPersonId: state.pathParameters['studentId']!,
-          childName: state.uri.queryParameters['name'] ?? 'الطفل',
+          childName:
+              state.uri.queryParameters['name'] ??
+              AppL10n.of(context).famChildLabel,
         ),
       ),
       GoRoute(
@@ -364,7 +382,9 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             ChildHistoryScreen(
               studentPersonId: state.pathParameters['studentId']!,
-              childName: state.uri.queryParameters['name'] ?? 'الطفل',
+              childName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).famChildLabel,
               initialTab:
                   int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0,
             ),
@@ -378,8 +398,12 @@ GoRouter appRouter(Ref ref) {
         path: Routes.certificatePreviewPattern,
         builder: (BuildContext context, GoRouterState state) =>
             CertificatePreviewScreen(
-              studentName: state.uri.queryParameters['name'] ?? 'الطالب',
-              kindLabel: state.uri.queryParameters['kind'] ?? 'شهادة',
+              studentName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).commonStudent,
+              kindLabel:
+                  state.uri.queryParameters['kind'] ??
+                  AppL10n.of(context).docCertificateTitle,
               dateLabel: state.uri.queryParameters['date'] ?? '',
             ),
       ),
@@ -388,7 +412,9 @@ GoRouter appRouter(Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             CircleEvalScreen(
               circleId: state.pathParameters['circleId']!,
-              circleName: state.uri.queryParameters['name'] ?? 'الحلقة',
+              circleName:
+                  state.uri.queryParameters['name'] ??
+                  AppL10n.of(context).commonCircle,
             ),
       ),
     ],

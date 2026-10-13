@@ -54,10 +54,4 @@ class GuardianLinkRow {
   final bool hasLogin, subscriptionActive;
   final String? householdId, householdName;
   final int childrenCount;
-
-  String get relationAr => switch (relation) {
-    'father' => 'أب',
-    'mother' => 'أم',
-    _ => 'ولي أمر',
-  };
 }

@@ -22,6 +22,7 @@ import '../../domain/payment_row.dart';
 import '../controllers/household_members_controller.dart';
 import '../controllers/household_payments_controller.dart';
 import '../controllers/households_controller.dart';
+import '../subscription_labels.dart';
 import '../widgets/add_household_member_sheet.dart';
 import '../widgets/record_payment_sheet.dart';
 
@@ -63,7 +64,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
       title: householdName,
       actions: <Widget>[
         IconButton(
-          tooltip: 'تسجيل دفعة',
+          tooltip: l.subsRecordPaymentTitle,
           icon: const Icon(Icons.payments_outlined),
           onPressed: () async {
             try {
@@ -74,7 +75,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
               if (!context.mounted) return;
               await showAppModalSheet<void>(
                 context: context,
-                title: 'تسجيل دفعة',
+                title: l.subsRecordPaymentTitle,
                 builder: (_) => RecordPaymentSheet(
                   household: household,
                   feedbackContext: context,
@@ -83,7 +84,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
               ref.invalidate(householdPaymentsProvider(householdId));
             } catch (_) {
               if (context.mounted) {
-                AppSnackbar.error(context, 'تعذّر تحميل الأسرة — جرّب تاني');
+                AppSnackbar.error(context, l.subsHouseholdLoadError);
               }
             }
           },
@@ -129,7 +130,7 @@ class HouseholdMembersScreen extends ConsumerWidget {
                           ? Icons.person
                           : Icons.child_care,
                       title: m.personName,
-                      subtitle: m.roleAr,
+                      subtitle: m.roleLabel(l),
                     );
                   },
                 ),

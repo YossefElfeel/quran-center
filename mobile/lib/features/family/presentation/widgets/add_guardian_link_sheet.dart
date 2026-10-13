@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/error/app_exception.dart';
-import '../../../../shared/presentation/exception_message.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
@@ -14,12 +12,15 @@ import '../../../../shared/widgets/app_select_field.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../user_invite/data/invite_repository.dart';
+import '../../../user_invite/presentation/user_invite_labels.dart';
 import '../../data/family_repository.dart';
+import '../../domain/guardian_link_row.dart';
 import '../../domain/household_naming.dart';
 import '../../domain/household_option.dart';
 import '../../domain/student_option.dart';
 import '../controllers/guardian_links_controller.dart';
 import '../controllers/students_for_link_controller.dart';
+import '../family_labels.dart';
 
 class AddGuardianLinkSheet extends ConsumerStatefulWidget {
   const AddGuardianLinkSheet({this.childPersonId, this.childName, super.key});
@@ -59,7 +60,9 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
     final String current = _householdName.text.trim();
     if (current.isNotEmpty && current != _suggestedHousehold) return;
     final String family = suggestedFamilyName(_name.text);
-    final String suggestion = family.isEmpty ? '' : 'أسرة $family';
+    final String suggestion = family.isEmpty
+        ? ''
+        : AppL10n.of(context).famHouseholdSuggestion(family);
     _suggestedHousehold = suggestion;
     if (_householdName.text != suggestion) _householdName.text = suggestion;
   }
@@ -76,8 +79,9 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
 
   Future<void> _save() async {
     if (_saving || !_form.currentState!.validate()) return;
+    final AppL10n l = AppL10n.of(context);
     if (_childId == null) {
-      setState(() => _error = 'اختار الطفل');
+      setState(() => _error = l.famChildHint);
       return;
     }
     setState(() {
@@ -107,21 +111,19 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
             );
         if (!mounted) return;
         setState(() => _link = link);
-        AppSnackbar.success(
-          context,
-          'ولي الأمر اتربط ورابط الدعوة جاهز للمشاركة',
-        );
+        AppSnackbar.success(context, l.famLinkedWithInvite);
       } else if (mounted) {
-        AppSnackbar.success(context, 'ولي الأمر اتربط بالطفل والأسرة');
+        AppSnackbar.success(context, l.famLinkedSuccess);
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         setState(
           () => _error = _createdPersonId == null
-              ? 'تعذّر حفظ ولي الأمر — جرّب تاني'
-              : 'ولي الأمر اتحفظ، لكن الدعوة فشلت: '
-                    '${e is AppException ? e.localizedMessage(AppL10n.of(context)) : 'جرّب الدعوة تاني بنفس البيانات.'}',
+              ? l.famGuardianSaveError
+              : l.famInviteFailed(
+                  inviteErrorMessage(e, l) ?? l.famInviteRetryHint,
+                ),
         );
       }
     } finally {
@@ -131,6 +133,7 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<StudentOption>> students = ref.watch(
       studentsForLinkProvider,
     );
@@ -139,19 +142,19 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          const Text(
-            'رابط دعوة الدخول',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            l.famInviteLinkTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          const Text(
-            'شارك الرابط مع ولي الأمر عشان يعيّن كلمة السر. الإيميل مش بيتبعت تلقائيًا.',
-          ),
+          Text(l.famInviteLinkShareHint),
           SelectableText(_link!, textDirection: TextDirection.ltr),
           AppButton(
-            label: 'نسخ الرابط',
+            label: l.commonCopyLink,
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: _link!));
-              if (context.mounted) AppSnackbar.success(context, 'الرابط اتنسخ');
+              if (context.mounted) {
+                AppSnackbar.success(context, l.commonLinkCopied);
+              }
             },
           ),
           TextButton(
@@ -165,15 +168,15 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
                 }
               } catch (_) {
                 if (context.mounted) {
-                  AppSnackbar.error(context, 'تعذّر فتح واتساب — انسخ الرابط');
+                  AppSnackbar.error(context, l.commonWhatsappOpenError);
                 }
               }
             },
-            child: const Text('مشاركة عبر واتساب'),
+            child: Text(l.commonShareWhatsapp),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('تمام'),
+            child: Text(l.famDone),
           ),
         ],
       );
@@ -187,29 +190,29 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
           AppTextField(
             controller: _name,
             enabled: _createdPersonId == null,
-            label: 'اسم ولي الأمر',
+            label: l.famGuardianNameLabel,
             validator: (String? v) =>
-                v == null || v.trim().isEmpty ? 'اكتب الاسم' : null,
+                v == null || v.trim().isEmpty ? l.commonNameRequired : null,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
             controller: _phone,
             enabled: _createdPersonId == null,
-            label: 'رقم الموبايل',
+            label: l.famMobileLabel,
             keyboardType: TextInputType.phone,
             validator: (String? v) =>
                 v == null ||
                     !RegExp(
                       r'^\+?[0-9]{10,15}$',
                     ).hasMatch(v.replaceAll(' ', ''))
-                ? 'اكتب رقم صحيح من ١٠ إلى ١٥ رقم'
+                ? l.famMobileInvalid
                 : null,
           ),
           const SizedBox(height: AppSpacing.md),
           students.when(
             loading: () => const LinearProgressIndicator(),
             error: (_, _) => AppErrorView(
-              message: 'تعذّر تحميل الطلبة',
+              message: l.famStudentsLoadFailed,
               onRetry: () => ref.invalidate(studentsForLinkProvider),
             ),
             data: (List<StudentOption> list) => OutlinedButton(
@@ -219,7 +222,7 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
                       final StudentOption? student =
                           await showAppSearchPicker<StudentOption>(
                             context: context,
-                            title: 'اختار الطفل',
+                            title: l.famChildHint,
                             items: list,
                             label: (StudentOption s) => s.fullName,
                           );
@@ -230,17 +233,19 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
                         });
                       }
                     },
-              child: Text(_childName ?? 'اختار الطفل'),
+              child: Text(_childName ?? l.famChildHint),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           AppSelectField<String>(
-            label: 'صلة القرابة',
+            label: l.famRelationLabel,
             value: _relation,
-            items: const <DropdownMenuItem<String>>[
-              DropdownMenuItem(value: 'father', child: Text('أب')),
-              DropdownMenuItem(value: 'mother', child: Text('أم')),
-              DropdownMenuItem(value: 'other', child: Text('ولي أمر')),
+            items: <DropdownMenuItem<String>>[
+              for (final String r in GuardianLinkRow.knownRelations)
+                DropdownMenuItem(
+                  value: r,
+                  child: Text(guardianRelationLabel(r, l)),
+                ),
             ],
             onChanged: _createdPersonId != null
                 ? null
@@ -254,13 +259,10 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
                     final HouseholdOption? h =
                         await showAppServerSearchPicker<HouseholdOption>(
                           context: context,
-                          title: 'الأسرة',
-                          searchLabel: 'بحث باسم الأسرة أو الهاتف',
+                          title: l.famHouseholdTitle,
+                          searchLabel: l.famHouseholdSearchLabel,
                           search: (query) async => <HouseholdOption>[
-                            const HouseholdOption(
-                              id: '',
-                              name: 'إنشاء أسرة جديدة',
-                            ),
+                            HouseholdOption(id: '', name: l.famCreateHousehold),
                             ...await ref
                                 .read(familyRepositoryProvider)
                                 .searchHouseholds(query),
@@ -271,32 +273,32 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
                       setState(() => _household = h.id.isEmpty ? null : h);
                     }
                   },
-            child: Text(_household?.name ?? 'إنشاء أسرة جديدة'),
+            child: Text(_household?.name ?? l.famCreateHousehold),
           ),
           if (_household == null) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
             AppTextField(
               controller: _householdName,
               enabled: _createdPersonId == null,
-              label: 'اسم الأسرة (لو فاضي هنستخدم اسم ولي الأمر)',
+              label: l.famHouseholdNameLabel,
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('إنشاء دعوة دخول'),
+            title: Text(l.famCreateLoginInvite),
             value: _invite,
             onChanged: _saving ? null : (bool v) => setState(() => _invite = v),
           ),
           if (_invite)
             AppTextField(
               controller: _email,
-              label: 'إيميل ولي الأمر',
+              label: l.famGuardianEmailLabel,
               keyboardType: TextInputType.emailAddress,
               validator: (String? v) =>
                   v == null ||
                       !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v.trim())
-                  ? 'اكتب إيميل صحيح'
+                  ? l.commonEmailInvalid
                   : null,
             ),
           if (_error != null) ...<Widget>[
@@ -306,8 +308,8 @@ class _AddGuardianLinkSheetState extends ConsumerState<AddGuardianLinkSheet> {
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: _createdPersonId == null
-                ? 'حفظ ولي الأمر'
-                : 'إعادة محاولة الدعوة',
+                ? l.famSaveGuardian
+                : l.famRetryInvite,
             isLoading: _saving,
             onPressed: _save,
           ),

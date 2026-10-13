@@ -33,15 +33,16 @@ Future<void> enrollStudentFlow(
         builder: (_) => AddStudentSheet(circleId: selectedCircleId),
       );
   if (student == null || !context.mounted) return;
+  final AppL10n l = AppL10n.of(context);
   AppSnackbar.success(
     context,
-    'الطالب اتسجّل',
-    actionLabel: 'ربط ولي أمر',
+    l.enrStudentEnrolled,
+    actionLabel: l.enrLinkGuardian,
     onAction: () {
       if (!navigator.mounted) return;
       showAppModalSheet<void>(
         context: navigator.context,
-        title: 'إضافة ولي أمر',
+        title: l.enrAddGuardianTitle,
         builder: (_) => AddGuardianLinkSheet(
           childPersonId: student['id'],
           childName: student['name'],

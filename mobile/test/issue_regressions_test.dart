@@ -64,7 +64,7 @@ void main() {
 
       expect(student.scored, isTrue);
       expect(student.average, 8);
-      expect(student.levelAr, 'جيد جدًا');
+      expect(student.level, EvalLevel.veryGood);
     });
 
     test('marks an incomplete evaluation as not scored', () {

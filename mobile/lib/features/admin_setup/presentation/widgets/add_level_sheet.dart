@@ -39,7 +39,10 @@ class _AddLevelSheetState extends ConsumerState<AddLevelSheet> {
           .read(levelsControllerProvider(widget.curriculumId).notifier)
           .add(name);
       if (mounted) {
-        AppSnackbar.success(context, 'اتحفظ بنجاح');
+        AppSnackbar.success(
+          context,
+          AppL10n.of(context).commonSavedSuccessfully,
+        );
         Navigator.of(context).pop();
       }
     } catch (_) {
@@ -62,7 +65,7 @@ class _AddLevelSheetState extends ConsumerState<AddLevelSheet> {
             controller: _name,
             label: l.admLevelNameLabel,
             validator: (String? v) =>
-                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+                v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(

@@ -47,56 +47,20 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
         parent = roles.contains('parent');
     final List<_Slide> slides = teacher
         ? <_Slide>[
-            const _Slide(
-              Icons.menu_book,
-              'حصة منظّمة كل يوم',
-              'افتح حلقتك وسجّل الحضور والتسميع من مكان واحد.',
-            ),
-            const _Slide(
-              Icons.cloud_off,
-              'سجّل التسميع حتى من غير نت',
-              'الدرجات تتحفظ على الجهاز وتتزامن لما الاتصال يرجع.',
-            ),
-            const _Slide(
-              Icons.trending_up,
-              'تابع كل طالب',
-              'شوف اللي محتاج مراجعة وخلّي خطوات الحفظ واضحة.',
-            ),
+            _Slide(Icons.menu_book, l.onbTeacherTitle1, l.onbTeacherBody1),
+            _Slide(Icons.cloud_off, l.onbTeacherTitle2, l.onbTeacherBody2),
+            _Slide(Icons.trending_up, l.onbTeacherTitle3, l.onbTeacherBody3),
           ]
         : parent
         ? <_Slide>[
-            const _Slide(
-              Icons.child_care,
-              'تابع حفظ ولادك يوم بيوم',
-              'آخر تسميع والحضور والخطة في بطاقة واحدة لكل طفل.',
-            ),
-            const _Slide(
-              Icons.message,
-              'تواصل مع الدار',
-              'اقرأ الملاحظات وابعث شكوى أو تواصل مع الإدارة.',
-            ),
-            const _Slide(
-              Icons.payments,
-              'اشتراكك واضح',
-              'شوف الدفعات والشهور المستحقة وحدّث الحالة بعد الدفع.',
-            ),
+            _Slide(Icons.child_care, l.onbParentTitle1, l.onbParentBody1),
+            _Slide(Icons.message, l.onbParentTitle2, l.onbParentBody2),
+            _Slide(Icons.payments, l.onbParentTitle3, l.onbParentBody3),
           ]
         : <_Slide>[
-            const _Slide(
-              Icons.groups,
-              'كل طلبة الدار في مكان واحد',
-              'سجّل الطالب واربط ولي الأمر بأسرة وحساب دخول.',
-            ),
-            const _Slide(
-              Icons.fact_check,
-              'المراجعات من غير انتظار',
-              'اعتمد التقييم أو رجّعه للمعلّم مع سبب واضح.',
-            ),
-            const _Slide(
-              Icons.notifications,
-              'تابع اللي محتاج قرار',
-              'الأعذار والاشتراكات والتقييمات ظاهرة في الرئيسية.',
-            ),
+            _Slide(Icons.groups, l.onbAdminTitle1, l.onbAdminBody1),
+            _Slide(Icons.fact_check, l.onbAdminTitle2, l.onbAdminBody2),
+            _Slide(Icons.notifications, l.onbAdminTitle3, l.onbAdminBody3),
           ];
     final bool last = _page == slides.length - 1;
 
@@ -160,7 +124,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
               children: <Widget>[
                 for (int i = 0; i < slides.length; i++)
                   Semantics(
-                    label: 'صفحة ${i + 1} من ${slides.length}',
+                    label: l.onbPageIndicator('${i + 1}', '${slides.length}'),
                     selected: i == _page,
                     child: AnimatedContainer(
                       duration: reduceMotion(context)
@@ -184,10 +148,10 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
               child: AppButton(
                 label: last
                     ? (teacher
-                          ? 'افتح حلقتك'
+                          ? l.onbTeacherFinish
                           : parent
-                          ? 'شوف ولادك'
-                          : 'ابدأ من الرئيسية')
+                          ? l.onbParentFinish
+                          : l.onbAdminFinish)
                     : l.onbNext,
                 icon: last ? Icons.check : Icons.arrow_forward,
                 onPressed: () {

@@ -69,7 +69,7 @@ class StudentTile extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             _LedgerBadge(state: entry.ledgerState),
-            if (excuseRequested) const Text('طلب متبعت'),
+            if (excuseRequested) Text(AppL10n.of(context).sesExcuseRequested),
             Wrap(
               spacing: AppSpacing.sm,
               crossAxisAlignment: WrapCrossAlignment.center,

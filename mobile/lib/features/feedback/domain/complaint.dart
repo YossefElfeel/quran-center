@@ -43,21 +43,13 @@ class Complaint {
   }
 
   bool get isAnswered => managerResponse != null && managerResponse!.isNotEmpty;
-
-  String get statusAr => switch (status) {
-    'open' => 'مفتوحة',
-    'answered' => 'تم الرد',
-    'reopened' => 'أعيد فتحها',
-    'closed' => 'مقفولة',
-    _ => status,
-  };
 }
 
-/// تصنيفات الشكوى (للعرض في الفورم).
-const Map<String, String> complaintCategoriesAr = <String, String>{
-  'academic': 'أكاديمي',
-  'financial': 'مالي',
-  'behavioral': 'سلوكي',
-  'privacy': 'خصوصية',
-  'other': 'أخرى',
-};
+/// تصنيفات الشكوى (قيم الـ DB) بترتيب العرض في الفورم.
+const List<String> complaintCategories = <String>[
+  'academic',
+  'financial',
+  'behavioral',
+  'privacy',
+  'other',
+];

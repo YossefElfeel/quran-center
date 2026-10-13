@@ -23,7 +23,7 @@ class SyncStatusSheet extends ConsumerStatefulWidget {
   const SyncStatusSheet({super.key});
   static Future<void> show(BuildContext context) => showAppModalSheet<void>(
     context: context,
-    title: 'حالة المزامنة',
+    title: AppL10n.of(context).syncStatusTitle,
     scrollable: false,
     builder: (_) => const SyncStatusSheet(),
   );
@@ -67,30 +67,30 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
       }
     } catch (_) {
       if (mounted) {
-        AppSnackbar.error(context, 'تعذّر تحديث الطابور — السجل لسه محفوظ');
+        AppSnackbar.error(context, AppL10n.of(context).syncQueueUpdateError);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  String label(OutboxOpType type) => switch (type) {
-    OutboxOpType.sessionOpen => 'فتح حصة',
-    OutboxOpType.sessionClose => 'قفل حصة',
-    OutboxOpType.tasmeeRecord => 'تسميع',
-    OutboxOpType.attendanceMark => 'حضور',
+  String label(AppL10n l, OutboxOpType type) => switch (type) {
+    OutboxOpType.sessionOpen => l.syncOpSessionOpen,
+    OutboxOpType.sessionClose => l.syncOpSessionClose,
+    OutboxOpType.tasmeeRecord => l.syncOpTasmee,
+    OutboxOpType.attendanceMark => l.syncOpAttendanceMark,
   };
   String reason(AppL10n l, String? error) {
-    if (error == null) return 'رفض السيرفر السجل';
+    if (error == null) return l.syncReasonServerRejected;
     if (error.contains('dependent')) {
-      return 'راجع السجلات السابقة وأعد محاولة الكل قبل قفل الحصة';
+      return l.syncReasonDependent;
     }
     if (error.contains('freeze')) return l.sesWritesFrozen;
     if (error.contains('maintenance')) return l.sesWritesMaintenance;
     if (error.contains('42501') || error.contains('permission')) {
-      return 'الصلاحية مرفوضة — راجع الإدارة';
+      return l.syncReasonPermission;
     }
-    return 'راجع البيانات مع الإدارة ثم أعد المحاولة';
+    return l.syncReasonGeneric;
   }
 
   Future<bool> _flush() async {
@@ -101,15 +101,16 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
       sessionWritesBlockStateProvider,
     );
     if (mounted) {
+      final l = AppL10n.of(context);
       AppSnackbar.info(
         context,
         blocked != null && pending > 0
-            ? blocked.label(AppL10n.of(context))
+            ? blocked.label(l)
             : dead > 0
-            ? 'في سجلات محتاجة مراجعة'
+            ? l.syncFlushNeedsReview
             : pending > 0
-            ? 'السجلات لسه محفوظة وفي انتظار الاتصال'
-            : 'كل السجلات اتزامنت',
+            ? l.syncFlushStillPending
+            : l.syncFlushAllSynced,
       );
     }
     return true;
@@ -147,7 +148,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
             const SizedBox(height: 12),
           ],
           AppButton(
-            label: 'زامن دلوقتي',
+            label: l.syncNow,
             icon: Icons.sync,
             isLoading: _busy,
             onPressed: () => _perform(_flush),
@@ -163,7 +164,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                 }
                 if (snapshot.hasError) {
                   return AppErrorView(
-                    message: 'تعذّر قراءة السجلات المحفوظة',
+                    message: l.syncReadQueueError,
                     onRetry: _reload,
                   );
                 }
@@ -175,10 +176,8 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                     for (final op in pending)
                       ListTile(
                         leading: const Icon(Icons.schedule),
-                        title: Text(op.displayLabel ?? label(op.type)),
-                        subtitle: const Text(
-                          'محفوظ على الجهاز — في انتظار المزامنة',
-                        ),
+                        title: Text(op.displayLabel ?? label(l, op.type)),
+                        subtitle: Text(l.syncSavedOnDeviceAwaiting),
                       ),
                     if (dead.isEmpty)
                       Padding(
@@ -205,7 +204,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                     for (final entry in dead)
                       ListTile(
                         leading: const Icon(Icons.error_outline),
-                        title: Text(entry.displayLabel ?? label(entry.type)),
+                        title: Text(entry.displayLabel ?? label(l, entry.type)),
                         subtitle: Text(reason(l, entry.lastError)),
                         trailing: Wrap(
                           children: <Widget>[
@@ -231,11 +230,10 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                                         title:
                                             entry.type ==
                                                 OutboxOpType.tasmeeRecord
-                                            ? 'حذف الدرجة؟'
-                                            : 'حذف السجل؟',
-                                        message:
-                                            'السجل ده هيتحذف نهائيًا من الجهاز',
-                                        confirmLabel: 'حذف نهائي',
+                                            ? l.syncDeleteScoreTitle
+                                            : l.syncDeleteRecordTitle,
+                                        message: l.syncDeleteRecordMessage,
+                                        confirmLabel: l.syncDeletePermanently,
                                         destructive: true,
                                       )) {
                                         return false;
@@ -244,7 +242,7 @@ class _SyncStatusSheetState extends ConsumerState<SyncStatusSheet> {
                                           .read(localDbProvider)
                                           .discard(entry.id);
                                       return true;
-                                    }, success: 'السجل اتحذف'),
+                                    }, success: l.syncRecordDeleted),
                               icon: const Icon(Icons.close),
                             ),
                           ],

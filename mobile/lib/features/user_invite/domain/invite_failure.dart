@@ -24,6 +24,9 @@ enum InviteFailure {
   /// 500 "invite link failed" — غالبًا الإيميل متسجّل قبل كده.
   linkFailed,
 
+  /// الحساب اتعمل لكن الرد مرجّعش رابط الدعوة.
+  linkMissing,
+
   unknown;
 
   /// يصنّف الرد من الـ status + نص الجسم.
@@ -52,24 +55,14 @@ enum InviteFailure {
     if (body.contains('invite link failed')) return InviteFailure.linkFailed;
     return InviteFailure.unknown;
   }
+}
 
-  /// رسالة للمستخدم فيها السبب + الخطوة الجاية.
-  String get message => switch (this) {
-    InviteFailure.forbidden => 'الدعوة للأدمن بس',
-    InviteFailure.alreadyHasLogin =>
-      'الشخص ده عنده حساب دخول بالفعل — خليه يدخل بإيميله، ولو نسي كلمة السر يدوس «نسيت كلمة السر؟» في شاشة الدخول',
-    InviteFailure.emailAlreadyRegistered =>
-      'الإيميل ده متسجّل بحساب تاني — استخدم إيميل مختلف، أو لو هو نفس الشخص يدوس «نسيت كلمة السر؟»',
-    InviteFailure.parentNeedsHousehold =>
-      'ولي الأمر لازم يكون في أسرة ومربوط بطفل الأول — كمّل بياناته من «تعديل البيانات / الأسرة» وبعدين ابعت الدعوة',
-    InviteFailure.parentNeedsFamilyFlow =>
-      'أولياء الأمور بيتضافوا من «ربط أولياء الأمور» الأول، وبعدها تقدر تبعتلهم دعوة',
-    InviteFailure.invalidExistingPerson =>
-      'الحساب ده مش متاح للدعوة (موقوف أو دوره مختلف) — راجع بياناته من لوحة الإدارة',
-    InviteFailure.badRequest => 'اتأكد من الإيميل والاسم والدور وجرّب تاني',
-    InviteFailure.linkFailed =>
-      'تعذّر إنشاء رابط الدعوة — لو الإيميل ده متسجّل قبل كده استخدم إيميل تاني، وإلا جرّب بعد شوية',
-    InviteFailure.unknown =>
-      'مش قادرين نبعت الدعوة — اتأكد من البيانات وجرّب تاني',
-  };
+/// استثناء typed بيحمل سبب فشل الدعوة — الرسالة بتتعمل في الـ presentation.
+class InviteException implements Exception {
+  const InviteException(this.failure);
+
+  final InviteFailure failure;
+
+  @override
+  String toString() => 'InviteException: ${failure.name}';
 }

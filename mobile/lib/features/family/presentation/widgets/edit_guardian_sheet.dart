@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/supabase/supabase_providers.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -12,6 +13,7 @@ import '../../data/family_repository.dart';
 import '../../domain/guardian_link_row.dart';
 import '../../domain/household_option.dart';
 import '../controllers/guardian_links_controller.dart';
+import '../family_labels.dart';
 
 class EditGuardianSheet extends ConsumerStatefulWidget {
   const EditGuardianSheet({required this.row, super.key});
@@ -36,6 +38,9 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
   late String? _householdName = widget.row.householdName;
   bool _loading = true;
   bool _busy = false;
+  // Load failure is a flag (not a message) because _load starts in initState,
+  // before localizations can be looked up.
+  bool _loadFailed = false;
   String? _error;
   @override
   void initState() {
@@ -61,7 +66,7 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'تعذّر تحميل البيانات';
+          _loadFailed = true;
         });
       }
     }
@@ -77,8 +82,10 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
 
   Future<void> _save() async {
     if (_busy || !_form.currentState!.validate()) return;
+    final AppL10n l = AppL10n.of(context);
     setState(() {
       _busy = true;
+      _loadFailed = false;
       _error = null;
     });
     try {
@@ -98,112 +105,126 @@ class _EditGuardianSheetState extends ConsumerState<EditGuardianSheet> {
           );
       ref.invalidate(guardianLinksControllerProvider);
       if (mounted) {
-        AppSnackbar.success(context, 'بيانات ولي الأمر اتحفظت');
+        AppSnackbar.success(context, l.famGuardianSaved);
         Navigator.of(context).pop();
       }
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذّر حفظ البيانات — جرّب تاني');
+      if (mounted) setState(() => _error = l.famDataSaveError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) => _loading
-      ? const Center(child: CircularProgressIndicator())
-      : Form(
-          key: _form,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              AppTextField(
-                controller: _name,
-                label: 'اسم ولي الأمر',
-                enabled: !_busy,
-                validator: (s) =>
-                    s == null || s.trim().length < 2 ? 'اكتب الاسم' : null,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _phone,
-                label: 'رقم الهاتف',
-                enabled: !_busy,
-                keyboardType: TextInputType.phone,
-                validator: (s) =>
-                    s != null &&
-                        s.isNotEmpty &&
-                        !RegExp(r'^\+?[0-9]{10,15}$').hasMatch(s)
-                    ? 'رقم الهاتف من ١٠ إلى ١٥ رقم'
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppSelectField<String>(
-                label: 'صلة القرابة',
-                value: _relation,
-                items: const <DropdownMenuItem<String>>[
-                  DropdownMenuItem(value: 'father', child: Text('أب')),
-                  DropdownMenuItem(value: 'mother', child: Text('أم')),
-                  DropdownMenuItem(value: 'other', child: Text('ولي أمر')),
-                ],
-                onChanged: _busy
-                    ? null
-                    : (v) => setState(() => _relation = v ?? 'other'),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextButton(
-                onPressed: _busy
-                    ? null
-                    : () async {
-                        try {
-                          final selected =
-                              await showAppServerSearchPicker<HouseholdOption>(
-                                context: context,
-                                title: 'اختار الأسرة',
-                                searchLabel: 'بحث باسم الأسرة أو الهاتف',
-                                search: ref
-                                    .read(familyRepositoryProvider)
-                                    .searchHouseholds,
-                                label: (h) => h.name,
-                              );
-                          if (selected != null && mounted) {
-                            setState(() {
-                              _householdId = selected.id;
-                              _householdName = selected.name;
-                            });
-                          }
-                        } catch (_) {
-                          if (context.mounted) {
-                            AppSnackbar.error(context, 'تعذّر تحميل الأسر');
-                          }
-                        }
-                      },
-                child: Text(_householdName ?? 'اختار أسرة موجودة'),
-              ),
-              if (_householdId == null) ...<Widget>[
-                const SizedBox(height: AppSpacing.sm),
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    final String? error = _loadFailed ? l.famDataLoadError : _error;
+    return _loading
+        ? const Center(child: CircularProgressIndicator())
+        : Form(
+            key: _form,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
                 AppTextField(
-                  controller: _newHousehold,
-                  label: 'اسم الأسرة الجديدة',
+                  controller: _name,
+                  label: l.famGuardianNameLabel,
                   enabled: !_busy,
-                  validator: (s) => s == null || s.trim().isEmpty
-                      ? 'اكتب اسم الأسرة أو اختار أسرة موجودة'
+                  validator: (s) => s == null || s.trim().length < 2
+                      ? l.commonNameRequired
                       : null,
                 ),
-              ],
-              if (_error != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _phone,
+                  label: l.famPhoneLabel,
+                  enabled: !_busy,
+                  keyboardType: TextInputType.phone,
+                  validator: (s) =>
+                      s != null &&
+                          s.isNotEmpty &&
+                          !RegExp(r'^\+?[0-9]{10,15}$').hasMatch(s)
+                      ? l.famPhoneInvalid
+                      : null,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppSelectField<String>(
+                  label: l.famRelationLabel,
+                  value: _relation,
+                  items: <DropdownMenuItem<String>>[
+                    for (final String r in GuardianLinkRow.knownRelations)
+                      DropdownMenuItem(
+                        value: r,
+                        child: Text(guardianRelationLabel(r, l)),
+                      ),
+                  ],
+                  onChanged: _busy
+                      ? null
+                      : (v) => setState(() => _relation = v ?? 'other'),
+                ),
                 const SizedBox(height: AppSpacing.sm),
-                Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () async {
+                          try {
+                            final selected =
+                                await showAppServerSearchPicker<
+                                  HouseholdOption
+                                >(
+                                  context: context,
+                                  title: l.famPickHousehold,
+                                  searchLabel: l.famHouseholdSearchLabel,
+                                  search: ref
+                                      .read(familyRepositoryProvider)
+                                      .searchHouseholds,
+                                  label: (h) => h.name,
+                                );
+                            if (selected != null && mounted) {
+                              setState(() {
+                                _householdId = selected.id;
+                                _householdName = selected.name;
+                              });
+                            }
+                          } catch (_) {
+                            if (context.mounted) {
+                              AppSnackbar.error(
+                                context,
+                                l.famHouseholdsLoadFailed,
+                              );
+                            }
+                          }
+                        },
+                  child: Text(_householdName ?? l.famPickExistingHousehold),
+                ),
+                if (_householdId == null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _newHousehold,
+                    label: l.famNewHouseholdNameLabel,
+                    enabled: !_busy,
+                    validator: (s) => s == null || s.trim().isEmpty
+                        ? l.famHouseholdNameRequired
+                        : null,
+                  ),
+                ],
+                if (error != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    error,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                AppButton(
+                  label: l.famSaveData,
+                  isLoading: _busy,
+                  onPressed: _save,
                 ),
               ],
-              const SizedBox(height: AppSpacing.lg),
-              AppButton(
-                label: 'حفظ البيانات',
-                isLoading: _busy,
-                onPressed: _save,
-              ),
-            ],
-          ),
-        );
+            ),
+          );
+  }
 }

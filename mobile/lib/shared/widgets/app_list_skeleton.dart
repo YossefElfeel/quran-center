@@ -24,8 +24,10 @@ class AppListSkeleton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         itemCount: itemCount,
         itemBuilder: (BuildContext context, int index) => const AppListCard(
-          title: 'عنصر تجريبي للتحميل',
-          subtitle: 'سطر فرعي قصير للوصف',
+          title:
+              'عنصر تجريبي للتحميل', // l10n-ignore: skeleton placeholder shape, not shown as text
+          subtitle:
+              'سطر فرعي قصير للوصف', // l10n-ignore: skeleton placeholder shape, not shown as text
           leadingIcon: Icons.circle,
         ),
       ),

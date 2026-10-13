@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'app_button.dart';
 
 /// A failed next page keeps the already loaded rows visible and retryable.
@@ -58,7 +59,7 @@ class _AppPagedListState<T> extends State<AppPagedList<T>> {
       }
     } catch (_) {
       if (mounted && generation == _generation) {
-        setState(() => _error = 'تعذّر تحميل الباقي — جرّب تاني');
+        setState(() => _error = AppL10n.of(context).commonLoadMoreError);
       }
     } finally {
       if (mounted && generation == _generation) setState(() => _busy = false);
@@ -88,7 +89,7 @@ class _AppPagedListState<T> extends State<AppPagedList<T>> {
                       ),
                     ),
                   AppButton(
-                    label: 'عرض المزيد',
+                    label: AppL10n.of(context).commonShowMore,
                     isLoading: _busy,
                     onPressed: _more,
                   ),

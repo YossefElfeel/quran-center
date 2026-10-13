@@ -53,7 +53,7 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
             Map<EvalCriterion, int>.of(_scores),
           );
       if (mounted) {
-        AppSnackbar.success(context, 'التقييم اتحفظ');
+        AppSnackbar.success(context, AppL10n.of(context).supEvalSaved);
         Navigator.of(context).pop();
       }
     } catch (_) {

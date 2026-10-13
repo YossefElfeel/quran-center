@@ -67,13 +67,19 @@ FCM and push preferences remain explicitly deferred by the plan until a Firebase
 - Read-only hosted schema/function/index preflight completed. Duplicate non-voided household/month payments = 0; registration-phone and application uniqueness indexes already exist. Existing legacy close overload retained for compatibility.
 - `supabase/tests/ux_flows.sql` rolls back guardian/login linkage, payment uniqueness/void, return-reason guard, returned notifications after transfer and retry-safe close. Passed in isolated Linux CI and against the approved hosted release, with zero fixtures remaining afterward. The expanded suite also passed hosted rollback checks for service-only public submission, duplicate application reuse and deadline rejection. Fresh-install CI at `f89a7de` additionally passed direct registration/application uniqueness assertions. HTTP guards passed: unauthenticated invite/reset 401, invalid public submission 400, allowed-origin preflight 204 and forbidden-origin 403. Live invite delivery/login is a separate unverified check.
 
-## UX review fixes (2026-10-13, uncommitted working tree)
+## UX review fixes (2026-10-13, Claude review pass)
+
+Independent review of the plan against code found 2 high (device-bound reset links; dead outbox rows pinning a stale session), 8 medium and 18 low issues plus partial items; all are fixed in commits `f0351e4`, `3d8609f`, `3d895bb` and the l10n commit that follows them. Details: plan file sections 2–3.
+
 
 - Supabase: `20261013120000_ux_review_fixes.sql` (M1 household move in `update_guardian_details`; M3 `session_writes_blocked()`; `run_monthly_close` notifies each affected circle teacher with `route_data {circle_id, month}`). `ux_flows.sql` gains household-move, write-freeze and missed-eval-teacher cases. Not applied to hosted; no local Postgres was available, so the SQL was reviewed but not executed here — CI's `ux_flows` job is the first execution.
 - H1: `supabase/templates/{recovery,invite}.html` + `[auth.email.template.*]`; hosted template paste documented in `DEPLOY_RUNBOOK.md`. Web `/auth/confirm` separates expired / used / other-device / incomplete links, shows center phone + WhatsApp, and has an aria-live password-strength meter.
 - Dashboard: system tools (flags, settings, automation, data console, users, audit + export) back on the operator client with an impersonation note; sign-out ends impersonation and clears `imp_token`; stale/foreign/ended tokens fall back to the operator (proxy clears the cookie) with a 5 s grace; L7/L9/L10; overview partial-failure banner; struggling filter chip; shared field/button primitives; person and circle links; competition edit; ar-EG month/number formatting; brand green `#0c7c59`.
 - Web: footer "تفعيل الحساب / نسيت كلمة السر" → `/auth/forgot`; text-free PNG Open Graph card (`app/opengraph-image.tsx`, Satori cannot shape Arabic).
 - Verified: dashboard `tsc`, `lint`, `test:forms`, `build`; web `lint`, `build`.
+- Mobile: dead outbox rows no longer force cache mode (+ stale-day check always runs); freeze/maintenance denials explained via `session_writes_blocked()` and kept pending with a flat 5-min retry; add-guardian retry reuses the created person; distinct invite failures (invite-user now returns 409 `email already registered`); payments must be > 0; exempt households; offline parents pass the gate; per-role notification routes; guardian checklist fix actions; one title/padding per sheet; `AppSelectField` reflects code changes; role toggle in the app bar; home circle cards no longer open sessions; staff-only attention queue; `DisposeWith` for sheet controllers; paged competitions/development/households; grouped enrollable-circle picker; child-card attendance tab.
+- M7 localization: hard-coded Arabic literals in presentation/shared/app 442 → 0 unmarked (8 `// l10n-ignore` with reasons); +366 ARB keys; domain labels moved to presentation mappers; terminology unified to معلّم / كلمة السر; `test/l10n_guard_test.dart` blocks regressions.
+- Mobile verified: `flutter analyze` 0 issues; `flutter test` 203/203 including Windows goldens (unchanged).
 
 ## Remaining release work
 

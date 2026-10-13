@@ -69,10 +69,7 @@ class _SubscriptionStatusViewState
       await ref.read(subscriptionDetailsProvider.future);
     } catch (_) {
       if (mounted) {
-        AppSnackbar.error(
-          context,
-          'تعذّر تحديث الحالة — راجع الاتصال وجرّب تاني',
-        );
+        AppSnackbar.error(context, AppL10n.of(context).subsStatusRefreshError);
       }
     } finally {
       if (mounted) setState(() => _refreshing = false);
@@ -81,15 +78,14 @@ class _SubscriptionStatusViewState
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
     final state = ref.watch(subscriptionDetailsProvider);
     final phone =
         ref.watch(appSettingsProvider).asData?.value.centerPhone ?? '';
     return state.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => AppErrorView(
-        message: 'تعذّر تحميل الاشتراك — راجع الاتصال',
-        onRetry: _refresh,
-      ),
+      error: (_, _) =>
+          AppErrorView(message: l.subsLoadSubscriptionError, onRetry: _refresh),
       data: (data) => RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
@@ -97,13 +93,10 @@ class _SubscriptionStatusViewState
           padding: const EdgeInsets.all(24),
           children: <Widget>[
             Text(
-              data.$2 ? 'اشتراكك نشط' : 'اشتراكك محتاج تجديد',
+              data.$2 ? l.subsActive : l.subsNeedsRenewal,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            if (data.$1.isEmpty)
-              const Text(
-                'حسابك لسه مش مرتبط بأسرة — الإدارة تقدر تربط الأسرة والطفل',
-              ),
+            if (data.$1.isEmpty) Text(l.subsNoHouseholdLinked),
             for (final billing in data.$1)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
@@ -114,7 +107,7 @@ class _SubscriptionStatusViewState
               ),
             const SizedBox(height: 24),
             AppButton(
-              label: 'تحديث الحالة',
+              label: l.subsRefreshStatus,
               icon: Icons.refresh,
               isLoading: _refreshing,
               onPressed: _refresh,
@@ -138,15 +131,18 @@ class _SubscriptionStatusViewState
                     if (context.mounted) {
                       AppSnackbar.error(
                         context,
-                        'تعذّر فتح واتساب — رقم الإدارة: $phone',
+                        l.subsWhatsappOpenError(phone),
                       );
                     }
                   }
                 },
-                child: const Text('واتساب الإدارة'),
+                child: Text(l.subsAdminWhatsapp),
               ),
             if (data.$2)
-              AppButton(label: 'شوف ولادك', onPressed: () => context.go('/me')),
+              AppButton(
+                label: l.subsSeeChildren,
+                onPressed: () => context.go('/me'),
+              ),
           ],
         ),
       ),
@@ -188,7 +184,7 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'تعذّر تحميل باقي الدفعات — جرّب تاني');
+        setState(() => _error = AppL10n.of(context).subsMorePaymentsError);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -223,36 +219,50 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           Text(
-            exempt ? l.subsExempt : '${arabicNumber(monthlyAmount)} ج.م شهريًا',
+            exempt
+                ? l.subsExempt
+                : l.subsMonthlyAmountPerMonth(arabicNumber(monthlyAmount)),
           ),
           const SizedBox(height: 16),
           if (exempt)
             Text(l.subsExemptNoDue)
           else ...<Widget>[
-            const Text(
-              'الشهور المستحقة — آخر ١٢ شهر',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              l.subsDueMonthsTitle,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            Text(due.isEmpty ? 'مفيش شهور مستحقة' : due.map(label).join('، ')),
+            Text(
+              due.isEmpty
+                  ? l.subsNoDueMonths
+                  : due
+                        .map(label)
+                        .join('، '), // l10n-ignore: Arabic list separator
+            ),
           ],
           const SizedBox(height: 16),
-          const Text(
-            'سجل الدفعات',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            l.subsPaymentsLogTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          if (billing.payments.isEmpty) const Text('لسه مفيش دفعات مسجّلة'),
+          if (billing.payments.isEmpty) Text(l.subsNoPayments),
           for (final payment in [...billing.payments, ..._extra])
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(label(payment.periodMonth)),
               subtitle: Text(
-                '${arabicNumber(payment.amount)} ج.م${payment.voided ? ' — ملغاة' : ' — مدفوعة'}',
+                payment.voided
+                    ? l.subsPaymentAmountVoided(arabicNumber(payment.amount))
+                    : l.subsPaymentAmountPaid(arabicNumber(payment.amount)),
               ),
             ),
           if (_error != null)
             Text(_error!, style: TextStyle(color: context.palette.error)),
           if (billing.payments.length >= 24 && !_exhausted)
-            AppButton(label: 'عرض المزيد', isLoading: _busy, onPressed: _more),
+            AppButton(
+              label: l.commonShowMore,
+              isLoading: _busy,
+              onPressed: _more,
+            ),
         ],
       ),
     );

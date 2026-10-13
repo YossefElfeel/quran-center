@@ -231,7 +231,9 @@ class SubscriptionRepository {
     } on PostgrestException catch (e) {
       // 23505 = unique_violation: الشخص في أسرة واحدة بس (household_member_person_unique).
       if (e.code == '23505') {
-        throw const ValidationException('الشخص ده مضاف لأسرة بالفعل');
+        throw const ValidationException.reason(
+          AppErrorReason.alreadyInHousehold,
+        );
       }
       rethrow;
     }

@@ -87,7 +87,7 @@ class _TasmeeTab extends ConsumerWidget {
               action: TextButton(
                 onPressed: () =>
                     ref.invalidate(childTasmeeHistoryProvider(studentPersonId)),
-                child: const Text('تحديث البيانات'),
+                child: Text(l.commonRefreshData),
               ),
             )
           : AppRefreshIndicator(
@@ -160,7 +160,7 @@ class _AttendanceTab extends ConsumerWidget {
                 onPressed: () => ref.invalidate(
                   childAttendanceHistoryProvider(studentPersonId),
                 ),
-                child: const Text('تحديث البيانات'),
+                child: Text(l.commonRefreshData),
               ),
             )
           : AppRefreshIndicator(

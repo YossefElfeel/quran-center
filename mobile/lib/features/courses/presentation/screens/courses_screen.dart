@@ -51,7 +51,7 @@ class CoursesScreen extends ConsumerWidget {
         notifiers: <ChangeNotifier>[title, url, desc],
         child: AppAsyncFormSheet(
           submitLabel: l.add,
-          successMessage: 'الكورس اتضاف',
+          successMessage: l.courseAdded,
           onSubmit: () => ref
               .read(coursesProvider.notifier)
               .add(
@@ -64,7 +64,7 @@ class CoursesScreen extends ConsumerWidget {
               controller: title,
               label: l.courseTitleLabel,
               validator: (v) =>
-                  (v?.trim().length ?? 0) < 2 ? 'اكتب عنوان الكورس' : null,
+                  (v?.trim().length ?? 0) < 2 ? l.courseTitleRequired : null,
             ),
             AppTextField(
               controller: url,
@@ -75,7 +75,7 @@ class CoursesScreen extends ConsumerWidget {
                 return uri == null ||
                         !['http', 'https'].contains(uri.scheme) ||
                         uri.host.isEmpty
-                    ? 'اكتب رابط HTTP أو HTTPS صحيحًا'
+                    ? l.courseInvalidUrl
                     : null;
               },
             ),
@@ -126,7 +126,7 @@ class CoursesScreen extends ConsumerWidget {
                       ref.invalidate(coursesProvider);
                     }
                   },
-                  child: Text(isAdmin ? l.courseNew : 'تحديث'),
+                  child: Text(isAdmin ? l.courseNew : l.commonRefresh),
                 ),
               )
             : AppRefreshIndicator(

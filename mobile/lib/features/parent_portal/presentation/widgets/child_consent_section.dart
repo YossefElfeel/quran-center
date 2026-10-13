@@ -114,6 +114,7 @@ class _ConsentSwitchState extends ConsumerState<_ConsentSwitch> {
   bool get granted => widget.granted;
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
@@ -128,10 +129,9 @@ class _ConsentSwitchState extends ConsumerState<_ConsentSwitch> {
                 if (!v &&
                     !await showAppConfirmSheet(
                       context: context,
-                      title: 'سحب موافقة الوسائط؟',
-                      message:
-                          'الإدارة مش هتقدر تعرض الوسائط الجديدة بالموافقة دي',
-                      confirmLabel: 'سحب الموافقة',
+                      title: l.ppWithdrawConsentTitle,
+                      message: l.ppWithdrawConsentMessage,
+                      confirmLabel: l.ppWithdrawConsentConfirm,
                     )) {
                   return;
                 }
@@ -146,12 +146,12 @@ class _ConsentSwitchState extends ConsumerState<_ConsentSwitch> {
                   if (context.mounted) {
                     AppSnackbar.success(
                       context,
-                      v ? 'الموافقة اتسجّلت' : 'الموافقة اتسحبت',
+                      v ? l.ppConsentGranted : l.ppConsentWithdrawn,
                     );
                   }
                 } catch (_) {
                   if (context.mounted) {
-                    AppSnackbar.error(context, 'تعذّر تحديث الموافقة');
+                    AppSnackbar.error(context, l.ppConsentUpdateError);
                   }
                 }
               } finally {

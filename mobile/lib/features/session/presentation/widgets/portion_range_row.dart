@@ -79,9 +79,26 @@ class PortionRangeRow extends StatelessWidget {
   }
 }
 
+/// مشكلة في نطاق المقطع (الرسالة من [PortionRangeIssueLabel.label]).
+enum PortionRangeIssue {
+  incomplete,
+  startAyahOutOfRange,
+  endAyahOutOfRange,
+  endBeforeStart,
+}
+
+extension PortionRangeIssueLabel on PortionRangeIssue {
+  String label(AppL10n l) => switch (this) {
+    PortionRangeIssue.incomplete => l.sesRangeIncomplete,
+    PortionRangeIssue.startAyahOutOfRange => l.sesRangeStartAyahTooLarge,
+    PortionRangeIssue.endAyahOutOfRange => l.sesRangeEndAyahTooLarge,
+    PortionRangeIssue.endBeforeStart => l.sesRangeEndBeforeStart,
+  };
+}
+
 /// تحقّق نطاق المقطع: الخانات كاملة + الآيات في حدود السورة + الترتيب صح.
-/// بيرجّع رسالة خطأ بالعربي أو null لو سليم.
-String? portionRangeError({
+/// بيرجّع نوع المشكلة أو null لو سليم.
+PortionRangeIssue? portionRangeError({
   required List<SurahOption> surahs,
   required String name,
   required int? surahStart,
@@ -96,19 +113,19 @@ String? portionRangeError({
       ayahEnd == null ||
       ayahStart <= 0 ||
       ayahEnd <= 0) {
-    return 'املا كل الخانات صح';
+    return PortionRangeIssue.incomplete;
   }
   final SurahOption? start = _surahByNumber(surahs, surahStart);
   final SurahOption? end = _surahByNumber(surahs, surahEnd);
   if (start != null && ayahStart > start.ayahCount) {
-    return 'رقم آية البداية أكبر من آيات السورة';
+    return PortionRangeIssue.startAyahOutOfRange;
   }
   if (end != null && ayahEnd > end.ayahCount) {
-    return 'رقم آية النهاية أكبر من آيات السورة';
+    return PortionRangeIssue.endAyahOutOfRange;
   }
   if (surahEnd < surahStart ||
       (surahEnd == surahStart && ayahEnd < ayahStart)) {
-    return 'نهاية المقطع لازم تكون بعد بدايتها';
+    return PortionRangeIssue.endBeforeStart;
   }
   return null;
 }

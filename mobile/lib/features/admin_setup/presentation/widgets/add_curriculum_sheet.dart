@@ -40,7 +40,10 @@ class _AddCurriculumSheetState extends ConsumerState<AddCurriculumSheet> {
           .read(curriculaControllerProvider.notifier)
           .add(name: name, type: _type);
       if (mounted) {
-        AppSnackbar.success(context, 'اتحفظ بنجاح');
+        AppSnackbar.success(
+          context,
+          AppL10n.of(context).commonSavedSuccessfully,
+        );
         Navigator.of(context).pop();
       }
     } catch (_) {
@@ -63,7 +66,7 @@ class _AddCurriculumSheetState extends ConsumerState<AddCurriculumSheet> {
             controller: _name,
             label: l.admCurriculumNameLabel,
             validator: (String? v) =>
-                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+                v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
           ),
           const SizedBox(height: AppSpacing.lg),
           SegmentedButton<CurriculumType>(

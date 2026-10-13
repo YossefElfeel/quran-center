@@ -96,7 +96,7 @@ class CircleEvalScreen extends ConsumerWidget {
               action: TextButton(
                 onPressed: () =>
                     ref.invalidate(circleEvalControllerProvider(circleId)),
-                child: const Text('تحديث البيانات'),
+                child: Text(l.commonRefreshData),
               ),
             );
           }

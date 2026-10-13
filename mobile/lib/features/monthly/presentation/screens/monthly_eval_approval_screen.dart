@@ -86,10 +86,10 @@ class MonthlyEvalApprovalScreen extends ConsumerWidget {
             ? EmptyState(
                 message: l.monNoPendingEvals,
                 icon: Icons.done_all,
-                title: 'كل التقييمات متراجعة',
+                title: l.monAllEvalsReviewed,
                 action: TextButton(
                   onPressed: () => ref.invalidate(pendingMonthlyEvalsProvider),
-                  child: const Text('تحديث التقييمات'),
+                  child: Text(l.monRefreshEvals),
                 ),
               )
             : AppRefreshIndicator(

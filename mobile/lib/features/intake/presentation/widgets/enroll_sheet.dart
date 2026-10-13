@@ -47,7 +47,7 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
             circleId: circleId,
           );
       if (mounted) {
-        AppSnackbar.success(context, 'الطالب اتسكّن في الحلقة');
+        AppSnackbar.success(context, AppL10n.of(context).itkStudentPlaced);
         Navigator.of(context).pop();
       }
     } catch (_) {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import 'app_modal_sheet.dart';
 import 'app_text_field.dart';
@@ -34,18 +35,19 @@ class _SearchPickerState<T> extends State<_SearchPicker<T>> {
               widget.label(item).toLowerCase().contains(_query.toLowerCase()),
         )
         .toList();
+    final AppL10n l = AppL10n.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         AppTextField(
-          label: 'بحث',
+          label: l.commonSearch,
           prefixIcon: Icons.search,
           onChanged: (String v) => setState(() => _query = v),
         ),
         if (matches.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('مفيش نتائج — جرّب اسم تاني'),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(l.commonNoResultsTryAnotherName),
           ),
         SizedBox(
           height: MediaQuery.sizeOf(context).height * .4,
@@ -67,14 +69,14 @@ Future<T?> showAppServerSearchPicker<T>({
   required String title,
   required Future<List<T>> Function(String) search,
   required String Function(T) label,
-  String searchLabel = 'بحث بالاسم',
+  String? searchLabel,
 }) => showAppModalSheet<T>(
   context: context,
   title: title,
   builder: (_) => _ServerSearchPicker<T>(
     search: search,
     label: label,
-    searchLabel: searchLabel,
+    searchLabel: searchLabel ?? AppL10n.of(context).commonSearchByName,
   ),
 );
 
@@ -128,41 +130,46 @@ class _ServerSearchPickerState<T> extends State<_ServerSearchPicker<T>> {
       if (mounted && generation == _generation) {
         setState(() {
           _loading = false;
-          _error = 'تعذّر تحميل النتائج — جرّب تاني';
+          _error = AppL10n.of(context).commonResultsLoadError;
         });
       }
     }
   }
 
   @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: <Widget>[
-      AppTextField(
-        label: widget.searchLabel,
-        prefixIcon: Icons.search,
-        onChanged: (v) {
-          _query = v;
-          _generation++;
-          _debounce?.cancel();
-          _debounce = Timer(const Duration(milliseconds: 300), _load);
-        },
-      ),
-      if (_loading) const LinearProgressIndicator(),
-      if (_error != null) TextButton(onPressed: _load, child: Text(_error!)),
-      if (!_loading && _error == null && _items.isEmpty)
-        const Text('مفيش نتائج — جرّب اسم تاني'),
-      if (_items.length >= 50) const Text('اكتب اسم أوضح عشان تضيق النتائج'),
-      SizedBox(
-        height: MediaQuery.sizeOf(context).height * .4,
-        child: ListView.builder(
-          itemCount: _items.length,
-          itemBuilder: (_, i) => ListTile(
-            title: Text(widget.label(_items[i])),
-            onTap: _loading ? null : () => Navigator.of(context).pop(_items[i]),
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        AppTextField(
+          label: widget.searchLabel,
+          prefixIcon: Icons.search,
+          onChanged: (v) {
+            _query = v;
+            _generation++;
+            _debounce?.cancel();
+            _debounce = Timer(const Duration(milliseconds: 300), _load);
+          },
+        ),
+        if (_loading) const LinearProgressIndicator(),
+        if (_error != null) TextButton(onPressed: _load, child: Text(_error!)),
+        if (!_loading && _error == null && _items.isEmpty)
+          Text(l.commonNoResultsTryAnotherName),
+        if (_items.length >= 50) Text(l.commonRefineSearchHint),
+        SizedBox(
+          height: MediaQuery.sizeOf(context).height * .4,
+          child: ListView.builder(
+            itemCount: _items.length,
+            itemBuilder: (_, i) => ListTile(
+              title: Text(widget.label(_items[i])),
+              onTap: _loading
+                  ? null
+                  : () => Navigator.of(context).pop(_items[i]),
+            ),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }

@@ -46,7 +46,7 @@ class TeacherRatingsScreen extends ConsumerWidget {
                 icon: Icons.star_outline,
                 action: TextButton(
                   onPressed: () => ref.invalidate(teacherRatingsProvider),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : AppRefreshIndicator(

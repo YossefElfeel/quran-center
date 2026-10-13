@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../domain/eval_criterion.dart';
 import '../../domain/eval_student.dart';
+import '../supervisor_eval_labels.dart';
 
 /// بلاطة طالب في تقييم المشرف — تمييز المختار + شارة "اتقيّم" + زر تقييم.
 class EvalStudentTile extends StatelessWidget {
@@ -23,7 +24,9 @@ class EvalStudentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final String average = toArabicDigits(
-      student.average.toStringAsFixed(1).replaceAll('.', '٫'),
+      student.average
+          .toStringAsFixed(1)
+          .replaceAll('.', '٫'), // l10n-ignore: Arabic decimal separator
     );
     String score(EvalCriterion criterion) =>
         arabicNumber(student.scores[criterion] ?? 0);
@@ -31,9 +34,9 @@ class EvalStudentTile extends StatelessWidget {
       EvalCriterion.memorization,
       EvalCriterion.recitation,
       EvalCriterion.mushafReading,
-    ].map(score).join('، ');
+    ].map(score).join('، '); // l10n-ignore: Arabic list separator
     final String? subtitle = student.scored
-        ? '${l.supEvaluationResult(average, student.levelAr)}\n'
+        ? '${l.supEvaluationResult(average, student.level.label(l))}\n'
               '${l.supEvaluationBreakdown(breakdown)}'
         : student.selected
         ? l.supSelectedForEval

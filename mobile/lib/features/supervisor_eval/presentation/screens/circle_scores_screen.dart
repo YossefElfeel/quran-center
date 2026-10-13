@@ -62,7 +62,7 @@ class CircleScoresScreen extends ConsumerWidget {
                   action: TextButton(
                     onPressed: () =>
                         ref.invalidate(circleRosterScoresProvider(circleId)),
-                    child: const Text('تحديث البيانات'),
+                    child: Text(l.commonRefreshData),
                   ),
                 )
               else

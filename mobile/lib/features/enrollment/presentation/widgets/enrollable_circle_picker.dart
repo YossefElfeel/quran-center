@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -17,7 +18,7 @@ import '../controllers/enrollable_circles_controller.dart';
 Future<EnrollableCircle?> showEnrollableCirclePicker(BuildContext context) =>
     showAppModalSheet<EnrollableCircle>(
       context: context,
-      title: 'اختار الحلقة',
+      title: AppL10n.of(context).enrPickCircleTitle,
       builder: (_) => const EnrollableCirclePicker(),
     );
 
@@ -35,6 +36,7 @@ class _EnrollableCirclePickerState
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<EnrollableCircle>> state = ref.watch(
       enrollableCirclesProvider,
     );
@@ -44,14 +46,14 @@ class _EnrollableCirclePickerState
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (Object e, StackTrace _) => AppErrorView(
-        message: 'تعذّر تحميل الحلقات — جرّب تاني',
+        message: l.enrCirclesLoadError,
         onRetry: () => ref.invalidate(enrollableCirclesProvider),
       ),
       data: (List<EnrollableCircle> circles) {
         if (circles.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.groups_outlined,
-            message: 'ضيف منهج ومستوى وحلقة من إعدادات المناهج الأول',
+            message: l.enrNoCirclesHint,
           );
         }
         final String q = _query.trim().toLowerCase();
@@ -69,15 +71,15 @@ class _EnrollableCirclePickerState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             AppTextField(
-              label: 'بحث',
+              label: l.commonSearch,
               prefixIcon: Icons.search,
               onChanged: (String v) => setState(() => _query = v),
             ),
             if (groups.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(AppSpacing.lg),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Text(
-                  'مفيش نتائج — جرّب اسم تاني',
+                  l.commonNoResultsTryAnotherName,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -116,10 +118,18 @@ class _CircleOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
     final int? max = circle.maxSize;
     final String capacity = max == null
-        ? '${arabicNumber(circle.activeCount)} طالب'
-        : '${arabicNumber(circle.activeCount)}/${arabicNumber(max)} طالب';
+        ? l.enrCircleStudentCount(
+            circle.activeCount,
+            arabicNumber(circle.activeCount),
+          )
+        : l.enrCircleStudentCapacity(
+            circle.activeCount,
+            arabicNumber(circle.activeCount),
+            arabicNumber(max),
+          );
     final bool full = circle.isFull;
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -127,7 +137,7 @@ class _CircleOptionTile extends StatelessWidget {
       title: Text(circle.name),
       subtitle: Text(capacity),
       trailing: full
-          ? const AppStatusBadge(label: 'مكتملة', kind: AppStatusKind.warning)
+          ? AppStatusBadge(label: l.enrCircleFull, kind: AppStatusKind.warning)
           : null,
       onTap: full ? null : () => Navigator.of(context).pop(circle),
     );

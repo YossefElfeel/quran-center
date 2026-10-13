@@ -80,30 +80,30 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.only(bottom: AppSpacing.xl),
         children: <Widget>[
-          const AppSectionHeader(title: 'حسابي'),
+          AppSectionHeader(title: l.settingsAccountSection),
           ListTile(
             title: ref
                 .watch(homeNameProvider)
                 .when(
                   data: (name) => Text(name),
                   loading: () => const LinearProgressIndicator(),
-                  error: (_, _) => const Text('تعذّر تحميل الاسم'),
+                  error: (_, _) => Text(l.settingsNameLoadError),
                 ),
-            subtitle: const Text('الاسم'),
+            subtitle: Text(l.invNameLabel),
           ),
           ListTile(
             title: Text(
               ref.watch(supabaseClientProvider).auth.currentUser?.email ??
-                  'الحساب',
+                  l.settingsAccountFallback,
             ),
-            subtitle: const Text('إيميل الدخول'),
+            subtitle: Text(l.settingsLoginEmail),
           ),
           ListTile(
             leading: const Icon(Icons.password),
-            title: const Text('تغيير كلمة السر'),
+            title: Text(l.settingsChangePassword),
             onTap: () => showAppModalSheet<void>(
               context: context,
-              title: 'تغيير كلمة السر',
+              title: l.settingsChangePassword,
               builder: (_) => const ChangePasswordSheet(),
             ),
           ),
@@ -206,28 +206,28 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          const AppSectionHeader(title: 'المزامنة'),
+          AppSectionHeader(title: l.settingsSyncSection),
           ListTile(
             leading: const Icon(Icons.sync),
-            title: const Text('حالة المزامنة'),
+            title: Text(l.syncStatusTitle),
             onTap: () => SyncStatusSheet.show(context),
           ),
-          const AppSectionHeader(title: 'عن التطبيق'),
+          AppSectionHeader(title: l.settingsAboutSection),
           ListTile(
-            title: const Text('نسخة التطبيق'),
+            title: Text(l.settingsAppVersion),
             subtitle: Text(
               ref
                   .watch(appVersionProvider)
                   .when(
                     data: (String v) => v,
-                    loading: () => 'جاري التحميل…',
+                    loading: () => l.settingsVersionLoading,
                     error: (_, _) => '—',
                   ),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.phone),
-            title: const Text('تواصل مع الإدارة'),
+            title: Text(l.commonContactAdmin),
             subtitle: Text(
               ref.watch(appSettingsProvider).asData?.value.centerPhone ?? '',
             ),
@@ -235,7 +235,7 @@ class SettingsScreen extends ConsumerWidget {
               final String phone =
                   ref.read(appSettingsProvider).asData?.value.centerPhone ?? '';
               if (phone.isEmpty) {
-                AppSnackbar.info(context, 'اطلب رقم الإدارة من الدار');
+                AppSnackbar.info(context, l.settingsAdminPhoneMissing);
                 return;
               }
               try {
@@ -244,7 +244,7 @@ class SettingsScreen extends ConsumerWidget {
                 }
               } catch (_) {
                 if (context.mounted) {
-                  AppSnackbar.error(context, 'تعذّر فتح الاتصال — $phone');
+                  AppSnackbar.error(context, l.settingsCallFailed(phone));
                 }
               }
             },
@@ -259,9 +259,9 @@ class SettingsScreen extends ConsumerWidget {
               onPressed: () async {
                 if (!await showAppConfirmSheet(
                   context: context,
-                  title: 'تسجيل خروج؟',
-                  confirmLabel: 'تسجيل خروج',
-                  message: 'الدرجات المعلّقة هتفضل محفوظة على الجهاز',
+                  title: l.settingsLogoutConfirmTitle,
+                  confirmLabel: l.settingsLogoutConfirm,
+                  message: l.settingsLogoutConfirmMessage,
                 )) {
                   return;
                 }
@@ -269,10 +269,7 @@ class SettingsScreen extends ConsumerWidget {
                   await ref.read(authRepositoryProvider).signOut();
                 } catch (_) {
                   if (context.mounted) {
-                    AppSnackbar.error(
-                      context,
-                      'تعذّر تسجيل الخروج — جرّب تاني',
-                    );
+                    AppSnackbar.error(context, l.settingsLogoutError);
                   }
                 }
               },

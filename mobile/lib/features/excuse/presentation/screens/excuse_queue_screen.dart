@@ -110,7 +110,7 @@ class ExcuseQueueScreen extends ConsumerWidget {
               action: TextButton(
                 onPressed: () =>
                     ref.invalidate(pendingExcusesControllerProvider),
-                child: const Text('تحديث البيانات'),
+                child: Text(l.commonRefreshData),
               ),
             );
           }

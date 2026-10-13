@@ -52,7 +52,7 @@ class TeacherPassRateScreen extends ConsumerWidget {
                       action: TextButton(
                         onPressed: () =>
                             ref.invalidate(circlePassRatesProvider),
-                        child: const Text('تحديث البيانات'),
+                        child: Text(l.commonRefreshData),
                       ),
                     )
                   : Column(

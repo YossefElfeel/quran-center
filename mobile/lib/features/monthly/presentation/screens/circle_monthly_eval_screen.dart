@@ -50,7 +50,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
         notifiers: <ChangeNotifier>[summary, behavior],
         child: AppAsyncFormSheet(
           submitLabel: l.monSubmitForApproval,
-          successMessage: 'التقييم اتبعت للاعتماد',
+          successMessage: l.commonSentForApproval,
           onSubmit: () => ref
               .read(circleMonthlyEvalsProvider(circleId, month: month).notifier)
               .save(
@@ -65,7 +65,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
               maxLines: 4,
               label: l.monPerformanceSummaryLabel,
               validator: (value) => value == null || value.trim().isEmpty
-                  ? 'اكتب ملخّص التقييم'
+                  ? l.monSummaryRequired
                   : null,
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -165,7 +165,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                   onPressed: () => ref.invalidate(
                     circleMonthlyEvalsProvider(circleId, month: month),
                   ),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : ListView.builder(
@@ -176,7 +176,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                   final (String label, Color color) = s.isApproved
                       ? (l.monStatusApproved, context.palette.success)
                       : s.status == 'returned'
-                      ? ('مطلوب تعديل', context.palette.warningText)
+                      ? (l.monStatusReturned, context.palette.warningText)
                       : s.isSubmitted
                       ? (l.monStatusSubmitted, context.palette.accent)
                       : (l.monStatusPending, context.palette.textSecondary);
@@ -194,7 +194,7 @@ class CircleMonthlyEvalScreen extends ConsumerWidget {
                           [
                             label,
                             if (s.returnReason != null)
-                              'سبب الإرجاع: ${s.returnReason}',
+                              l.monReturnReason(s.returnReason!),
                             if (s.summary != null) s.summary!,
                           ].join('\n'),
                           style: TextStyle(

@@ -47,7 +47,7 @@ class CompetitionResultsScreen extends ConsumerWidget {
                 action: TextButton(
                   onPressed: () =>
                       ref.invalidate(competitionResultsProvider(competitionId)),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : AppRefreshIndicator(

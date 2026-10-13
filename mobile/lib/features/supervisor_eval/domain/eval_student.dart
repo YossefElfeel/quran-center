@@ -1,6 +1,9 @@
 import 'eval_criterion.dart';
 import 'supervisor_eval_logic.dart';
 
+/// مستوى تقييم المشرف المشتق من متوسّط الدرجات.
+enum EvalLevel { excellent, veryGood, good, acceptable, needsFollowUp }
+
 /// طالب في شاشة تقييم المشرف — مع الاختيار وآخر درجات محفوظة.
 class EvalStudent {
   const EvalStudent({
@@ -20,13 +23,14 @@ class EvalStudent {
   bool get scored => scores.length == EvalCriterion.values.length;
   double get average => averageScore(scores.values);
 
-  String get levelAr {
+  /// مستوى الطالب حسب المتوسّط (الاسم المعروض في طبقة العرض).
+  EvalLevel get level {
     final double value = average;
-    if (value >= 9) return 'ممتاز';
-    if (value >= 8) return 'جيد جدًا';
-    if (value >= 7) return 'جيد';
-    if (value >= 5) return 'مقبول';
-    return 'يحتاج متابعة';
+    if (value >= 9) return EvalLevel.excellent;
+    if (value >= 8) return EvalLevel.veryGood;
+    if (value >= 7) return EvalLevel.good;
+    if (value >= 5) return EvalLevel.acceptable;
+    return EvalLevel.needsFollowUp;
   }
 
   EvalStudent copyWith({

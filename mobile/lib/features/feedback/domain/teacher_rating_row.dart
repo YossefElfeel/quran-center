@@ -12,7 +12,7 @@ class TeacherRatingRow {
     final Map<String, dynamic>? t = map['teacher'] as Map<String, dynamic>?;
     return TeacherRatingRow(
       id: map['id'] as String,
-      teacherName: (t?['full_name'] as String?) ?? 'المحفّظ',
+      teacherName: (t?['full_name'] as String?) ?? 'المعلّم',
       stars: (map['stars'] as num).toInt(),
       hidden: map['hidden_by_manager'] as bool? ?? false,
       comment: map['comment'] as String?,

@@ -26,7 +26,7 @@ class _AddHouseholdMemberSheetState
   Future<void> _save() async {
     if (_saving) return;
     if (_person == null) {
-      setState(() => _error = 'اختار الفرد');
+      setState(() => _error = AppL10n.of(context).subsPickMemberRequired);
       return;
     }
     setState(() {
@@ -38,14 +38,12 @@ class _AddHouseholdMemberSheetState
           .read(householdMembersControllerProvider(widget.householdId).notifier)
           .addMember(personId: _person!.personId, role: _role);
       if (mounted) {
-        AppSnackbar.success(context, 'الفرد اتضاف للأسرة');
+        AppSnackbar.success(context, AppL10n.of(context).subsMemberAdded);
         Navigator.of(context).pop();
       }
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _error = 'تعذّر إضافة الفرد — ممكن يكون مرتبط بأسرة بالفعل',
-        );
+        setState(() => _error = AppL10n.of(context).subsAddMemberFailed);
       }
     } finally {
       if (mounted) setState(() => _saving = false);

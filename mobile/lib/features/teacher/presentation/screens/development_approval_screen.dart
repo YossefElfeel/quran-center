@@ -38,10 +38,10 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
             ? EmptyState(
                 message: l.tchNoPendingApprovals,
                 icon: Icons.done_all,
-                title: 'كل الطلبات متراجعة',
+                title: l.tchAllRequestsReviewed,
                 action: TextButton(
                   onPressed: () => ref.invalidate(pendingDevelopmentProvider),
-                  child: const Text('تحديث الطلبات'),
+                  child: Text(l.tchRefreshRequests),
                 ),
               )
             : AppRefreshIndicator(
@@ -63,7 +63,7 @@ class DevelopmentApprovalScreen extends ConsumerWidget {
                               '${arabicNumber(e.month.month)}/'
                               '${arabicNumber(e.month.year)}',
                           trailing: AppApprovalActions(
-                            subject: 'بند التطوّر',
+                            subject: l.tchDevApprovalSubject,
                             onApprove: () => ref
                                 .read(pendingDevelopmentProvider.notifier)
                                 .approve(e.id),

@@ -69,7 +69,7 @@ class StrugglingStudentDetailScreen extends ConsumerWidget {
                       onPressed: () => ref.invalidate(
                         studentTasmeeHistoryProvider(studentPersonId),
                       ),
-                      child: const Text('تحديث البيانات'),
+                      child: Text(l.commonRefreshData),
                     ),
                   )
                 : Column(

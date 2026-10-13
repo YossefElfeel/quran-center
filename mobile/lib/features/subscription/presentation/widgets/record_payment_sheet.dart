@@ -56,12 +56,17 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
     try {
       final double? amount = parsePaymentAmount(_amount.text);
       if (amount == null) return;
+      final AppL10n l = AppL10n.of(context);
       if (!await showAppConfirmSheet(
         context: context,
-        title: 'تأكيد الدفعة',
-        message:
-            '${widget.household.name} — ${arabicNumber(_month.month)}/${arabicNumber(_month.year)} — ${arabicNumber(amount)} ج.م',
-        confirmLabel: 'تسجيل الدفعة',
+        title: l.subsConfirmPaymentTitle,
+        message: l.subsPaymentConfirmMessage(
+          widget.household.name,
+          arabicNumber(_month.month),
+          arabicNumber(_month.year),
+          arabicNumber(amount),
+        ),
+        confirmLabel: l.subsConfirmPaymentAction,
         destructive: false,
       )) {
         return;
@@ -81,21 +86,21 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
       if (mounted && feedbackContext.mounted) {
         AppSnackbar.success(
           feedbackContext,
-          'الدفعة اتسجّلت',
-          actionLabel: 'تراجع',
+          l.subsPaymentRecorded,
+          actionLabel: l.subsUndo,
           onAction: () async {
             try {
-              await repo.voidPayment(id, 'تراجع بعد تسجيل الدفعة');
+              await repo.voidPayment(
+                id,
+                'تراجع بعد تسجيل الدفعة', // l10n-ignore: void reason stored server-side
+              );
               if (feedbackContext.mounted) {
                 refresh();
-                AppSnackbar.success(feedbackContext, 'الدفعة اتلغت');
+                AppSnackbar.success(feedbackContext, l.subsPaymentVoided);
               }
             } catch (_) {
               if (feedbackContext.mounted) {
-                AppSnackbar.error(
-                  feedbackContext,
-                  'تعذّر إلغاء الدفعة — راجع الإدارة',
-                );
+                AppSnackbar.error(feedbackContext, l.subsVoidPaymentError);
               }
             }
           },
@@ -107,8 +112,8 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
         AppSnackbar.error(
           context,
           e.toString().contains('23505')
-              ? 'الشهر ده مدفوع بالفعل'
-              : 'تعذّر تسجيل الدفعة — جرّب تاني',
+              ? AppL10n.of(context).subsMonthAlreadyPaid
+              : AppL10n.of(context).subsRecordPaymentError,
         );
       }
     } finally {
@@ -117,74 +122,83 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => Form(
-    key: _form,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        // The shared sheet already shows the title; this line only names the
-        // household the payment is for.
-        Text(
-          widget.household.name,
-          style: AppTextStyles.bodyMd.copyWith(
-            color: context.palette.textSecondary,
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          // The shared sheet already shows the title; this line only names the
+          // household the payment is for.
+          Text(
+            widget.household.name,
+            style: AppTextStyles.bodyMd.copyWith(
+              color: context.palette.textSecondary,
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        OutlinedButton(
-          onPressed: _busy
-              ? null
-              : () async {
-                  final DateTime? date = await showDatePicker(
-                    context: context,
-                    initialDate: _month,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(
-                      DateTime.now().year,
-                      DateTime.now().month + 1,
-                      0,
-                    ),
-                  );
-                  if (date != null && mounted) {
-                    setState(() => _month = DateTime(date.year, date.month));
-                  }
-                },
-          child: Text(
-            'الشهر: ${arabicNumber(_month.month)}/${arabicNumber(_month.year)}',
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton(
+            onPressed: _busy
+                ? null
+                : () async {
+                    final DateTime? date = await showDatePicker(
+                      context: context,
+                      initialDate: _month,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(
+                        DateTime.now().year,
+                        DateTime.now().month + 1,
+                        0,
+                      ),
+                    );
+                    if (date != null && mounted) {
+                      setState(() => _month = DateTime(date.year, date.month));
+                    }
+                  },
+            child: Text(
+              l.subsPaymentMonthLabel(
+                arabicNumber(_month.month),
+                arabicNumber(_month.year),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        AppTextField(
-          controller: _amount,
-          label: 'المبلغ (ج.م)',
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (String? v) {
-            if (parsePaymentAmount(v) != null) return null;
-            final double? raw = v == null ? null : parseLocalizedDouble(v);
-            return raw != null && raw <= 0
-                ? AppL10n.of(context).subsAmountPositive
-                : 'اكتب مبلغ صحيح';
-          },
-        ),
-        const SizedBox(height: AppSpacing.md),
-        AppSelectField<String>(
-          label: 'طريقة الدفع',
-          value: _method,
-          items: const <DropdownMenuItem<String>>[
-            DropdownMenuItem(value: 'cash', child: Text('كاش')),
-            DropdownMenuItem(value: 'instapay', child: Text('InstaPay')),
-            DropdownMenuItem(value: 'other', child: Text('أخرى')),
-          ],
-          onChanged: (String? v) => setState(() => _method = v ?? 'cash'),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        AppButton(
-          label: 'مراجعة وتسجيل الدفعة',
-          isLoading: _busy,
-          onPressed: _save,
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: AppSpacing.md),
+          AppTextField(
+            controller: _amount,
+            label: l.subsAmountLabel,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (String? v) {
+              if (parsePaymentAmount(v) != null) return null;
+              final double? raw = v == null ? null : parseLocalizedDouble(v);
+              return raw != null && raw <= 0
+                  ? l.subsAmountPositive
+                  : l.subsAmountInvalid;
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppSelectField<String>(
+            label: l.subsPaymentMethodLabel,
+            value: _method,
+            items: <DropdownMenuItem<String>>[
+              DropdownMenuItem(value: 'cash', child: Text(l.subsMethodCash)),
+              const DropdownMenuItem(
+                value: 'instapay',
+                child: Text('InstaPay'),
+              ),
+              DropdownMenuItem(value: 'other', child: Text(l.subsMethodOther)),
+            ],
+            onChanged: (String? v) => setState(() => _method = v ?? 'cash'),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: l.subsReviewAndRecord,
+            isLoading: _busy,
+            onPressed: _save,
+          ),
+        ],
+      ),
+    );
+  }
 }

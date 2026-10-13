@@ -48,7 +48,10 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
           .read(circlesControllerProvider(widget.levelId).notifier)
           .add(name: name, maxSize: maxSize, teacherId: _teacherId);
       if (mounted) {
-        AppSnackbar.success(context, 'اتحفظ بنجاح');
+        AppSnackbar.success(
+          context,
+          AppL10n.of(context).commonSavedSuccessfully,
+        );
         Navigator.of(context).pop();
       }
     } catch (_) {
@@ -74,7 +77,7 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
             controller: _name,
             label: l.admCircleNameLabel,
             validator: (String? v) =>
-                v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+                v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
           ),
           const SizedBox(height: AppSpacing.md),
           AppTextField(
@@ -84,7 +87,7 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
             validator: (String? v) {
               final int? size = parseLocalizedInt((v ?? '').trim());
               return size == null || size <= 0
-                  ? 'اكتب سعة الحلقة كرقم أكبر من صفر'
+                  ? l.admCircleCapacityInvalid
                   : null;
             },
           ),

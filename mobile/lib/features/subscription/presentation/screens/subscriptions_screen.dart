@@ -35,7 +35,7 @@ class SubscriptionsScreen extends ConsumerWidget {
         notifiers: <ChangeNotifier>[name],
         child: AppAsyncFormSheet(
           submitLabel: l.add,
-          successMessage: 'الأسرة اتضافت',
+          successMessage: l.subsHouseholdAdded,
           onSubmit: () => ref
               .read(householdsControllerProvider.notifier)
               .createHousehold(name.text.trim()),
@@ -44,8 +44,9 @@ class SubscriptionsScreen extends ConsumerWidget {
               controller: name,
               autofocus: true,
               label: l.subsHouseholdNameLabel,
-              validator: (v) =>
-                  (v?.trim().length ?? 0) < 2 ? 'اكتب اسم الأسرة' : null,
+              validator: (v) => (v?.trim().length ?? 0) < 2
+                  ? l.subsHouseholdNameRequired
+                  : null,
             ),
           ],
         ),
@@ -80,7 +81,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                 icon: Icons.family_restroom,
                 action: TextButton(
                   onPressed: () => ref.invalidate(householdsControllerProvider),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : AppRefreshIndicator(
@@ -100,7 +101,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                             household: h,
                             onRecordPayment: () => showAppModalSheet<void>(
                               context: context,
-                              title: 'تسجيل دفعة',
+                              title: l.subsRecordPaymentTitle,
                               builder: (_) => RecordPaymentSheet(
                                 household: h,
                                 feedbackContext: context,

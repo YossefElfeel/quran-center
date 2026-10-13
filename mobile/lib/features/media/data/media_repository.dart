@@ -37,11 +37,11 @@ class MediaRepository {
       );
     } on FunctionException catch (e) {
       if (e.status == 403) {
-        throw const PermissionDeniedException(
-          'محتاج موافقة ولي الأمر للوسائط دي',
+        throw const PermissionDeniedException.reason(
+          AppErrorReason.mediaConsentRequired,
         );
       }
-      throw const ValidationException('مش قادرين نرفع الوسيط — جرّب تاني');
+      throw const ValidationException.reason(AppErrorReason.mediaUploadFailed);
     }
   }
 
@@ -66,9 +66,9 @@ class MediaRepository {
       if (data is Map && data['url'] is String) {
         return data['url'] as String;
       }
-      throw const ValidationException('مش قادرين نجيب رابط الوسيط');
+      throw const ValidationException.reason(AppErrorReason.mediaUrlFailed);
     } on FunctionException catch (_) {
-      throw const ValidationException('مش قادرين نجيب رابط الوسيط');
+      throw const ValidationException.reason(AppErrorReason.mediaUrlFailed);
     }
   }
 }

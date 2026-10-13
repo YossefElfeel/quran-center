@@ -86,7 +86,7 @@ class _MoreHubScreenState extends ConsumerState<MoreHubScreen> {
                       _search.clear();
                       setState(() => _query = '');
                     },
-                    child: const Text('مسح البحث'),
+                    child: Text(l.moreClearSearch),
                   ),
                 )
               : ListView(

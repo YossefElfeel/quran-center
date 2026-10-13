@@ -17,6 +17,7 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../data/feedback_repository.dart';
 import '../../domain/complaint.dart';
 import '../controllers/feedback_controllers.dart';
+import '../feedback_labels.dart';
 import '../widgets/complaint_compose_sheet.dart';
 import '../widgets/complaint_detail_content.dart';
 
@@ -27,7 +28,7 @@ class MyComplaintsScreen extends ConsumerWidget {
   Future<void> _add(BuildContext context, WidgetRef ref) =>
       showAppModalSheet<void>(
         context: context,
-        title: 'شكوى جديدة',
+        title: AppL10n.of(context).fbkNewComplaint,
         builder: (_) => const ComplaintComposeSheet(),
       );
 
@@ -108,8 +109,7 @@ class _ComplaintCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    complaintCategoriesAr[complaint.category] ??
-                        complaint.category,
+                    complaint.categoryLabel(l),
                     style: AppTextStyles.titleMd.copyWith(
                       color: p.textPrimary,
                       fontWeight: FontWeight.bold,
@@ -117,7 +117,7 @@ class _ComplaintCard extends StatelessWidget {
                   ),
                 ),
                 AppStatusBadge(
-                  label: complaint.statusAr,
+                  label: complaint.statusLabel(l),
                   kind: complaint.isAnswered
                       ? AppStatusKind.success
                       : AppStatusKind.warning,

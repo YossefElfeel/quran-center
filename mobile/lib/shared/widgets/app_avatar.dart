@@ -23,7 +23,9 @@ class AppAvatar extends StatelessWidget {
         .split(RegExp(r'\s+'))
         .where((String s) => s.isNotEmpty)
         .toList();
-    if (parts.isEmpty) return '؟';
+    if (parts.isEmpty) {
+      return '؟'; // l10n-ignore: punctuation placeholder glyph for an empty name
+    }
     if (parts.length == 1) {
       return parts.first.substring(0, 1);
     }

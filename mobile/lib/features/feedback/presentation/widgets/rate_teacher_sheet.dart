@@ -8,8 +8,9 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/feedback_repository.dart';
+import '../feedback_labels.dart';
 
-/// شيت تقييم المحفّظ (نجوم + تعليق) — خاص للمدير/المشرف، المعلّم مايشوفوش.
+/// شيت تقييم المعلّم (نجوم + تعليق) — خاص للمدير/المشرف، المعلّم مايشوفوش.
 class RateTeacherSheet extends ConsumerStatefulWidget {
   const RateTeacherSheet({required this.studentPersonId, super.key});
 
@@ -32,7 +33,7 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
 
   Future<void> _submit() async {
     setState(() => _saving = true);
-    final String? err = await ref
+    final RateTeacherFailure? err = await ref
         .read(feedbackRepositoryProvider)
         .rateChildTeacher(
           studentPersonId: widget.studentPersonId,
@@ -46,7 +47,7 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
       AppSnackbar.success(context, l.fbkRateThanks);
       Navigator.of(context).pop();
     } else {
-      AppSnackbar.error(context, err);
+      AppSnackbar.error(context, err.label(l));
     }
   }
 
@@ -83,7 +84,7 @@ class _RateTeacherSheetState extends ConsumerState<RateTeacherSheet> {
             children: <Widget>[
               for (int i = 1; i <= 5; i++)
                 IconButton(
-                  tooltip: '$i من ٥ نجوم',
+                  tooltip: l.fbkStarsTooltip(i),
                   isSelected: i <= _stars,
                   icon: Icon(
                     i <= _stars ? Icons.star : Icons.star_border,

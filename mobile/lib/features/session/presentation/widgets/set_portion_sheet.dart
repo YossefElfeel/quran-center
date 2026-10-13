@@ -50,7 +50,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
     final String name = _name.text.trim();
     final int? as = parseLocalizedInt(_ayahStart.text.trim());
     final int? ae = parseLocalizedInt(_ayahEnd.text.trim());
-    final String? err = portionRangeError(
+    final PortionRangeIssue? err = portionRangeError(
       surahs: surahs,
       name: name,
       surahStart: _surahStart,
@@ -59,7 +59,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
       ayahEnd: ae,
     );
     if (err != null) {
-      setState(() => _error = err);
+      setState(() => _error = err.label(AppL10n.of(context)));
       return;
     }
     setState(() {
@@ -88,7 +88,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
         );
       }
       if (mounted) {
-        AppSnackbar.success(context, 'المقطع اتحدّد');
+        AppSnackbar.success(context, AppL10n.of(context).sesPortionSet);
         Navigator.of(context).pop();
       }
     } catch (_) {

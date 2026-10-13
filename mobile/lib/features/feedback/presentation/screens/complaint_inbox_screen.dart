@@ -17,6 +17,7 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../data/feedback_repository.dart';
 import '../../domain/complaint.dart';
 import '../controllers/feedback_controllers.dart';
+import '../feedback_labels.dart';
 import '../widgets/complaint_compose_sheet.dart';
 import '../widgets/complaint_detail_content.dart';
 
@@ -50,7 +51,7 @@ class ComplaintInboxScreen extends ConsumerWidget {
     Complaint complaint,
   ) => showAppModalSheet<void>(
     context: context,
-    title: 'الرد على الشكوى',
+    title: AppL10n.of(context).fbkRespondDialogTitle,
     builder: (_) => ComplaintComposeSheet(complaint: complaint),
   );
 
@@ -72,7 +73,7 @@ class ComplaintInboxScreen extends ConsumerWidget {
                 icon: Icons.inbox,
                 action: TextButton(
                   onPressed: () => ref.invalidate(complaintInboxProvider),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : AppRefreshIndicator(
@@ -92,10 +93,10 @@ class ComplaintInboxScreen extends ConsumerWidget {
                       subtitle:
                           '${l.fbkComplaintNumber(c.referenceNumber)} · '
                           '${arabicDateTimeLabel(c.createdAt)}\n'
-                          '${complaintCategoriesAr[c.category] ?? c.category}: ${c.body}',
+                          '${c.categoryLabel(l)}: ${c.body}',
                       onTap: () => _openDetails(context, ref, c),
                       trailing: AppStatusBadge(
-                        label: c.statusAr,
+                        label: c.statusLabel(l),
                         kind: c.isAnswered
                             ? AppStatusKind.success
                             : AppStatusKind.warning,

@@ -6,6 +6,7 @@ import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
 import '../../domain/complaint.dart';
+import '../feedback_labels.dart';
 
 /// محتوى موحّد لتفاصيل الشكوى في شاشة صاحبها وصندوق الإدارة.
 class ComplaintDetailContent extends StatelessWidget {
@@ -31,7 +32,7 @@ class ComplaintDetailContent extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: <Widget>[
             AppStatusBadge(
-              label: complaint.statusAr,
+              label: complaint.statusLabel(l),
               kind: complaint.isAnswered
                   ? AppStatusKind.success
                   : AppStatusKind.warning,
@@ -49,7 +50,7 @@ class ComplaintDetailContent extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          complaintCategoriesAr[complaint.category] ?? complaint.category,
+          complaint.categoryLabel(l),
           style: AppTextStyles.titleMd.copyWith(color: p.textPrimary),
         ),
         const SizedBox(height: AppSpacing.xs),

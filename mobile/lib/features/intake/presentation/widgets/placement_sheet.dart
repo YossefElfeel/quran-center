@@ -60,7 +60,7 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
             notes: notes.isEmpty ? null : notes,
           );
       if (mounted) {
-        AppSnackbar.success(context, 'نتيجة اختبار المستوى اتسجّلت');
+        AppSnackbar.success(context, AppL10n.of(context).itkPlacementSaved);
         Navigator.of(context).pop();
       }
     } catch (_) {

@@ -52,7 +52,10 @@ class _BehavioralNoteSheetState extends ConsumerState<BehavioralNoteSheet> {
             visibility: _visibility,
           );
       if (mounted) {
-        AppSnackbar.success(context, 'اتحفظ بنجاح');
+        AppSnackbar.success(
+          context,
+          AppL10n.of(context).commonSavedSuccessfully,
+        );
         Navigator.of(context).pop();
       }
     } catch (_) {
@@ -105,7 +108,7 @@ class _BehavioralNoteSheetState extends ConsumerState<BehavioralNoteSheet> {
             AppTextField(
               controller: _text,
               validator: (String? v) =>
-                  v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+                  v == null || v.trim().isEmpty ? l.commonFieldRequired : null,
               minLines: 3,
               maxLines: 5,
               hint: l.sesNoteHint,

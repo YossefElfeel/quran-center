@@ -101,7 +101,7 @@ class _TeacherDevelopmentScreenState
                       icon: Icons.trending_up,
                       action: TextButton(
                         onPressed: () => ref.invalidate(myDevelopmentProvider),
-                        child: const Text('تحديث البيانات'),
+                        child: Text(l.commonRefreshData),
                       ),
                     )
                   : AppRefreshIndicator(
@@ -213,12 +213,12 @@ class _DevTile extends ConsumerWidget {
                   : AppBannerKind.info,
             ),
             if (entry.status == 'returned') ...<Widget>[
-              Text('مطلوب تعديل: ${entry.returnReason ?? ''}'),
+              Text(l.tchRevisionRequested(entry.returnReason ?? '')),
               AppButton(
-                label: 'تعديل وإعادة إرسال',
+                label: l.tchEditAndResubmit,
                 onPressed: () => showAppModalSheet<void>(
                   context: context,
-                  title: 'تعديل التطوّر',
+                  title: l.tchEditDevTitle,
                   builder: (_) => _ResubmitDev(entry: entry),
                 ),
               ),
@@ -275,46 +275,49 @@ class _ResubmitDevState extends ConsumerState<_ResubmitDev> {
   }
 
   @override
-  Widget build(BuildContext context) => Form(
-    key: _form,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Text(widget.entry.returnReason ?? ''),
-        AppTextField(
-          controller: _text,
-          label: 'التطوّر',
-          maxLines: 5,
-          validator: (String? v) =>
-              v == null || v.trim().isEmpty ? 'اكتب التعديل' : null,
-        ),
-        AppButton(
-          label: 'إعادة إرسال',
-          isLoading: _busy,
-          onPressed: () async {
-            if (_busy || !_form.currentState!.validate()) return;
-            setState(() => _busy = true);
-            try {
-              await ref
-                  .read(teacherRepositoryProvider)
-                  .resubmitDevelopment(widget.entry.id, _text.text.trim());
-              ref.invalidate(myDevelopmentProvider);
-              if (context.mounted) {
-                AppSnackbar.success(context, 'التقييم اتبعت للاعتماد');
-                Navigator.of(context).pop();
+  Widget build(BuildContext context) {
+    final AppL10n l = AppL10n.of(context);
+    return Form(
+      key: _form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(widget.entry.returnReason ?? ''),
+          AppTextField(
+            controller: _text,
+            label: l.tchDevFieldLabel,
+            maxLines: 5,
+            validator: (String? v) =>
+                v == null || v.trim().isEmpty ? l.tchDevEditRequired : null,
+          ),
+          AppButton(
+            label: l.tchResubmit,
+            isLoading: _busy,
+            onPressed: () async {
+              if (_busy || !_form.currentState!.validate()) return;
+              setState(() => _busy = true);
+              try {
+                await ref
+                    .read(teacherRepositoryProvider)
+                    .resubmitDevelopment(widget.entry.id, _text.text.trim());
+                ref.invalidate(myDevelopmentProvider);
+                if (context.mounted) {
+                  AppSnackbar.success(context, l.commonSentForApproval);
+                  Navigator.of(context).pop();
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  AppSnackbar.error(context, l.tchResubmitFailed);
+                }
+              } finally {
+                if (mounted) setState(() => _busy = false);
               }
-            } catch (_) {
-              if (context.mounted) {
-                AppSnackbar.error(context, 'تعذّر إعادة الإرسال');
-              }
-            } finally {
-              if (mounted) setState(() => _busy = false);
-            }
-          },
-        ),
-      ],
-    ),
-  );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _MetaChip extends StatelessWidget {

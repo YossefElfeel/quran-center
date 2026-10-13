@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
@@ -56,7 +57,7 @@ class _ScoreCell extends StatelessWidget {
     return Semantics(
       selected: isSelected,
       button: true,
-      label: 'درجة ${arabicNumber(value)} من عشرة',
+      label: AppL10n.of(context).sesScoreCellSemantics(arabicNumber(value)),
       // الرقم المرسوم جوّه مكرّر للّيبل — نخفيه عن قارئ الشاشة ونحط النقر هنا.
       excludeSemantics: true,
       onTap: onTap,

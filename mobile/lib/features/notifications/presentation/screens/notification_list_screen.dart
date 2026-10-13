@@ -94,7 +94,7 @@ class NotificationListScreen extends ConsumerWidget {
               ] else
                 TextButton(
                   onPressed: () => Navigator.of(sheetContext).pop(),
-                  child: const Text('تمام'),
+                  child: Text(AppL10n.of(sheetContext).notificationsOk),
                 ),
             ],
           ),
@@ -140,7 +140,7 @@ class NotificationListScreen extends ConsumerWidget {
                 action: TextButton(
                   onPressed: () =>
                       ref.invalidate(notificationsControllerProvider),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : AppRefreshIndicator(
@@ -155,7 +155,7 @@ class NotificationListScreen extends ConsumerWidget {
                         onPressed: () => ref
                             .read(notificationsControllerProvider.notifier)
                             .loadMore(),
-                        child: const Text('عرض المزيد'),
+                        child: Text(l.commonShowMore),
                       );
                     }
                     final AppNotification n = items[i];
@@ -194,7 +194,7 @@ class _NotificationTile extends StatelessWidget {
         if (!read) ...<Widget>[
           // النقطة لوحدها لون بس — نديها نص لقارئ الشاشة.
           Semantics(
-            label: 'إشعار جديد مش مقروء',
+            label: AppL10n.of(context).notificationsUnreadSemantics,
             child: Container(
               width: 10,
               height: 10,

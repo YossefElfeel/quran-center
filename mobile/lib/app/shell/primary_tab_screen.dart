@@ -55,9 +55,9 @@ class _PrimaryTabScreenState extends ConsumerState<PrimaryTabScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: AppSegmentedControl<bool>(
-                segments: const [
-                  (value: false, label: 'حلقاتي'),
-                  (value: true, label: 'المراجعات'),
+                segments: [
+                  (value: false, label: l.navMyCircles),
+                  (value: true, label: l.tabReviews),
                 ],
                 selected: _review,
                 onChanged: (bool v) => setState(() => _review = v),

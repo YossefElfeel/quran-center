@@ -21,6 +21,7 @@ import '../../../subscription/presentation/widgets/record_payment_sheet.dart';
 import '../../../user_invite/presentation/screens/invite_user_screen.dart';
 import '../../domain/guardian_link_row.dart';
 import '../controllers/guardian_links_controller.dart';
+import '../family_labels.dart';
 import '../widgets/add_guardian_link_sheet.dart';
 import '../widgets/edit_guardian_sheet.dart';
 
@@ -97,8 +98,19 @@ class GuardianLinksScreen extends ConsumerWidget {
                       leadingIcon: Icons.link,
                       trailing: _GuardianFixAction(row: r),
                       title: r.guardianName,
-                      subtitle:
-                          '${r.relationAr}: ${r.childName}\nدخول ${r.hasLogin ? '✓' : '✗'} · أسرة ${r.householdId != null ? '✓' : '✗'} · ${r.subscriptionActive ? 'الاشتراك نشط' : 'اشتراك محتاج تجديد'} · ${r.childrenCount} أطفال',
+                      subtitle: l.famLinkRowSubtitle(
+                        r.relationLabel(l),
+                        r.childName,
+                        r.hasLogin ? '✓' : '✗',
+                        r.householdId != null ? '✓' : '✗',
+                        r.subscriptionActive
+                            ? l.famSubscriptionActive
+                            : l.famSubscriptionNeedsRenewal,
+                        l.famChildrenCount(
+                          r.childrenCount,
+                          '${r.childrenCount}',
+                        ),
+                      ),
                       onTap: () => showAppModalSheet<void>(
                         context: context,
                         title: r.guardianName,
@@ -106,19 +118,19 @@ class GuardianLinksScreen extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
                             AppButton(
-                              label: 'تعديل البيانات / الأسرة',
+                              label: l.famEditDataHousehold,
                               onPressed: () {
                                 Navigator.of(sheetContext).pop();
                                 showAppModalSheet<void>(
                                   context: context,
-                                  title: 'تعديل ولي الأمر',
+                                  title: l.famEditGuardian,
                                   builder: (_) => EditGuardianSheet(row: r),
                                 );
                               },
                             ),
                             if (!r.hasLogin)
                               AppButton(
-                                label: 'إنشاء دعوة دخول',
+                                label: l.famCreateLoginInvite,
                                 onPressed: () async {
                                   Navigator.of(sheetContext).pop();
                                   await _openInvite(context, ref, r);
@@ -126,18 +138,18 @@ class GuardianLinksScreen extends ConsumerWidget {
                               ),
                             if (r.householdId != null)
                               AppButton(
-                                label: 'سجّل دفعة / إدارة الأسرة',
+                                label: l.famPaymentManageHousehold,
                                 onPressed: () => context.push(
-                                  '/admin/household/${r.householdId}/members?name=${Uri.encodeComponent(r.householdName ?? 'الأسرة')}',
+                                  '/admin/household/${r.householdId}/members?name=${Uri.encodeComponent(r.householdName ?? l.famHouseholdTitle)}',
                                 ),
                               ),
                             TextButton(
                               onPressed: () async {
                                 if (!await showAppConfirmSheet(
                                   context: sheetContext,
-                                  title: 'إلغاء ربط ولي الأمر بالطفل؟',
-                                  confirmLabel: 'إلغاء الربط',
-                                  message: 'الحساب والأسرة هيفضلوا موجودين',
+                                  title: l.famUnlinkConfirmTitle,
+                                  confirmLabel: l.famUnlinkConfirm,
+                                  message: l.famUnlinkConfirmMessage,
                                 )) {
                                   return;
                                 }
@@ -158,12 +170,12 @@ class GuardianLinksScreen extends ConsumerWidget {
                                   if (sheetContext.mounted) {
                                     AppSnackbar.error(
                                       sheetContext,
-                                      'تعذّر إلغاء الربط',
+                                      l.famUnlinkError,
                                     );
                                   }
                                 }
                               },
-                              child: const Text('إلغاء ربط الطفل'),
+                              child: Text(l.famUnlinkChild),
                             ),
                           ],
                         ),
@@ -203,7 +215,7 @@ class _GuardianFixAction extends ConsumerWidget {
       ref.invalidate(guardianLinksControllerProvider);
     } catch (_) {
       if (context.mounted) {
-        AppSnackbar.error(context, 'تعذّر تحميل الأسرة — جرّب تاني');
+        AppSnackbar.error(context, AppL10n.of(context).famHouseholdLoadError);
       }
     }
   }
@@ -216,7 +228,7 @@ class _GuardianFixAction extends ConsumerWidget {
         onPressed: () async {
           await showAppModalSheet<void>(
             context: context,
-            title: 'تعديل ولي الأمر',
+            title: l.famEditGuardian,
             builder: (_) => EditGuardianSheet(row: row),
           );
         },

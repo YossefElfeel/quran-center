@@ -59,17 +59,20 @@ class _ChildCardScreenState extends ConsumerState<ChildCardScreen> {
         .asData
         ?.value;
     if (card == null) return;
+    final AppL10n l = AppL10n.of(context);
     final ByteData fontData = await rootBundle.load('assets/fonts/Cairo.ttf');
     final LatestTasmee? lt = card.latestTasmee;
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat _) => buildProgressCardPdf(
         studentName: childName,
-        circleName: card.circleName ?? 'الحلقة',
+        circleName: card.circleName ?? l.ppCircle,
         present: card.present,
         absent: card.absent,
         excused: card.excused,
         late: card.late,
-        latestScore: lt != null ? '${arabicNumber(lt.score)}/١٠' : null,
+        latestScore: lt != null
+            ? '${arabicNumber(lt.score)}/${arabicNumber(10)}'
+            : null,
         fontData: fontData,
       ),
     );
@@ -138,7 +141,7 @@ class _ChildCardScreenState extends ConsumerState<ChildCardScreen> {
               if (card.currentPortion != null)
                 _InfoCard(
                   icon: Icons.menu_book,
-                  title: 'المقطع الحالي',
+                  title: l.ppCurrentPortion,
                   value: card.currentPortion!,
                 ),
               if (lt != null)
@@ -162,12 +165,12 @@ class _ChildCardScreenState extends ConsumerState<ChildCardScreen> {
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: AppSegmentedControl<int>(
-                  segments: const [
-                    (value: 0, label: 'التقدّم'),
-                    (value: 1, label: 'الحضور'),
-                    (value: 2, label: 'الشهادات'),
-                    (value: 3, label: 'الوسائط والموافقة'),
-                    (value: 4, label: 'الملاحظات'),
+                  segments: [
+                    (value: 0, label: l.ppTabProgress),
+                    (value: 1, label: l.ppTabAttendance),
+                    (value: 2, label: l.ppCertificates),
+                    (value: 3, label: l.ppTabMediaConsent),
+                    (value: 4, label: l.ppTabNotes),
                   ],
                   selected: _tab,
                   onChanged: (int v) => setState(() => _tab = v),
@@ -295,7 +298,7 @@ class _AttendanceCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    '${l.ppAttendance} — الشهر الحالي',
+                    l.ppAttendanceCurrentMonth,
                     style: AppTextStyles.labelSm.copyWith(
                       color: p.textSecondary,
                     ),

@@ -1,3 +1,4 @@
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -124,7 +125,8 @@ class TodaySessionController extends _$TodaySessionController {
     }
   }
 
-  Future<void> openSession() async {
+  /// [l] يحدّد `display_label` اللي بيتخزّن مع العملية في الطابور.
+  Future<void> openSession({required AppL10n l}) async {
     final TodaySession? current = state.asData?.value;
     if (current == null || current.isOpen) return;
     final String? personId = ref.read(currentPersonIdProvider).asData?.value;
@@ -160,7 +162,7 @@ class TodaySessionController extends _$TodaySessionController {
                 'circle_id': circleId,
                 'session_id': id,
                 'opened_by': personId,
-                'display_label': 'فتح حصة',
+                'display_label': l.syncOpSessionOpen,
               },
             ),
           );
@@ -187,8 +189,9 @@ class TodaySessionController extends _$TodaySessionController {
 
   Future<void> setAttendance(
     String enrollmentId,
-    AttendanceStatus status,
-  ) async {
+    AttendanceStatus status, {
+    required AppL10n l,
+  }) async {
     final TodaySession? current = state.asData?.value;
     if (current == null || !current.isOpen) return;
     final RosterEntry entry = current.roster.firstWhere(
@@ -204,7 +207,7 @@ class TodaySessionController extends _$TodaySessionController {
               'session_id': current.sessionId,
               'enrollment_id': enrollmentId,
               'status': status.dbValue,
-              'display_label': '${entry.studentName} — حضور',
+              'display_label': l.sesOutboxAttendance(entry.studentName),
               'circle_id': circleId,
             },
           ),
@@ -283,6 +286,7 @@ class TodaySessionController extends _$TodaySessionController {
     required String studentPersonId,
     required int score,
     required String idempotencyKey,
+    required AppL10n l,
     TasmeeKind kind = TasmeeKind.memorization,
   }) async {
     final TodaySession? current = state.asData?.value;
@@ -319,8 +323,14 @@ class TodaySessionController extends _$TodaySessionController {
               'kind': kind.dbValue,
               'teacher_id': teacherId,
               'session_id': current.sessionId,
-              'display_label':
-                  '${current.roster.firstWhere((RosterEntry e) => e.studentPersonId == studentPersonId).studentName} — تسميع $score/١٠',
+              'display_label': l.sesOutboxTasmee(
+                current.roster
+                    .firstWhere(
+                      (RosterEntry e) => e.studentPersonId == studentPersonId,
+                    )
+                    .studentName,
+                '$score',
+              ),
               'circle_id': circleId,
             },
           ),
@@ -364,6 +374,7 @@ class TodaySessionController extends _$TodaySessionController {
   /// القفل بيدخل الطابور دايمًا. بيرجّع سبب الإيقاف (تجميد/صيانة) لو السيرفر
   /// رفض الإرسال بسببه — القفل يفضل محفوظ ويتبعت أول ما الإيقاف يتشال.
   Future<SessionWriteBlock?> closeWithPlan({
+    required AppL10n l,
     bool markUnrecordedPresent = true,
     String? revisionName,
     int? revSurahStart,
@@ -388,7 +399,7 @@ class TodaySessionController extends _$TodaySessionController {
                   'session_id': sessionId,
                   'enrollment_id': entry.enrollmentId,
                   'status': AttendanceStatus.present.dbValue,
-                  'display_label': '${entry.studentName} — حضور',
+                  'display_label': l.sesOutboxAttendance(entry.studentName),
                   'circle_id': circleId,
                 },
               ),
@@ -412,7 +423,7 @@ class TodaySessionController extends _$TodaySessionController {
               'ayah_end': revAyahEnd,
               'portion_id': current.currentPortion?.id,
               'teacher_id': teacherId,
-              'display_label': 'قفل الحصة',
+              'display_label': l.sesOutboxCloseSession,
             },
           ),
         );

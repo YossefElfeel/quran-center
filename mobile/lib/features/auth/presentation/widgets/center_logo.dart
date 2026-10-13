@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
 
@@ -14,7 +15,7 @@ class CenterLogo extends StatelessWidget {
     final AppPalette p = context.palette;
     return Semantics(
       image: true,
-      label: 'شعار الدار',
+      label: AppL10n.of(context).authCenterLogo,
       child: SizedBox.square(
         dimension: size,
         child: CustomPaint(

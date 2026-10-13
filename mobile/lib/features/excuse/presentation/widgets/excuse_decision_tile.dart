@@ -35,21 +35,22 @@ class _ExcuseDecisionTileState extends State<ExcuseDecisionTile> {
 
   Future<void> _decide(Future<void> Function() action) async {
     if (_busy) return;
+    final AppL10n l = AppL10n.of(context);
     setState(() => _busy = true);
     try {
       if (!await showAppConfirmSheet(
         context: context,
-        title: 'تأكيد قرار العذر',
-        confirmLabel: 'حفظ القرار',
+        title: l.excConfirmDecisionTitle,
+        confirmLabel: l.excSaveDecision,
         destructive: false,
       )) {
         return;
       }
       await action();
-      if (mounted) AppSnackbar.success(context, 'قرار العذر اتحفظ');
+      if (mounted) AppSnackbar.success(context, l.excDecisionSaved);
     } catch (_) {
       if (!mounted) return;
-      AppSnackbar.error(context, AppL10n.of(context).genericError);
+      AppSnackbar.error(context, l.genericError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

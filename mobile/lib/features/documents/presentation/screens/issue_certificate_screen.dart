@@ -87,7 +87,7 @@ class IssueCertificateScreen extends ConsumerWidget {
                 icon: Icons.workspace_premium_outlined,
                 action: TextButton(
                   onPressed: () => ref.invalidate(eligibleStudentsProvider),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : AppRefreshIndicator(

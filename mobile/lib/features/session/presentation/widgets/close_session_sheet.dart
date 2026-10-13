@@ -56,7 +56,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
         _revSurahStart != null ||
         _revSurahEnd != null;
     if (anyRevision) {
-      final String? err = portionRangeError(
+      final PortionRangeIssue? err = portionRangeError(
         surahs: surahs,
         name: name,
         surahStart: _revSurahStart,
@@ -65,7 +65,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
         ayahEnd: ae,
       );
       if (err != null) {
-        setState(() => _error = err);
+        setState(() => _error = err.label(AppL10n.of(context)));
         return;
       }
     }
@@ -77,6 +77,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
       final SessionWriteBlock? blocked = await ref
           .read(todaySessionControllerProvider(widget.circleId).notifier)
           .closeWithPlan(
+            l: AppL10n.of(context),
             markUnrecordedPresent: _markPresent,
             revisionName: anyRevision ? name : null,
             revSurahStart: anyRevision ? _revSurahStart : null,
@@ -92,7 +93,7 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
             '${blocked.label(l)} — ${l.sesCloseQueuedBlocked}',
           );
         } else {
-          AppSnackbar.success(context, 'الحصة اتقفلت');
+          AppSnackbar.success(context, AppL10n.of(context).sesSessionClosed);
         }
         Navigator.of(context).pop();
       }
@@ -107,6 +108,15 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<SurahOption>> surahsAsync = ref.watch(surahsProvider);
+    final int unrecorded =
+        ref
+            .watch(todaySessionControllerProvider(widget.circleId))
+            .asData
+            ?.value
+            .roster
+            .where((e) => !e.attendanceRecorded)
+            .length ??
+        0;
     return Padding(
       padding: const EdgeInsets.only(
         left: AppSpacing.lg,
@@ -135,7 +145,10 @@ class _CloseSessionSheetState extends ConsumerState<CloseSessionSheet> {
                 onChanged: (bool? v) =>
                     setState(() => _markPresent = v ?? true),
                 title: Text(
-                  '${arabicNumber(ref.watch(todaySessionControllerProvider(widget.circleId)).asData?.value.roster.where((e) => !e.attendanceRecorded).length ?? 0)} طلاب من غير حضور متسجّل — اعتبرهم حاضرين؟',
+                  l.sesMarkUnrecordedPresentPrompt(
+                    unrecorded,
+                    arabicNumber(unrecorded),
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),

@@ -37,11 +37,11 @@
     "description": "حقل الإيميل في الدخول"
   },
   "emailRequired": "اكتب الإيميل",
-  "passwordLabel": "الباسورد",
-  "passwordRequired": "اكتب الباسورد",
+  "passwordLabel": "كلمة السر",
+  "passwordRequired": "اكتب كلمة السر",
   "signIn": "دخول",
   "signingIn": "بنحاول…",
-  "loginFailed": "فشل الدخول — اتأكد من الإيميل والباسورد",
+  "loginFailed": "فشل الدخول — اتأكد من الإيميل وكلمة السر",
   "welcome": "أهلاً بيك",
   "noRoleYet": "لسه مفيش دور متسنّد لحسابك — كلّم الأدمن.",
   "logout": "خروج",
@@ -71,7 +71,7 @@
   "navTeacherDev": "تطوّر المعلّمين",
   "navMonthlyEvalApproval": "اعتماد التقييم الشهري",
   "navIssueCertificates": "إصدار الشهادات",
-  "navTeacherRatings": "تقييمات المحفّظين",
+  "navTeacherRatings": "تقييمات المعلّمين",
   "navCompetitions": "المسابقات",
   "navHonorBoard": "لوحة الشرف",
   "navCourses": "الكورسات",
@@ -178,7 +178,7 @@
       }
     }
   },
-  "fbkTeacherRatingsTitle": "تقييمات المحفّظين",
+  "fbkTeacherRatingsTitle": "تقييمات المعلّمين",
   "fbkLoadRatingsError": "مش قادرين نحمّل التقييمات",
   "fbkNoRatings": "لسه مفيش تقييمات",
   "fbkShow": "إظهار",
@@ -481,7 +481,7 @@
   "invSendButton": "ابعت الدعوة",
   "invSendingButton": "بنبعت…",
   "invSendError": "مش قادرين نبعت الدعوة — جرّب تاني",
-  "invLinkReady": "الدعوة اتعملت ✅ — ابعت اللينك ده للمستخدم عشان يحطّ باسورده:",
+  "invLinkReady": "الدعوة اتعملت ✅ — ابعت اللينك ده للمستخدم عشان يحطّ كلمة السر بتاعته:",
   "invCopyLink": "نسخ اللينك",
   "excQueueTitle": "أعذار الغياب",
   "excLoadError": "مش قادرين نحمّل الأعذار",
@@ -713,7 +713,7 @@
   "sesLedgerOwed": "عليه دَيْن",
   "sesLedgerPending": "لسه",
   "ppPrintProgressCard": "بطاقة تقدّم (PDF)",
-  "ppRateTeacher": "قيّم المحفّظ",
+  "ppRateTeacher": "قيّم المعلّم",
   "ppCardLoadError": "مش قادرين نحمّل الكارت",
   "ppCircle": "الحلقة",
   "ppNotInCircle": "مش في حلقة دلوقتي",
@@ -817,10 +817,10 @@
     }
   },
   "ppMonthlyPlan": "خطة الشهر",
-  "fbkRateTeacherTitle": "قيّم المحفّظ",
-  "fbkRatePrivateNote": "تقييمك خاص للإدارة — المحفّظ مش هيشوفه",
+  "fbkRateTeacherTitle": "قيّم المعلّم",
+  "fbkRatePrivateNote": "تقييمك خاص للإدارة — المعلّم مش هيشوفه",
   "fbkRateCommentLabel": "تعليق (اختياري)",
-  "fbkRateThanks": "تم تقييم المحفّظ — شكراً",
+  "fbkRateThanks": "تم تقييم المعلّم — شكراً",
   "fbkSending": "بنبعت…",
   "fbkSubmitRating": "إرسال التقييم",
   "supSelectedForEval": "مختار للتقييم",
@@ -942,5 +942,1269 @@
   "commonCircle": "الحلقة",
   "commonStudent": "الطالب",
   "commonCurriculum": "المنهج",
-  "commonLevel": "المستوى"
+  "commonLevel": "المستوى",
+  "commonEmailInvalid": "اكتب إيميل صحيح",
+  "@commonEmailInvalid": {
+    "description": "خطأ تحقق: صيغة الإيميل غلط"
+  },
+  "commonHidePassword": "إخفاء كلمة السر",
+  "@commonHidePassword": {
+    "description": "تلميح زرار إخفاء كلمة السر"
+  },
+  "commonShowPassword": "إظهار كلمة السر",
+  "@commonShowPassword": {
+    "description": "تلميح زرار إظهار كلمة السر"
+  },
+  "authResetPasswordTitle": "استعادة كلمة السر",
+  "@authResetPasswordTitle": {
+    "description": "عنوان شيت استعادة كلمة السر"
+  },
+  "authForgotPassword": "نسيت كلمة السر؟",
+  "@authForgotPassword": {
+    "description": "زرار نسيت كلمة السر في شاشة الدخول"
+  },
+  "authOpenWebsiteFailed": "تعذّر فتح الموقع",
+  "@authOpenWebsiteFailed": {
+    "description": "خطأ فتح موقع الدار"
+  },
+  "authBrowseCoursesCompetitions": "تصفّح الكورسات والمسابقات",
+  "@authBrowseCoursesCompetitions": {
+    "description": "زرار فتح الموقع العام من شاشة الدخول"
+  },
+  "authResetRequestFailed": "تعذّر إرسال الطلب — راجع الاتصال وجرّب تاني",
+  "@authResetRequestFailed": {
+    "description": "خطأ إرسال طلب استعادة كلمة السر"
+  },
+  "authResetLinkSentNote": "لو الإيميل مسجّل هيوصلك رابط. راجع الوارد والبريد غير المرغوب فيه.",
+  "@authResetLinkSentNote": {
+    "description": "رسالة بعد إرسال طلب الاستعادة"
+  },
+  "authSendResetLink": "ابعت رابط استعادة",
+  "@authSendResetLink": {
+    "description": "زرار إرسال رابط استعادة كلمة السر"
+  },
+  "authCenterLogo": "شعار الدار",
+  "@authCenterLogo": {
+    "description": "وصف الشعار لقارئ الشاشة"
+  },
+  "moreClearSearch": "مسح البحث",
+  "@moreClearSearch": {
+    "description": "زرار مسح البحث في المزيد"
+  },
+  "commonRefreshData": "تحديث البيانات",
+  "@commonRefreshData": {
+    "description": "زرار تحديث لوحة الشرف الفاضية"
+  },
+  "notificationsOk": "تمام",
+  "@notificationsOk": {
+    "description": "زرار قفل تفاصيل الإشعار"
+  },
+  "notificationsUnreadSemantics": "إشعار جديد مش مقروء",
+  "@notificationsUnreadSemantics": {
+    "description": "وصف نقطة الإشعار غير المقروء لقارئ الشاشة"
+  },
+  "courseAdded": "الكورس اتضاف",
+  "@courseAdded": {
+    "description": "رسالة نجاح إضافة كورس"
+  },
+  "courseTitleRequired": "اكتب عنوان الكورس",
+  "@courseTitleRequired": {
+    "description": "خطأ تحقق: عنوان الكورس"
+  },
+  "courseInvalidUrl": "اكتب رابط HTTP أو HTTPS صحيحًا",
+  "@courseInvalidUrl": {
+    "description": "خطأ تحقق: رابط الكورس"
+  },
+  "commonRefresh": "تحديث",
+  "@commonRefresh": {
+    "description": "زرار تحديث قايمة الكورسات الفاضية"
+  },
+  "cmpScoreSaved": "الدرجة اتحفظت",
+  "@cmpScoreSaved": {
+    "description": "رسالة نجاح حفظ درجة المتسابق"
+  },
+  "cmpScoreRangeError": "اكتب درجة من ٠ إلى ١٠٠",
+  "@cmpScoreRangeError": {
+    "description": "خطأ تحقق: الدرجة لازم بين ٠ و١٠٠"
+  },
+  "cmpCompetitionAdded": "المسابقة اتضافت",
+  "@cmpCompetitionAdded": {
+    "description": "رسالة نجاح إضافة مسابقة"
+  },
+  "cmpNameRequired": "اكتب اسم المسابقة",
+  "@cmpNameRequired": {
+    "description": "خطأ تحقق: اسم المسابقة"
+  },
+  "onbTeacherTitle1": "حصة منظّمة كل يوم",
+  "@onbTeacherTitle1": {
+    "description": "شريحة ترحيب المعلّم ١ — عنوان"
+  },
+  "onbTeacherBody1": "افتح حلقتك وسجّل الحضور والتسميع من مكان واحد.",
+  "@onbTeacherBody1": {
+    "description": "شريحة ترحيب المعلّم ١ — نص"
+  },
+  "onbTeacherTitle2": "سجّل التسميع حتى من غير نت",
+  "@onbTeacherTitle2": {
+    "description": "شريحة ترحيب المعلّم ٢ — عنوان"
+  },
+  "onbTeacherBody2": "الدرجات تتحفظ على الجهاز وتتزامن لما الاتصال يرجع.",
+  "@onbTeacherBody2": {
+    "description": "شريحة ترحيب المعلّم ٢ — نص"
+  },
+  "onbTeacherTitle3": "تابع كل طالب",
+  "@onbTeacherTitle3": {
+    "description": "شريحة ترحيب المعلّم ٣ — عنوان"
+  },
+  "onbTeacherBody3": "شوف اللي محتاج مراجعة وخلّي خطوات الحفظ واضحة.",
+  "@onbTeacherBody3": {
+    "description": "شريحة ترحيب المعلّم ٣ — نص"
+  },
+  "onbParentTitle1": "تابع حفظ ولادك يوم بيوم",
+  "@onbParentTitle1": {
+    "description": "شريحة ترحيب ولي الأمر ١ — عنوان"
+  },
+  "onbParentBody1": "آخر تسميع والحضور والخطة في بطاقة واحدة لكل طفل.",
+  "@onbParentBody1": {
+    "description": "شريحة ترحيب ولي الأمر ١ — نص"
+  },
+  "onbParentTitle2": "تواصل مع الدار",
+  "@onbParentTitle2": {
+    "description": "شريحة ترحيب ولي الأمر ٢ — عنوان"
+  },
+  "onbParentBody2": "اقرأ الملاحظات وابعث شكوى أو تواصل مع الإدارة.",
+  "@onbParentBody2": {
+    "description": "شريحة ترحيب ولي الأمر ٢ — نص"
+  },
+  "onbParentTitle3": "اشتراكك واضح",
+  "@onbParentTitle3": {
+    "description": "شريحة ترحيب ولي الأمر ٣ — عنوان"
+  },
+  "onbParentBody3": "شوف الدفعات والشهور المستحقة وحدّث الحالة بعد الدفع.",
+  "@onbParentBody3": {
+    "description": "شريحة ترحيب ولي الأمر ٣ — نص"
+  },
+  "onbAdminTitle1": "كل طلبة الدار في مكان واحد",
+  "@onbAdminTitle1": {
+    "description": "شريحة ترحيب الإدارة ١ — عنوان"
+  },
+  "onbAdminBody1": "سجّل الطالب واربط ولي الأمر بأسرة وحساب دخول.",
+  "@onbAdminBody1": {
+    "description": "شريحة ترحيب الإدارة ١ — نص"
+  },
+  "onbAdminTitle2": "المراجعات من غير انتظار",
+  "@onbAdminTitle2": {
+    "description": "شريحة ترحيب الإدارة ٢ — عنوان"
+  },
+  "onbAdminBody2": "اعتمد التقييم أو رجّعه للمعلّم مع سبب واضح.",
+  "@onbAdminBody2": {
+    "description": "شريحة ترحيب الإدارة ٢ — نص"
+  },
+  "onbAdminTitle3": "تابع اللي محتاج قرار",
+  "@onbAdminTitle3": {
+    "description": "شريحة ترحيب الإدارة ٣ — عنوان"
+  },
+  "onbAdminBody3": "الأعذار والاشتراكات والتقييمات ظاهرة في الرئيسية.",
+  "@onbAdminBody3": {
+    "description": "شريحة ترحيب الإدارة ٣ — نص"
+  },
+  "onbPageIndicator": "صفحة {page} من {total}",
+  "@onbPageIndicator": {
+    "description": "وصف مؤشّر الصفحة لقارئ الشاشة",
+    "placeholders": {
+      "page": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "onbTeacherFinish": "افتح حلقتك",
+  "@onbTeacherFinish": {
+    "description": "زرار إنهاء الترحيب للمعلّم"
+  },
+  "onbParentFinish": "شوف ولادك",
+  "@onbParentFinish": {
+    "description": "زرار إنهاء الترحيب لولي الأمر"
+  },
+  "onbAdminFinish": "ابدأ من الرئيسية",
+  "@onbAdminFinish": {
+    "description": "زرار إنهاء الترحيب للإدارة"
+  },
+  "homeAccountLoadError": "تعذّر تحميل حسابك",
+  "@homeAccountLoadError": {
+    "description": "خطأ تحميل أدوار الحساب في الرئيسية"
+  },
+  "homeGreeting": "أهلاً يا {name}",
+  "@homeGreeting": {
+    "description": "تحية الرئيسية بالاسم",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeDateLine": "{day} {month} · {hDay}/{hMonth}/{hYear} هـ",
+  "@homeDateLine": {
+    "description": "سطر التاريخ الميلادي والهجري في الرئيسية (أرقام منسّقة مسبقًا)",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      },
+      "hDay": {
+        "type": "String"
+      },
+      "hMonth": {
+        "type": "String"
+      },
+      "hYear": {
+        "type": "String"
+      }
+    }
+  },
+  "homeTodaySessions": "حصص النهارده",
+  "@homeTodaySessions": {
+    "description": "عنوان قسم حصص المعلّم"
+  },
+  "homeCirclesLoadError": "تعذّر تحميل الحلقات",
+  "@homeCirclesLoadError": {
+    "description": "خطأ تحميل حلقات المعلّم"
+  },
+  "homeNoCircleAssigned": "لسه مفيش حلقة مرتبطة بيك — كلّم الإدارة لإسناد حلقة",
+  "@homeNoCircleAssigned": {
+    "description": "المعلّم مالوش حلقات"
+  },
+  "homeFollowChildren": "متابعة ولادك",
+  "@homeFollowChildren": {
+    "description": "عنوان قسم ولي الأمر"
+  },
+  "homeMySubscription": "اشتراكي",
+  "@homeMySubscription": {
+    "description": "كارت اشتراك ولي الأمر"
+  },
+  "homeChildrenLoadError": "تعذّر تحميل الأطفال",
+  "@homeChildrenLoadError": {
+    "description": "خطأ تحميل أطفال ولي الأمر"
+  },
+  "homeContactAdminToLinkChildren": "كلّم الإدارة لربط ولادك",
+  "@homeContactAdminToLinkChildren": {
+    "description": "ولي الأمر مالوش أطفال مربوطين"
+  },
+  "homeCenterManagement": "إدارة الدار",
+  "@homeCenterManagement": {
+    "description": "عنوان قسم الإدارة"
+  },
+  "homeRecordPayment": "تسجيل دفعة",
+  "@homeRecordPayment": {
+    "description": "زرار/عنوان تسجيل دفعة"
+  },
+  "homeOverdueSubscriptions": "اشتراكات متأخّرة",
+  "@homeOverdueSubscriptions": {
+    "description": "عنوان قسم الاشتراكات المتأخّرة"
+  },
+  "homeSubscriptionsLoadError": "تعذّر تحميل الاشتراكات",
+  "@homeSubscriptionsLoadError": {
+    "description": "خطأ تحميل الاشتراكات المتأخّرة"
+  },
+  "homeNoOverdueSubscriptions": "مفيش اشتراكات متأخّرة",
+  "@homeNoOverdueSubscriptions": {
+    "description": "مفيش أسر متأخّرة"
+  },
+  "homeMonthlyAmount": "{amount} ج.م شهريًا",
+  "@homeMonthlyAmount": {
+    "description": "المبلغ الشهري للأسرة (رقم منسّق مسبقًا)",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNeedsYourDecision": "يحتاج قرارك",
+  "@homeNeedsYourDecision": {
+    "description": "عنوان قسم الطوابير اللي محتاجة قرار"
+  },
+  "homeAbsenceExcuses": "أعذار غياب",
+  "@homeAbsenceExcuses": {
+    "description": "طابور أعذار الغياب"
+  },
+  "homeMonthlyEvals": "تقييمات شهرية",
+  "@homeMonthlyEvals": {
+    "description": "طابور التقييمات الشهرية"
+  },
+  "homeStrugglingStudents": "طلاب محتاجين متابعة",
+  "@homeStrugglingStudents": {
+    "description": "طابور الطلاب المتعثّرين"
+  },
+  "homeQueueLoadError": "تعذّر تحميل {title}",
+  "@homeQueueLoadError": {
+    "description": "خطأ تحميل طابور في الرئيسية",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "homePickHousehold": "اختار الأسرة",
+  "@homePickHousehold": {
+    "description": "عنوان منتقي الأسرة لتسجيل دفعة"
+  },
+  "homeSearchHouseholdName": "بحث باسم الأسرة",
+  "@homeSearchHouseholdName": {
+    "description": "حقل البحث في منتقي الأسرة"
+  },
+  "homeSyncPendingSemantics": "حالة المزامنة — {count} مستني الإرسال",
+  "@homeSyncPendingSemantics": {
+    "description": "وصف زرار المزامنة لقارئ الشاشة مع عدد المعلّق (رقم منسّق مسبقًا)",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSyncFailedSemantics": "حالة المزامنة — فيه عمليات فشلت",
+  "@homeSyncFailedSemantics": {
+    "description": "وصف زرار المزامنة لما فيه عمليات فاشلة"
+  },
+  "homeSyncPendingLabel": "حالة المزامنة ({count} معلّق)",
+  "@homeSyncPendingLabel": {
+    "description": "نص زرار المزامنة مع عدد المعلّق (رقم منسّق مسبقًا)",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "homeLoadingProgress": "جاري تحميل التقدّم…",
+  "@homeLoadingProgress": {
+    "description": "تحميل تقدّم الطفل"
+  },
+  "homeProgressLoadError": "تعذّر تحميل التقدّم — افتح البطاقة لإعادة المحاولة",
+  "@homeProgressLoadError": {
+    "description": "خطأ تحميل تقدّم الطفل"
+  },
+  "homeNoPortion": "لسه مفيش ورد محدّد",
+  "@homeNoPortion": {
+    "description": "الطفل مالوش ورد حالي"
+  },
+  "homeCurrentPortion": "الورد الحالي: {portion}",
+  "@homeCurrentPortion": {
+    "description": "الورد الحالي للطفل",
+    "placeholders": {
+      "portion": {
+        "type": "String"
+      }
+    }
+  },
+  "homeMonthAttendance": "حضور الشهر: {attended}/{total}",
+  "@homeMonthAttendance": {
+    "description": "حضور الطفل في الشهر (أرقام منسّقة مسبقًا)",
+    "placeholders": {
+      "attended": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSubscriptionActive": "الاشتراك ساري",
+  "@homeSubscriptionActive": {
+    "description": "شارة اشتراك ساري"
+  },
+  "homeSubscriptionOverdue": "الاشتراك متأخّر",
+  "@homeSubscriptionOverdue": {
+    "description": "شارة اشتراك متأخّر"
+  },
+  "homeLoadingSession": "جاري تحميل الحصة…",
+  "@homeLoadingSession": {
+    "description": "تحميل حصة النهارده"
+  },
+  "homeSessionLoadError": "تعذّر تحميل الحصة — افتح الحلقة لإعادة المحاولة",
+  "@homeSessionLoadError": {
+    "description": "خطأ تحميل حصة النهارده"
+  },
+  "homeSessionOpen": "الحصة مفتوحة — كمّل",
+  "@homeSessionOpen": {
+    "description": "الحصة مفتوحة"
+  },
+  "homeSessionClosed": "الحصة اتقفلت — {present} حضور، {tasmee} تسميع",
+  "@homeSessionClosed": {
+    "description": "ملخّص الحصة المقفولة (أرقام منسّقة مسبقًا)",
+    "placeholders": {
+      "present": {
+        "type": "String"
+      },
+      "tasmee": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSessionNotOpened": "حصة النهارده لسه ما اتفتحتش",
+  "@homeSessionNotOpened": {
+    "description": "الحصة لسه ما اتفتحتش"
+  },
+  "famHouseholdSuggestion": "أسرة {family}",
+  "@famHouseholdSuggestion": {
+    "description": "اسم الأسرة المقترح من اسم عيلة ولي الأمر",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "famLinkedWithInvite": "ولي الأمر اتربط ورابط الدعوة جاهز للمشاركة",
+  "famLinkedSuccess": "ولي الأمر اتربط بالطفل والأسرة",
+  "famGuardianSaveError": "تعذّر حفظ ولي الأمر — جرّب تاني",
+  "famInviteFailed": "ولي الأمر اتحفظ، لكن الدعوة فشلت: {reason}",
+  "@famInviteFailed": {
+    "description": "ولي الأمر اتحفظ لكن دعوة الدخول فشلت؛ reason هو سبب الخطأ",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "famInviteRetryHint": "جرّب الدعوة تاني بنفس البيانات.",
+  "famInviteLinkTitle": "رابط دعوة الدخول",
+  "famInviteLinkShareHint": "شارك الرابط مع ولي الأمر عشان يعيّن كلمة السر. الإيميل مش بيتبعت تلقائيًا.",
+  "commonCopyLink": "نسخ الرابط",
+  "commonLinkCopied": "الرابط اتنسخ",
+  "commonWhatsappOpenError": "تعذّر فتح واتساب — انسخ الرابط",
+  "commonShareWhatsapp": "مشاركة عبر واتساب",
+  "famDone": "تمام",
+  "commonNameRequired": "اكتب الاسم",
+  "famMobileLabel": "رقم الموبايل",
+  "famMobileInvalid": "اكتب رقم صحيح من ١٠ إلى ١٥ رقم",
+  "famStudentsLoadFailed": "تعذّر تحميل الطلبة",
+  "famHouseholdTitle": "الأسرة",
+  "famHouseholdSearchLabel": "بحث باسم الأسرة أو الهاتف",
+  "famCreateHousehold": "إنشاء أسرة جديدة",
+  "famHouseholdNameLabel": "اسم الأسرة (لو فاضي هنستخدم اسم ولي الأمر)",
+  "famCreateLoginInvite": "إنشاء دعوة دخول",
+  "famGuardianEmailLabel": "إيميل ولي الأمر",
+  "famSaveGuardian": "حفظ ولي الأمر",
+  "famRetryInvite": "إعادة محاولة الدعوة",
+  "famDataLoadError": "تعذّر تحميل البيانات",
+  "famGuardianSaved": "بيانات ولي الأمر اتحفظت",
+  "famDataSaveError": "تعذّر حفظ البيانات — جرّب تاني",
+  "famPhoneLabel": "رقم الهاتف",
+  "famPhoneInvalid": "رقم الهاتف من ١٠ إلى ١٥ رقم",
+  "famPickHousehold": "اختار الأسرة",
+  "famHouseholdsLoadFailed": "تعذّر تحميل الأسر",
+  "famPickExistingHousehold": "اختار أسرة موجودة",
+  "famNewHouseholdNameLabel": "اسم الأسرة الجديدة",
+  "famHouseholdNameRequired": "اكتب اسم الأسرة أو اختار أسرة موجودة",
+  "famSaveData": "حفظ البيانات",
+  "famEditDataHousehold": "تعديل البيانات / الأسرة",
+  "famEditGuardian": "تعديل ولي الأمر",
+  "famPaymentManageHousehold": "سجّل دفعة / إدارة الأسرة",
+  "famUnlinkConfirmTitle": "إلغاء ربط ولي الأمر بالطفل؟",
+  "famUnlinkConfirm": "إلغاء الربط",
+  "famUnlinkConfirmMessage": "الحساب والأسرة هيفضلوا موجودين",
+  "famUnlinkError": "تعذّر إلغاء الربط",
+  "famUnlinkChild": "إلغاء ربط الطفل",
+  "famHouseholdLoadError": "تعذّر تحميل الأسرة — جرّب تاني",
+  "famSubscriptionActive": "الاشتراك نشط",
+  "famSubscriptionNeedsRenewal": "اشتراك محتاج تجديد",
+  "famChildrenCount": "{count, plural, other{{countText} أطفال}}",
+  "@famChildrenCount": {
+    "description": "عدد أطفال الأسرة في سطر ربط ولي الأمر؛ countText هو الرقم كما يُعرض",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      }
+    }
+  },
+  "famLinkRowSubtitle": "{relation}: {child}\nدخول {login} · أسرة {household} · {subscription} · {children}",
+  "@famLinkRowSubtitle": {
+    "description": "السطر الفرعي لكارت ربط ولي الأمر؛ login/household علامات ✓ أو ✗، subscription حالة الاشتراك، children نص عدد الأطفال",
+    "placeholders": {
+      "relation": {
+        "type": "String"
+      },
+      "child": {
+        "type": "String"
+      },
+      "login": {
+        "type": "String"
+      },
+      "household": {
+        "type": "String"
+      },
+      "subscription": {
+        "type": "String"
+      },
+      "children": {
+        "type": "String"
+      }
+    }
+  },
+  "subsHouseholdAdded": "الأسرة اتضافت",
+  "subsHouseholdNameRequired": "اكتب اسم الأسرة",
+  "subsRecordPaymentTitle": "تسجيل دفعة",
+  "subsHouseholdLoadError": "تعذّر تحميل الأسرة — جرّب تاني",
+  "subsPickMemberRequired": "اختار الفرد",
+  "subsMemberAdded": "الفرد اتضاف للأسرة",
+  "subsAddMemberFailed": "تعذّر إضافة الفرد — ممكن يكون مرتبط بأسرة بالفعل",
+  "subsStatusRefreshError": "تعذّر تحديث الحالة — راجع الاتصال وجرّب تاني",
+  "subsLoadSubscriptionError": "تعذّر تحميل الاشتراك — راجع الاتصال",
+  "subsActive": "اشتراكك نشط",
+  "subsNeedsRenewal": "اشتراكك محتاج تجديد",
+  "subsNoHouseholdLinked": "حسابك لسه مش مرتبط بأسرة — الإدارة تقدر تربط الأسرة والطفل",
+  "subsRefreshStatus": "تحديث الحالة",
+  "subsWhatsappOpenError": "تعذّر فتح واتساب — رقم الإدارة: {phone}",
+  "@subsWhatsappOpenError": {
+    "description": "Snackbar when WhatsApp can't be opened; shows the center phone.",
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "subsAdminWhatsapp": "واتساب الإدارة",
+  "subsSeeChildren": "شوف ولادك",
+  "subsMorePaymentsError": "تعذّر تحميل باقي الدفعات — جرّب تاني",
+  "subsMonthlyAmountPerMonth": "{amount} ج.م شهريًا",
+  "@subsMonthlyAmountPerMonth": {
+    "description": "Household monthly fee; amount is pre-formatted with Arabic digits.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "subsDueMonthsTitle": "الشهور المستحقة — آخر ١٢ شهر",
+  "subsNoDueMonths": "مفيش شهور مستحقة",
+  "subsPaymentsLogTitle": "سجل الدفعات",
+  "subsPaymentAmountVoided": "{amount} ج.م — ملغاة",
+  "@subsPaymentAmountVoided": {
+    "description": "Payment row subtitle for a voided payment; amount pre-formatted.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "subsPaymentAmountPaid": "{amount} ج.م — مدفوعة",
+  "@subsPaymentAmountPaid": {
+    "description": "Payment row subtitle for a paid payment; amount pre-formatted.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "subsConfirmPaymentTitle": "تأكيد الدفعة",
+  "subsPaymentConfirmMessage": "{household} — {month}/{year} — {amount} ج.م",
+  "@subsPaymentConfirmMessage": {
+    "description": "Confirm sheet body before recording a payment; numbers pre-formatted with Arabic digits.",
+    "placeholders": {
+      "household": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      },
+      "year": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "subsConfirmPaymentAction": "تسجيل الدفعة",
+  "subsPaymentRecorded": "الدفعة اتسجّلت",
+  "subsUndo": "تراجع",
+  "subsPaymentVoided": "الدفعة اتلغت",
+  "subsVoidPaymentError": "تعذّر إلغاء الدفعة — راجع الإدارة",
+  "subsMonthAlreadyPaid": "الشهر ده مدفوع بالفعل",
+  "subsRecordPaymentError": "تعذّر تسجيل الدفعة — جرّب تاني",
+  "subsPaymentMonthLabel": "الشهر: {month}/{year}",
+  "@subsPaymentMonthLabel": {
+    "description": "Month picker button in the record-payment sheet; numbers pre-formatted.",
+    "placeholders": {
+      "month": {
+        "type": "String"
+      },
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "subsAmountLabel": "المبلغ (ج.م)",
+  "subsAmountInvalid": "اكتب مبلغ صحيح",
+  "subsPaymentMethodLabel": "طريقة الدفع",
+  "subsMethodCash": "كاش",
+  "subsMethodOther": "أخرى",
+  "subsReviewAndRecord": "مراجعة وتسجيل الدفعة",
+  "invCreateError": "تعذّر إنشاء الدعوة — جرّب تاني",
+  "invParentsHint": "لأولياء الأمور استخدم «إضافة ولي أمر» من بطاقة الطالب",
+  "invRoleManager": "مدير",
+  "invCreateLinkButton": "إنشاء رابط دعوة",
+  "invLinkReadyShare": "رابط الدعوة جاهز — شاركه مع المستخدم عشان يعيّن كلمة السر",
+  "invFailureForbidden": "الدعوة للأدمن بس",
+  "invFailureAlreadyHasLogin": "الشخص ده عنده حساب دخول بالفعل — خليه يدخل بإيميله، ولو نسي كلمة السر يدوس «نسيت كلمة السر؟» في شاشة الدخول",
+  "invFailureEmailAlreadyRegistered": "الإيميل ده متسجّل بحساب تاني — استخدم إيميل مختلف، أو لو هو نفس الشخص يدوس «نسيت كلمة السر؟»",
+  "invFailureParentNeedsHousehold": "ولي الأمر لازم يكون في أسرة ومربوط بطفل الأول — كمّل بياناته من «تعديل البيانات / الأسرة» وبعدين ابعت الدعوة",
+  "invFailureParentNeedsFamilyFlow": "أولياء الأمور بيتضافوا من «ربط أولياء الأمور» الأول، وبعدها تقدر تبعتلهم دعوة",
+  "invFailureInvalidExistingPerson": "الحساب ده مش متاح للدعوة (موقوف أو دوره مختلف) — راجع بياناته من لوحة الإدارة",
+  "invFailureBadRequest": "اتأكد من الإيميل والاسم والدور وجرّب تاني",
+  "invFailureLinkFailed": "تعذّر إنشاء رابط الدعوة — لو الإيميل ده متسجّل قبل كده استخدم إيميل تاني، وإلا جرّب بعد شوية",
+  "invFailureLinkMissing": "اتعمل الحساب لكن رابط الدعوة مرجعش — تواصل مع الإدارة",
+  "invFailureUnknown": "مش قادرين نبعت الدعوة — اتأكد من البيانات وجرّب تاني",
+  "syncQueueUpdateError": "تعذّر تحديث الطابور — السجل لسه محفوظ",
+  "@syncQueueUpdateError": {
+    "description": "Snackbar when a sync queue action (retry/discard) fails"
+  },
+  "syncOpSessionOpen": "فتح حصة",
+  "@syncOpSessionOpen": {
+    "description": "Outbox operation label: open session"
+  },
+  "syncOpSessionClose": "قفل حصة",
+  "@syncOpSessionClose": {
+    "description": "Outbox operation label: close session"
+  },
+  "syncOpAttendanceMark": "حضور",
+  "@syncOpAttendanceMark": {
+    "description": "Outbox operation label: attendance mark"
+  },
+  "syncReasonServerRejected": "رفض السيرفر السجل",
+  "@syncReasonServerRejected": {
+    "description": "Dead-letter reason when no error is recorded"
+  },
+  "syncReasonDependent": "راجع السجلات السابقة وأعد محاولة الكل قبل قفل الحصة",
+  "@syncReasonDependent": {
+    "description": "Dead-letter reason: depends on earlier failed records"
+  },
+  "syncReasonPermission": "الصلاحية مرفوضة — راجع الإدارة",
+  "@syncReasonPermission": {
+    "description": "Dead-letter reason: permission denied"
+  },
+  "syncReasonGeneric": "راجع البيانات مع الإدارة ثم أعد المحاولة",
+  "@syncReasonGeneric": {
+    "description": "Dead-letter reason: generic fallback"
+  },
+  "syncFlushNeedsReview": "في سجلات محتاجة مراجعة",
+  "@syncFlushNeedsReview": {
+    "description": "Snackbar after manual sync: some records failed"
+  },
+  "syncFlushStillPending": "السجلات لسه محفوظة وفي انتظار الاتصال",
+  "@syncFlushStillPending": {
+    "description": "Snackbar after manual sync: still pending (offline)"
+  },
+  "syncFlushAllSynced": "كل السجلات اتزامنت",
+  "@syncFlushAllSynced": {
+    "description": "Snackbar after manual sync: everything synced"
+  },
+  "syncNow": "زامن دلوقتي",
+  "@syncNow": {
+    "description": "Button: sync now"
+  },
+  "syncReadQueueError": "تعذّر قراءة السجلات المحفوظة",
+  "@syncReadQueueError": {
+    "description": "Error reading local outbox/dead letters"
+  },
+  "syncSavedOnDeviceAwaiting": "محفوظ على الجهاز — في انتظار المزامنة",
+  "@syncSavedOnDeviceAwaiting": {
+    "description": "Subtitle for a pending outbox record"
+  },
+  "syncDeleteScoreTitle": "حذف الدرجة؟",
+  "@syncDeleteScoreTitle": {
+    "description": "Confirm title when discarding a failed tasmee record"
+  },
+  "syncDeleteRecordTitle": "حذف السجل؟",
+  "@syncDeleteRecordTitle": {
+    "description": "Confirm title when discarding a failed record"
+  },
+  "syncDeleteRecordMessage": "السجل ده هيتحذف نهائيًا من الجهاز",
+  "@syncDeleteRecordMessage": {
+    "description": "Confirm message when discarding a failed record"
+  },
+  "syncDeletePermanently": "حذف نهائي",
+  "@syncDeletePermanently": {
+    "description": "Confirm button: delete permanently"
+  },
+  "syncRecordDeleted": "السجل اتحذف",
+  "@syncRecordDeleted": {
+    "description": "Snackbar after discarding a failed record"
+  },
+  "routeMySubscriptionTitle": "اشتراكي",
+  "@routeMySubscriptionTitle": {
+    "description": "Page title for the parent subscription route"
+  },
+  "routeHouseholdFallback": "الأسرة",
+  "@routeHouseholdFallback": {
+    "description": "Fallback household name when missing from route query"
+  },
+  "routeCompetitionFallback": "المسابقة",
+  "@routeCompetitionFallback": {
+    "description": "Fallback competition name when missing from route query"
+  },
+  "commonApprovalDefaultSubject": "التقييم",
+  "@commonApprovalDefaultSubject": {
+    "description": "Default subject (definite noun) for approval actions"
+  },
+  "commonApproveConfirmTitle": "اعتماد {subject}؟",
+  "@commonApproveConfirmTitle": {
+    "description": "Approve confirmation title; subject is a definite noun like التقييم",
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "commonApproveConfirmMessage": "راجع المحتوى قبل الاعتماد",
+  "@commonApproveConfirmMessage": {
+    "description": "Approve confirmation message"
+  },
+  "commonApprove": "اعتماد",
+  "@commonApprove": {
+    "description": "Approve button / confirm label"
+  },
+  "commonReturnToTeacher": "رجّعه للمعلّم",
+  "@commonReturnToTeacher": {
+    "description": "Return-to-teacher button and sheet title"
+  },
+  "commonApprovedSnack": "{subject} اتعتمد",
+  "@commonApprovedSnack": {
+    "description": "Snackbar after approval",
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "commonReturnedSnack": "{subject} رجع للمعلّم مع السبب",
+  "@commonReturnedSnack": {
+    "description": "Snackbar after returning to teacher",
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "commonDecisionSaveError": "تعذّر حفظ القرار — جرّب تاني",
+  "@commonDecisionSaveError": {
+    "description": "Error saving approve/return decision"
+  },
+  "commonReturnReasonLabel": "سبب الإرجاع",
+  "@commonReturnReasonLabel": {
+    "description": "Return reason field label"
+  },
+  "commonReturnReasonRequired": "اكتب المطلوب تعديله",
+  "@commonReturnReasonRequired": {
+    "description": "Validation: return reason required"
+  },
+  "commonReturnSubject": "إرجاع {subject}",
+  "@commonReturnSubject": {
+    "description": "Submit button in return-reason form",
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "commonSearch": "بحث",
+  "@commonSearch": {
+    "description": "Search field label"
+  },
+  "commonNoResultsTryAnotherName": "مفيش نتائج — جرّب اسم تاني",
+  "@commonNoResultsTryAnotherName": {
+    "description": "Empty search results in pickers"
+  },
+  "commonSearchByName": "بحث بالاسم",
+  "@commonSearchByName": {
+    "description": "Default server-search field label"
+  },
+  "commonResultsLoadError": "تعذّر تحميل النتائج — جرّب تاني",
+  "@commonResultsLoadError": {
+    "description": "Error loading search results"
+  },
+  "commonRefineSearchHint": "اكتب اسم أوضح عشان تضيق النتائج",
+  "@commonRefineSearchHint": {
+    "description": "Hint when results hit the cap"
+  },
+  "commonContactAdmin": "تواصل مع الإدارة",
+  "@commonContactAdmin": {
+    "description": "Contact administration button / tile"
+  },
+  "commonAdminPhoneMissing": "رقم الإدارة مش مضاف — تواصل مع المشرف في الدار",
+  "@commonAdminPhoneMissing": {
+    "description": "Center phone not configured"
+  },
+  "commonAdminPhone": "رقم الإدارة: {phone}",
+  "@commonAdminPhone": {
+    "description": "Shows center phone when dialing fails",
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "commonAdminPhoneLoadError": "تعذّر تحميل رقم الإدارة — جرّب تاني",
+  "@commonAdminPhoneLoadError": {
+    "description": "Error loading center phone"
+  },
+  "commonLoadMoreError": "تعذّر تحميل الباقي — جرّب تاني",
+  "@commonLoadMoreError": {
+    "description": "Error loading next page"
+  },
+  "commonShowMore": "عرض المزيد",
+  "@commonShowMore": {
+    "description": "Load more button"
+  },
+  "commonSaveFailedKeepData": "تعذّر الحفظ — بياناتك لسه هنا، جرّب تاني",
+  "@commonSaveFailedKeepData": {
+    "description": "Async form save failure, form stays open"
+  },
+  "settingsAccountSection": "حسابي",
+  "@settingsAccountSection": {
+    "description": "Settings section header: account"
+  },
+  "settingsNameLoadError": "تعذّر تحميل الاسم",
+  "@settingsNameLoadError": {
+    "description": "Error loading user display name"
+  },
+  "settingsAccountFallback": "الحساب",
+  "@settingsAccountFallback": {
+    "description": "Fallback when the account email is unavailable"
+  },
+  "settingsLoginEmail": "إيميل الدخول",
+  "@settingsLoginEmail": {
+    "description": "Subtitle under the login email"
+  },
+  "settingsChangePassword": "تغيير كلمة السر",
+  "@settingsChangePassword": {
+    "description": "Change password tile and sheet title"
+  },
+  "settingsSyncSection": "المزامنة",
+  "@settingsSyncSection": {
+    "description": "Settings section header: sync"
+  },
+  "settingsAboutSection": "عن التطبيق",
+  "@settingsAboutSection": {
+    "description": "Settings section header: about"
+  },
+  "settingsAppVersion": "نسخة التطبيق",
+  "@settingsAppVersion": {
+    "description": "App version tile title"
+  },
+  "settingsVersionLoading": "جاري التحميل…",
+  "@settingsVersionLoading": {
+    "description": "App version loading placeholder"
+  },
+  "settingsAdminPhoneMissing": "اطلب رقم الإدارة من الدار",
+  "@settingsAdminPhoneMissing": {
+    "description": "Center phone not configured (settings tile)"
+  },
+  "settingsCallFailed": "تعذّر فتح الاتصال — {phone}",
+  "@settingsCallFailed": {
+    "description": "Dialer could not be opened",
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLogoutConfirmTitle": "تسجيل خروج؟",
+  "@settingsLogoutConfirmTitle": {
+    "description": "Logout confirmation title"
+  },
+  "settingsLogoutConfirm": "تسجيل خروج",
+  "@settingsLogoutConfirm": {
+    "description": "Logout confirmation button"
+  },
+  "settingsLogoutConfirmMessage": "الدرجات المعلّقة هتفضل محفوظة على الجهاز",
+  "@settingsLogoutConfirmMessage": {
+    "description": "Logout confirmation message"
+  },
+  "settingsLogoutError": "تعذّر تسجيل الخروج — جرّب تاني",
+  "@settingsLogoutError": {
+    "description": "Logout failure"
+  },
+  "settingsNewPasswordLabel": "كلمة السر الجديدة",
+  "@settingsNewPasswordLabel": {
+    "description": "New password field label"
+  },
+  "settingsPasswordMinLength": "٨ أحرف على الأقل",
+  "@settingsPasswordMinLength": {
+    "description": "Validation: password minimum length"
+  },
+  "settingsConfirmPasswordLabel": "تأكيد كلمة السر",
+  "@settingsConfirmPasswordLabel": {
+    "description": "Confirm password field label"
+  },
+  "settingsPasswordMismatch": "كلمتا السر مختلفتين",
+  "@settingsPasswordMismatch": {
+    "description": "Validation: passwords differ"
+  },
+  "settingsSavePassword": "حفظ كلمة السر",
+  "@settingsSavePassword": {
+    "description": "Save password button"
+  },
+  "settingsPasswordChanged": "كلمة السر اتغيّرت",
+  "@settingsPasswordChanged": {
+    "description": "Snackbar after password change"
+  },
+  "settingsPasswordChangeError": "تعذّر تغيير كلمة السر — جرّب تاني أو استخدم الاستعادة",
+  "@settingsPasswordChangeError": {
+    "description": "Password change failure"
+  },
+  "sesExcuseRequestError": "تعذّر إرسال طلب العذر",
+  "sesCenterPhoneMissing": "رقم الإدارة مش مضاف — كلّم المشرف لربط الطلبة",
+  "sesCenterPhoneLoadError": "تعذّر تحميل رقم الإدارة",
+  "sesAddStudents": "ضيف طلاب",
+  "sesContactAdministration": "كلّم الإدارة",
+  "sesAttendanceSaveError": "تعذّر حفظ الحضور — جرّب تاني",
+  "sesOpenSessionError": "تعذّر فتح الحصة — راجع الاتصال وجرّب تاني",
+  "sesClosedTodaySummary": "✓ حصة النهارده اتقفلت — {present} حضور، {tasmee} تسميع، {absent} غياب",
+  "@sesClosedTodaySummary": {
+    "description": "Closed-today summary; counts are pre-formatted Arabic digits",
+    "placeholders": {
+      "present": {
+        "type": "String"
+      },
+      "tasmee": {
+        "type": "String"
+      },
+      "absent": {
+        "type": "String"
+      }
+    }
+  },
+  "sesViewDetails": "شوف التفاصيل",
+  "sesSessionDetailsTitle": "تفاصيل الحصة",
+  "sesAttendanceNotRecorded": "حضور غير مسجّل",
+  "sesTasmeeRecordedMark": "✓ تسميع",
+  "sesNoTasmee": "بدون تسميع",
+  "sesExtraSession": "حصة إضافية",
+  "sesExcuseReasonLabel": "السبب (اختياري)",
+  "sesExcuseSubmit": "إرسال الطلب",
+  "sesOutboxAttendance": "{name} — حضور",
+  "@sesOutboxAttendance": {
+    "description": "Offline-queue display label for an attendance mark",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sesOutboxTasmee": "{name} — تسميع {score}/١٠",
+  "@sesOutboxTasmee": {
+    "description": "Offline-queue display label for a tasmee record; score is the raw number",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "sesOutboxCloseSession": "قفل الحصة",
+  "@sesOutboxCloseSession": {
+    "description": "Offline-queue display label for closing the session"
+  },
+  "sesSessionClosed": "الحصة اتقفلت",
+  "sesMarkUnrecordedPresentPrompt": "{count, plural, other{{countText} طلاب من غير حضور متسجّل — اعتبرهم حاضرين؟}}",
+  "@sesMarkUnrecordedPresentPrompt": {
+    "description": "countText is count pre-formatted in Arabic digits",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      }
+    }
+  },
+  "commonSavedSuccessfully": "اتحفظ بنجاح",
+  "commonFieldRequired": "املا الحقل ده",
+  "sesRangeIncomplete": "املا كل الخانات صح",
+  "sesRangeStartAyahTooLarge": "رقم آية البداية أكبر من آيات السورة",
+  "sesRangeEndAyahTooLarge": "رقم آية النهاية أكبر من آيات السورة",
+  "sesRangeEndBeforeStart": "نهاية المقطع لازم تكون بعد بدايتها",
+  "sesTasmeeRecorded": "التسميع اتسجّل",
+  "sesScoreCellSemantics": "درجة {score} من عشرة",
+  "@sesScoreCellSemantics": {
+    "description": "Screen-reader label of a score pad cell; score pre-formatted",
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "sesExcuseRequested": "طلب متبعت",
+  "sesPortionSet": "المقطع اتحدّد",
+  "supEvalSaved": "التقييم اتحفظ",
+  "supLevelExcellent": "ممتاز",
+  "supLevelVeryGood": "جيد جدًا",
+  "supLevelGood": "جيد",
+  "supLevelAcceptable": "مقبول",
+  "supLevelNeedsFollowUp": "يحتاج متابعة",
+  "tchAllRequestsReviewed": "كل الطلبات متراجعة",
+  "tchRefreshRequests": "تحديث الطلبات",
+  "tchDevApprovalSubject": "بند التطوّر",
+  "tchRevisionRequested": "مطلوب تعديل: {reason}",
+  "@tchRevisionRequested": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "tchEditAndResubmit": "تعديل وإعادة إرسال",
+  "tchEditDevTitle": "تعديل التطوّر",
+  "tchDevFieldLabel": "التطوّر",
+  "tchDevEditRequired": "اكتب التعديل",
+  "tchResubmit": "إعادة إرسال",
+  "commonSentForApproval": "التقييم اتبعت للاعتماد",
+  "tchResubmitFailed": "تعذّر إعادة الإرسال",
+  "monSummaryRequired": "اكتب ملخّص التقييم",
+  "monStatusReturned": "مطلوب تعديل",
+  "monReturnReason": "سبب الإرجاع: {reason}",
+  "@monReturnReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "monAllEvalsReviewed": "كل التقييمات متراجعة",
+  "monRefreshEvals": "تحديث التقييمات",
+  "fbkComplaintStatusOpen": "مفتوحة",
+  "@fbkComplaintStatusOpen": {
+    "description": "Complaint status badge: open"
+  },
+  "fbkComplaintStatusAnswered": "تم الرد",
+  "@fbkComplaintStatusAnswered": {
+    "description": "Complaint status badge: answered"
+  },
+  "fbkComplaintStatusReopened": "أعيد فتحها",
+  "@fbkComplaintStatusReopened": {
+    "description": "Complaint status badge: reopened"
+  },
+  "fbkComplaintStatusClosed": "مقفولة",
+  "@fbkComplaintStatusClosed": {
+    "description": "Complaint status badge: closed"
+  },
+  "fbkCategoryAcademic": "أكاديمي",
+  "@fbkCategoryAcademic": {
+    "description": "Complaint category: academic"
+  },
+  "fbkCategoryFinancial": "مالي",
+  "@fbkCategoryFinancial": {
+    "description": "Complaint category: financial"
+  },
+  "fbkCategoryBehavioral": "سلوكي",
+  "@fbkCategoryBehavioral": {
+    "description": "Complaint category: behavioral"
+  },
+  "fbkCategoryPrivacy": "خصوصية",
+  "@fbkCategoryPrivacy": {
+    "description": "Complaint category: privacy"
+  },
+  "fbkCategoryOther": "أخرى",
+  "@fbkCategoryOther": {
+    "description": "Complaint category: other"
+  },
+  "fbkComplaintSent": "الشكوى اتبعتت",
+  "@fbkComplaintSent": {
+    "description": "Snackbar after submitting a new complaint"
+  },
+  "fbkResponseSaved": "الرد اتحفظ",
+  "@fbkResponseSaved": {
+    "description": "Snackbar after the manager saves a complaint response"
+  },
+  "fbkSendFailedDraftKept": "تعذّر الإرسال — كلامك لسه محفوظ هنا، جرّب تاني",
+  "@fbkSendFailedDraftKept": {
+    "description": "Inline error in complaint compose sheet; the typed text is kept"
+  },
+  "fbkComplaintCategoryLabel": "تصنيف الشكوى",
+  "@fbkComplaintCategoryLabel": {
+    "description": "Label of the complaint category dropdown"
+  },
+  "fbkDetailsRequired": "اكتب التفاصيل قبل الإرسال",
+  "@fbkDetailsRequired": {
+    "description": "Validator: complaint/response text is empty"
+  },
+  "fbkDetailsTooLong": "اكتب تفاصيل أقل من ٥٠٠٠ حرف",
+  "@fbkDetailsTooLong": {
+    "description": "Validator: complaint/response text exceeds 5000 chars"
+  },
+  "fbkSubmitComplaint": "إرسال الشكوى",
+  "@fbkSubmitComplaint": {
+    "description": "Button: submit a new complaint"
+  },
+  "fbkSaveResponse": "حفظ الرد",
+  "@fbkSaveResponse": {
+    "description": "Button: save the manager response to a complaint"
+  },
+  "fbkStarsTooltip": "{stars} من ٥ نجوم",
+  "@fbkStarsTooltip": {
+    "description": "Tooltip on each star button in the teacher rating sheet",
+    "placeholders": {
+      "stars": {
+        "type": "int"
+      }
+    }
+  },
+  "fbkRateErrorNoTeacher": "الطفل مش في حلقة بمعلّم دلوقتي",
+  "@fbkRateErrorNoTeacher": {
+    "description": "Rating error: child has no active circle with a teacher"
+  },
+  "fbkRateErrorAlreadyRated": "قيّمت المعلّم الشهر ده بالفعل",
+  "@fbkRateErrorAlreadyRated": {
+    "description": "Rating error: parent already rated the teacher this month"
+  },
+  "ppCurrentPortion": "المقطع الحالي",
+  "@ppCurrentPortion": {
+    "description": "Child card info row title: current memorization portion"
+  },
+  "ppTabProgress": "التقدّم",
+  "@ppTabProgress": {
+    "description": "Child card tab: progress"
+  },
+  "ppTabMediaConsent": "الوسائط والموافقة",
+  "@ppTabMediaConsent": {
+    "description": "Child card tab: media and consent"
+  },
+  "ppTabNotes": "الملاحظات",
+  "@ppTabNotes": {
+    "description": "Child card tab: notes"
+  },
+  "ppAttendanceCurrentMonth": "الحضور — الشهر الحالي",
+  "@ppAttendanceCurrentMonth": {
+    "description": "Child card attendance summary card header"
+  },
+  "ppWithdrawConsentTitle": "سحب موافقة الوسائط؟",
+  "@ppWithdrawConsentTitle": {
+    "description": "Confirm sheet title when a parent withdraws media consent"
+  },
+  "ppWithdrawConsentMessage": "الإدارة مش هتقدر تعرض الوسائط الجديدة بالموافقة دي",
+  "@ppWithdrawConsentMessage": {
+    "description": "Confirm sheet body when withdrawing media consent"
+  },
+  "ppWithdrawConsentConfirm": "سحب الموافقة",
+  "@ppWithdrawConsentConfirm": {
+    "description": "Confirm button: withdraw consent"
+  },
+  "ppConsentGranted": "الموافقة اتسجّلت",
+  "@ppConsentGranted": {
+    "description": "Snackbar: consent granted"
+  },
+  "ppConsentWithdrawn": "الموافقة اتسحبت",
+  "@ppConsentWithdrawn": {
+    "description": "Snackbar: consent withdrawn"
+  },
+  "ppConsentUpdateError": "تعذّر تحديث الموافقة",
+  "@ppConsentUpdateError": {
+    "description": "Snackbar: consent update failed"
+  },
+  "enrPickCircleTitle": "اختار الحلقة",
+  "@enrPickCircleTitle": {
+    "description": "Title of the enrollable circle picker sheet"
+  },
+  "enrCirclesLoadError": "تعذّر تحميل الحلقات — جرّب تاني",
+  "@enrCirclesLoadError": {
+    "description": "Error loading enrollable circles"
+  },
+  "enrNoCirclesHint": "ضيف منهج ومستوى وحلقة من إعدادات المناهج الأول",
+  "@enrNoCirclesHint": {
+    "description": "Empty state of the circle picker when no circles exist"
+  },
+  "enrCircleStudentCount": "{count, plural, other{{countText} طالب}}",
+  "@enrCircleStudentCount": {
+    "description": "Circle picker subtitle: active students (no capacity limit). countText is count formatted with Arabic digits.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      }
+    }
+  },
+  "enrCircleStudentCapacity": "{count, plural, other{{countText}/{maxText} طالب}}",
+  "@enrCircleStudentCapacity": {
+    "description": "Circle picker subtitle: active students out of capacity. countText/maxText are formatted with Arabic digits.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "countText": {
+        "type": "String"
+      },
+      "maxText": {
+        "type": "String"
+      }
+    }
+  },
+  "enrCircleFull": "مكتملة",
+  "@enrCircleFull": {
+    "description": "Badge on a circle that reached capacity"
+  },
+  "enrStudentEnrolled": "الطالب اتسجّل",
+  "@enrStudentEnrolled": {
+    "description": "Snackbar after enrolling a student"
+  },
+  "enrLinkGuardian": "ربط ولي أمر",
+  "@enrLinkGuardian": {
+    "description": "Snackbar action: link a guardian to the new student"
+  },
+  "enrAddGuardianTitle": "إضافة ولي أمر",
+  "@enrAddGuardianTitle": {
+    "description": "Sheet title: add guardian"
+  },
+  "@commonFieldRequired": {
+    "description": "Generic required-field validator (shared by admin setup, intake and enrollment sheets)"
+  },
+  "@commonSavedSuccessfully": {
+    "description": "Generic save-success snackbar (shared by admin setup and intake sheets)"
+  },
+  "admCircleCapacityInvalid": "اكتب سعة الحلقة كرقم أكبر من صفر",
+  "@admCircleCapacityInvalid": {
+    "description": "Validator: circle capacity must be a positive number"
+  },
+  "itkPlacementSaved": "نتيجة اختبار المستوى اتسجّلت",
+  "@itkPlacementSaved": {
+    "description": "Snackbar after saving a placement test result"
+  },
+  "itkStudentPlaced": "الطالب اتسكّن في الحلقة",
+  "@itkStudentPlaced": {
+    "description": "Snackbar after placing an applicant into a circle"
+  },
+  "excConfirmDecisionTitle": "تأكيد قرار العذر",
+  "@excConfirmDecisionTitle": {
+    "description": "Confirm sheet title before approving/rejecting an excuse"
+  },
+  "excSaveDecision": "حفظ القرار",
+  "@excSaveDecision": {
+    "description": "Confirm button: save excuse decision"
+  },
+  "excDecisionSaved": "قرار العذر اتحفظ",
+  "@excDecisionSaved": {
+    "description": "Snackbar after saving an excuse decision"
+  },
+  "errAccountSuspended": "الحساب موقوف — تواصل مع الإدارة",
+  "errInvalidCredentials": "الإيميل أو كلمة السر مش صحيحين",
+  "errTooManyAttempts": "محاولات كتير — استنى شوية وجرّب تاني",
+  "errSignInFailed": "تعذّر تسجيل الدخول — جرّب تاني",
+  "errResetLinkNotConfigured": "رابط الموقع مش مضبوط — تواصل مع الإدارة",
+  "errFileTooLarge": "الملف أكبر من ٢٠ ميجا — اختار ملف أصغر",
+  "errSessionExpired": "انتهت الجلسة — سجّل دخول تاني",
+  "errFileUploadFailed": "مش قادرين نرفع الملف — جرّب تاني",
+  "errDocumentSaveFailed": "مش قادرين نسجّل المستند — جرّب تاني",
+  "errMediaConsentRequired": "محتاج موافقة ولي الأمر للوسائط دي",
+  "errMediaUploadFailed": "مش قادرين نرفع الوسيط — جرّب تاني",
+  "errMediaUrlFailed": "مش قادرين نجيب رابط الوسيط",
+  "errNationalIdTaken": "الرقم القومي ده مسجّل قبل كده لشخص تاني",
+  "errAlreadyInHousehold": "الشخص ده مضاف لأسرة بالفعل"
 }

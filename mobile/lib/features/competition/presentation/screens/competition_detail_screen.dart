@@ -51,7 +51,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
         notifiers: <ChangeNotifier>[c],
         child: AppAsyncFormSheet(
           submitLabel: l.cmpSave,
-          successMessage: 'الدرجة اتحفظت',
+          successMessage: l.cmpScoreSaved,
           onSubmit: () => ref
               .read(competitionApplicationsProvider(competitionId).notifier)
               .score(app.id, parseLocalizedDouble(c.text)!),
@@ -67,7 +67,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
                         !value.isFinite ||
                         value < 0 ||
                         value > 100
-                    ? 'اكتب درجة من ٠ إلى ١٠٠'
+                    ? l.cmpScoreRangeError
                     : null;
               },
             ),
@@ -143,7 +143,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
                   onPressed: () => ref.invalidate(
                     competitionApplicationsProvider(competitionId),
                   ),
-                  child: const Text('تحديث البيانات'),
+                  child: Text(l.commonRefreshData),
                 ),
               )
             : AppRefreshIndicator(

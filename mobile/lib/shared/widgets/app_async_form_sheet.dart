@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import 'app_button.dart';
 import 'app_snackbar.dart';
@@ -37,7 +38,7 @@ class _AppAsyncFormSheetState extends State<AppAsyncFormSheet> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'تعذّر الحفظ — بياناتك لسه هنا، جرّب تاني');
+        setState(() => _error = AppL10n.of(context).commonSaveFailedKeepData);
       }
     } finally {
       if (mounted) setState(() => _busy = false);

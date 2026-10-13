@@ -100,9 +100,9 @@ class FeedbackRepository {
         .eq('id', id);
   }
 
-  /// ولي الأمر يقيّم محفّظ ابنه (بيستنتج المعلّم من حلقة الطفل النشطة).
-  /// بيرجّع null لو نجح، أو رسالة خطأ بالعربي (مفيش معلّم / قيّم قبل كده).
-  Future<String?> rateChildTeacher({
+  /// ولي الأمر يقيّم معلّم ابنه (بيستنتج المعلّم من حلقة الطفل النشطة).
+  /// بيرجّع null لو نجح، أو سبب الفشل (مفيش معلّم / قيّم قبل كده).
+  Future<RateTeacherFailure?> rateChildTeacher({
     required String studentPersonId,
     required int stars,
     String? comment,
@@ -115,7 +115,7 @@ class FeedbackRepository {
         .maybeSingle();
     final String? teacherId =
         (enr?['circle'] as Map<String, dynamic>?)?['teacher_id'] as String?;
-    if (teacherId == null) return 'الطفل مش في حلقة بمعلّم دلوقتي';
+    if (teacherId == null) return RateTeacherFailure.noTeacher;
     try {
       await _client.from('teacher_rating').insert(<String, dynamic>{
         'teacher_person_id': teacherId,
@@ -125,10 +125,19 @@ class FeedbackRepository {
       });
       return null;
     } on PostgrestException catch (e) {
-      if (e.code == '23505') return 'قيّمت المحفّظ الشهر ده بالفعل';
+      if (e.code == '23505') return RateTeacherFailure.alreadyRated;
       rethrow;
     }
   }
+}
+
+/// سبب فشل تقييم المعلّم (الواجهة بتحوّله لرسالة).
+enum RateTeacherFailure {
+  /// الطفل مش في حلقة نشطة ليها معلّم.
+  noTeacher,
+
+  /// ولي الأمر قيّم المعلّم الشهر ده بالفعل.
+  alreadyRated,
 }
 
 @riverpod

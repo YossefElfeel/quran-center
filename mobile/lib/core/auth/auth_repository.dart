@@ -37,18 +37,20 @@ class SupabaseAuthRepository implements AuthRepository {
       await _client.auth.signInWithPassword(email: email, password: password);
     } on AuthException catch (e) {
       if (e.code == 'user_banned') {
-        throw const PermissionDeniedException(
-          'الحساب موقوف — تواصل مع الإدارة',
+        throw const PermissionDeniedException.reason(
+          AppErrorReason.accountSuspended,
         );
       }
       if (e.code == 'invalid_credentials') {
-        throw const ValidationException('الإيميل أو كلمة السر مش صحيحين');
+        throw const ValidationException.reason(
+          AppErrorReason.invalidCredentials,
+        );
       }
       if (e.code == 'over_request_rate_limit') {
-        throw const ValidationException('محاولات كتير — استنى شوية وجرّب تاني');
+        throw const ValidationException.reason(AppErrorReason.tooManyAttempts);
       }
       if (isOfflineError(e)) throw const NetworkException();
-      throw const ValidationException('تعذّر تسجيل الدخول — جرّب تاني');
+      throw const ValidationException.reason(AppErrorReason.signInFailed);
     } catch (e) {
       if (isOfflineError(e)) throw const NetworkException();
       rethrow;
@@ -58,8 +60,8 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<void> resetPassword(String email) {
     if (Env.webUrl.isEmpty) {
-      throw const ValidationException(
-        'رابط الموقع مش مضبوط — تواصل مع الإدارة',
+      throw const ValidationException.reason(
+        AppErrorReason.resetLinkNotConfigured,
       );
     }
     return _client.auth.resetPasswordForEmail(

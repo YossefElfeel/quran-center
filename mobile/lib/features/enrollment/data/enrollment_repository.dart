@@ -78,12 +78,10 @@ class EnrollmentRepository {
       return studentId as String;
     } on PostgrestException catch (e) {
       if (e.code == '23505') {
-        throw const ValidationException(
-          'الرقم القومي ده مسجّل قبل كده لشخص تاني',
-        );
+        throw const ValidationException.reason(AppErrorReason.nationalIdTaken);
       }
       if (e.code == '22023') {
-        throw const ValidationException('الرقم القومي لازم يكون ١٤ رقم');
+        throw const ValidationException.reason(AppErrorReason.nationalIdLength);
       }
       rethrow;
     }

@@ -220,7 +220,7 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
       // closing animation finishes (not while the sheet is still building).
       final String? text = await showAppModalSheet<String>(
         context: context,
-        title: 'طلب عذر',
+        title: AppL10n.of(context).sesRequestExcuse,
         builder: (BuildContext _) => const _ExcuseReasonSheet(),
       );
       if (text == null) return;
@@ -231,7 +231,7 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
         );
       } catch (_) {
         if (context.mounted) {
-          AppSnackbar.error(context, 'تعذّر إرسال طلب العذر');
+          AppSnackbar.error(context, AppL10n.of(context).sesExcuseRequestError);
         }
         return;
       }
@@ -263,14 +263,11 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
               if (settings.centerPhone.isNotEmpty) {
                 await launchUrl(Uri(scheme: 'tel', path: settings.centerPhone));
               } else if (context.mounted) {
-                AppSnackbar.info(
-                  context,
-                  'رقم الإدارة مش مضاف — كلّم المشرف لربط الطلبة',
-                );
+                AppSnackbar.info(context, l.sesCenterPhoneMissing);
               }
             } catch (_) {
               if (context.mounted) {
-                AppSnackbar.error(context, 'تعذّر تحميل رقم الإدارة');
+                AppSnackbar.error(context, l.sesCenterPhoneLoadError);
               }
             }
           },
@@ -278,8 +275,8 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
             (ref.watch(currentRolesProvider).asData?.value ?? <String>[]).any(
                   (r) => r == 'admin' || r == 'super_admin',
                 )
-                ? 'ضيف طلاب'
-                : 'كلّم الإدارة',
+                ? l.sesAddStudents
+                : l.sesContactAdministration,
           ),
         ),
       );
@@ -289,7 +286,10 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
     );
 
     if (!session.isOpen) {
-      return _ClosedView(onOpen: notifier.openSession, session: session);
+      return _ClosedView(
+        onOpen: () => notifier.openSession(l: l),
+        session: session,
+      );
     }
 
     final bool hasRevision = session.requiredRevision != null;
@@ -327,13 +327,10 @@ class _SessionBodyState extends ConsumerState<_SessionBody> {
                 canRecordTasmee: session.hasPortion,
                 onAttendanceChanged: (AttendanceStatus s) async {
                   try {
-                    await notifier.setAttendance(e.enrollmentId, s);
+                    await notifier.setAttendance(e.enrollmentId, s, l: l);
                   } catch (_) {
                     if (context.mounted) {
-                      AppSnackbar.error(
-                        context,
-                        'تعذّر حفظ الحضور — جرّب تاني',
-                      );
+                      AppSnackbar.error(context, l.sesAttendanceSaveError);
                     }
                   }
                 },
@@ -383,7 +380,7 @@ class _ClosedViewState extends State<_ClosedView> {
           context,
           e is SessionWritesBlockedException
               ? e.reason.label(AppL10n.of(context))
-              : 'تعذّر فتح الحصة — راجع الاتصال وجرّب تاني',
+              : AppL10n.of(context).sesOpenSessionError,
         );
       }
     } finally {
@@ -404,7 +401,11 @@ class _ClosedViewState extends State<_ClosedView> {
           const SizedBox(height: AppSpacing.md),
           Text(
             widget.session.closedToday
-                ? '✓ حصة النهارده اتقفلت — ${arabicNumber(widget.session.presentCount)} حضور، ${arabicNumber(widget.session.tasmeeCount)} تسميع، ${arabicNumber(widget.session.absentCount)} غياب'
+                ? l.sesClosedTodaySummary(
+                    arabicNumber(widget.session.presentCount),
+                    arabicNumber(widget.session.tasmeeCount),
+                    arabicNumber(widget.session.absentCount),
+                  )
                 : l.sesSessionStillClosed,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyLg.copyWith(color: p.textPrimary),
@@ -412,10 +413,10 @@ class _ClosedViewState extends State<_ClosedView> {
           const SizedBox(height: AppSpacing.lg),
           if (widget.session.closedToday)
             AppButton(
-              label: 'شوف التفاصيل',
+              label: l.sesViewDetails,
               onPressed: () => showAppModalSheet<void>(
                 context: context,
-                title: 'تفاصيل الحصة',
+                title: l.sesSessionDetailsTitle,
                 builder: (_) => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -425,10 +426,12 @@ class _ClosedViewState extends State<_ClosedView> {
                         subtitle: Text(
                           entry.attendanceRecorded
                               ? entry.attendance.label(AppL10n.of(context))
-                              : 'حضور غير مسجّل',
+                              : l.sesAttendanceNotRecorded,
                         ),
                         trailing: Text(
-                          entry.tasmeeRecorded ? '✓ تسميع' : 'بدون تسميع',
+                          entry.tasmeeRecorded
+                              ? l.sesTasmeeRecordedMark
+                              : l.sesNoTasmee,
                         ),
                       ),
                   ],
@@ -437,7 +440,7 @@ class _ClosedViewState extends State<_ClosedView> {
             ),
           AppButton(
             label: widget.session.closedToday
-                ? 'حصة إضافية'
+                ? l.sesExtraSession
                 : l.sesOpenTodaySession,
             variant: widget.session.closedToday
                 ? AppButtonVariant.text
@@ -473,10 +476,14 @@ class _ExcuseReasonSheetState extends State<_ExcuseReasonSheet> {
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
     children: <Widget>[
-      AppTextField(controller: _reason, label: 'السبب (اختياري)', maxLines: 3),
+      AppTextField(
+        controller: _reason,
+        label: AppL10n.of(context).sesExcuseReasonLabel,
+        maxLines: 3,
+      ),
       const SizedBox(height: AppSpacing.md),
       AppButton(
-        label: 'إرسال الطلب',
+        label: AppL10n.of(context).sesExcuseSubmit,
         onPressed: () => Navigator.of(context).pop(_reason.text.trim()),
       ),
     ],
