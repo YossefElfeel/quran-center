@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/presentation/domain_labels.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../session/presentation/widgets/score_pad.dart';
 import '../../domain/eval_criterion.dart';
 import '../controllers/circle_eval_controller.dart';
@@ -53,9 +56,7 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context).supSaveEvalError)),
-      );
+      AppSnackbar.error(context, AppL10n.of(context).supSaveEvalError);
     }
   }
 
@@ -63,11 +64,11 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
   Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -77,12 +78,12 @@ class _CriteriaEvalSheetState extends ConsumerState<CriteriaEvalSheet> {
             Text(
               l.supEvalStudentTitle(widget.studentName),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: AppTextStyles.titleSm,
             ),
             for (final EvalCriterion c in EvalCriterion.values) ...<Widget>[
               const SizedBox(height: AppSpacing.lg),
               Text(
-                c.labelAr,
+                c.label(AppL10n.of(context)),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppSpacing.sm),

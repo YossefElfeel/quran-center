@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/center_contact_button.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../admin_setup/domain/circle.dart';
 import '../controllers/eval_circles_controller.dart';
@@ -31,7 +32,11 @@ class EvalCirclesScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(evalCirclesProvider),
         ),
         data: (List<Circle> items) => items.isEmpty
-            ? EmptyState(message: l.supNoCircles, icon: Icons.groups_outlined)
+            ? EmptyState(
+                message: l.supNoCircles,
+                action: const CenterContactButton(),
+                icon: Icons.groups_outlined,
+              )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(evalCirclesProvider),
                 child: ListView.builder(

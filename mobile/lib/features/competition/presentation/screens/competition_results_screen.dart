@@ -41,7 +41,15 @@ class CompetitionResultsScreen extends ConsumerWidget {
               ref.invalidate(competitionResultsProvider(competitionId)),
         ),
         data: (List<CompetitionResultRow> items) => items.isEmpty
-            ? EmptyState(message: l.cmpNoResults, icon: Icons.leaderboard)
+            ? EmptyState(
+                message: l.cmpNoResults,
+                icon: Icons.leaderboard,
+                action: TextButton(
+                  onPressed: () =>
+                      ref.invalidate(competitionResultsProvider(competitionId)),
+                  child: const Text('تحديث البيانات'),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(competitionResultsProvider(competitionId)),

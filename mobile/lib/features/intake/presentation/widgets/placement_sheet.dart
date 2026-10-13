@@ -6,6 +6,7 @@ import '../../../../core/auth/auth_providers.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/level_option.dart';
 import '../controllers/waiting_list_controller.dart';
@@ -59,9 +60,7 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       final AppL10n l = AppL10n.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.itkPlacementSaveError)));
+      AppSnackbar.error(context, l.itkPlacementSaveError);
     }
   }
 
@@ -72,11 +71,11 @@ class _PlacementSheetState extends ConsumerState<PlacementSheet> {
       levelOptionsProvider,
     );
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

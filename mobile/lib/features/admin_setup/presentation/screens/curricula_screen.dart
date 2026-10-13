@@ -5,8 +5,10 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -28,7 +30,7 @@ class CurriculaScreen extends ConsumerWidget {
     return AppScaffold(
       title: l.admCurriculaTitle,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet<void>(
+        onPressed: () => showAppModalSheet<void>(
           context: context,
           isScrollControlled: true,
           builder: (BuildContext _) => const AddCurriculumSheet(),
@@ -43,7 +45,16 @@ class CurriculaScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(curriculaControllerProvider),
         ),
         data: (List<Curriculum> items) => items.isEmpty
-            ? EmptyState(message: l.admCurriculaEmpty)
+            ? EmptyState(
+                message: l.admCurriculaEmpty,
+                action: AppButton(
+                  label: l.admNewCurriculum,
+                  onPressed: () => showAppModalSheet<void>(
+                    context: context,
+                    builder: (_) => const AddCurriculumSheet(),
+                  ),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(curriculaControllerProvider),

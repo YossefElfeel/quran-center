@@ -9,72 +9,27 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/feedback_repository.dart';
 import '../../domain/complaint.dart';
 import '../controllers/feedback_controllers.dart';
+import '../widgets/complaint_compose_sheet.dart';
 import '../widgets/complaint_detail_content.dart';
 
 /// شكاوي المستخدم — يرفع شكوى ويشوف الردود.
 class MyComplaintsScreen extends ConsumerWidget {
   const MyComplaintsScreen({super.key});
 
-  Future<void> _add(BuildContext context, WidgetRef ref) async {
-    final AppL10n l = AppL10n.of(context);
-    String category = 'other';
-    final TextEditingController body = TextEditingController();
-    final bool? ok = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(l.fbkNewComplaint),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            DropdownButtonFormField<String>(
-              initialValue: category,
-              decoration: InputDecoration(labelText: l.fbkCategory),
-              items: complaintCategoriesAr.entries
-                  .map(
-                    (MapEntry<String, String> e) => DropdownMenuItem<String>(
-                      value: e.key,
-                      child: Text(e.value),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (String? v) => category = v ?? 'other',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            AppTextField(
-              controller: body,
-              autofocus: true,
-              maxLines: 4,
-              label: l.fbkComplaintDetails,
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.fbkSend),
-          ),
-        ],
-      ),
-    );
-    final String text = body.text;
-    body.dispose();
-    if (ok == true) {
-      await ref
-          .read(myComplaintsProvider.notifier)
-          .add(category: category, body: text);
-    }
-  }
+  Future<void> _add(BuildContext context, WidgetRef ref) =>
+      showAppModalSheet<void>(
+        context: context,
+        title: 'شكوى جديدة',
+        builder: (_) => const ComplaintComposeSheet(),
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -98,15 +53,23 @@ class MyComplaintsScreen extends ConsumerWidget {
         data: (List<Complaint> items) => items.isEmpty
             ? EmptyState(
                 message: l.fbkNoComplaintsParent,
+                action: TextButton(
+                  onPressed: () => _add(context, ref),
+                  child: Text(l.fbkNewComplaint),
+                ),
                 icon: Icons.support_agent,
               )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(myComplaintsProvider),
-                child: ListView.builder(
+                child: AppPagedList<Complaint>(
+                  items: items,
+                  loadPage: (offset) => ref
+                      .read(feedbackRepositoryProvider)
+                      .fetchMyComplaints(offset: offset),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) =>
-                      _ComplaintCard(complaint: items[i]),
+
+                  itemBuilder: (BuildContext context, Complaint item, int i) =>
+                      _ComplaintCard(complaint: item),
                 ),
               ),
       ),

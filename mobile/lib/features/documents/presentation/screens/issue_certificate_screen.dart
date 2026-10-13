@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/presentation/domain_labels.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_action_sheet.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -32,15 +35,15 @@ class IssueCertificateScreen extends ConsumerWidget {
     EligibleStudent s,
   ) async {
     final AppL10n l = AppL10n.of(context);
-    final CertificateKind? kind = await showDialog<CertificateKind>(
+    final CertificateKind? kind = await showAppModalSheet<CertificateKind>(
       context: context,
-      builder: (BuildContext context) => SimpleDialog(
+      builder: (BuildContext context) => AppChoiceSheet(
         title: Text(l.docCertificateForTitle(s.name)),
         children: <Widget>[
           for (final CertificateKind k in _kinds)
             SimpleDialogOption(
               onPressed: () => Navigator.of(context).pop(k),
-              child: Text(k.labelAr),
+              child: Text(k.label(AppL10n.of(context))),
             ),
         ],
       ),
@@ -52,7 +55,10 @@ class IssueCertificateScreen extends ConsumerWidget {
           .issueCertificate(studentPersonId: s.id, kind: kind);
       ref.invalidate(eligibleStudentsProvider);
       if (context.mounted) {
-        AppSnackbar.success(context, l.docIssuedSnack(kind.labelAr, s.name));
+        AppSnackbar.success(
+          context,
+          l.docIssuedSnack(kind.label(AppL10n.of(context)), s.name),
+        );
       }
     } catch (_) {
       if (context.mounted) {
@@ -79,6 +85,10 @@ class IssueCertificateScreen extends ConsumerWidget {
             ? EmptyState(
                 message: l.docNoEligibleStudents,
                 icon: Icons.workspace_premium_outlined,
+                action: TextButton(
+                  onPressed: () => ref.invalidate(eligibleStudentsProvider),
+                  child: const Text('تحديث البيانات'),
+                ),
               )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(eligibleStudentsProvider),

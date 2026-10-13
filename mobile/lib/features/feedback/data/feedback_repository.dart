@@ -30,19 +30,24 @@ class FeedbackRepository {
   }
 
   /// شكاويّ أنا (RLS: الكاتب يشوف بتاعته).
-  Future<List<Complaint>> fetchMyComplaints() async {
+  Future<List<Complaint>> fetchMyComplaints({
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('complaint')
         .select(
           'id, category, body, status, manager_response, '
           'created_at, responded_at',
         )
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .order('id')
+        .range(offset, offset + limit - 1);
     return rows.map(Complaint.fromMap).toList();
   }
 
   /// صندوق الشكاوى (المدير يشوف الكل).
-  Future<List<Complaint>> fetchInbox() async {
+  Future<List<Complaint>> fetchInbox({int offset = 0, int limit = 50}) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('complaint')
         .select(
@@ -50,7 +55,9 @@ class FeedbackRepository {
           'responded_at, '
           'author:author_person_id(full_name)',
         )
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .order('id')
+        .range(offset, offset + limit - 1);
     return rows.map(Complaint.fromMap).toList();
   }
 
@@ -62,11 +69,16 @@ class FeedbackRepository {
           'status': 'answered',
           'responded_at': DateTime.now().toUtc().toIso8601String(),
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id')
+        .single();
   }
 
   /// تقييمات المحفّظين (المدير/المشرف يقروا — المعلّم مستبعد عبر RLS).
-  Future<List<TeacherRatingRow>> fetchTeacherRatings() async {
+  Future<List<TeacherRatingRow>> fetchTeacherRatings({
+    int offset = 0,
+    int limit = 50,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('teacher_rating')
         .select(
@@ -74,7 +86,9 @@ class FeedbackRepository {
           'teacher:teacher_person_id(full_name)',
         )
         .order('teacher_person_id', ascending: true)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .order('id')
+        .range(offset, offset + limit - 1);
     return rows.map(TeacherRatingRow.fromMap).toList();
   }
 

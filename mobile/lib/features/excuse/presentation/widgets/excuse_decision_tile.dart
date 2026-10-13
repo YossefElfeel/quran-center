@@ -5,6 +5,8 @@ import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_confirm_sheet.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
 import '../../domain/pending_excuse.dart';
 
@@ -34,12 +36,19 @@ class _ExcuseDecisionTileState extends State<ExcuseDecisionTile> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
+      if (!await showAppConfirmSheet(
+        context: context,
+        title: 'تأكيد قرار العذر',
+        confirmLabel: 'حفظ القرار',
+        destructive: false,
+      )) {
+        return;
+      }
       await action();
+      if (mounted) AppSnackbar.success(context, 'قرار العذر اتحفظ');
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppL10n.of(context).genericError)));
+      AppSnackbar.error(context, AppL10n.of(context).genericError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

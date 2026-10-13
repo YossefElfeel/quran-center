@@ -142,7 +142,10 @@ class SupervisorEvalRepository {
 
   /// الطلبة المتعثّرين: عليهم دَيْن وعدد محاولاتهم وصل حد التعثّر أو أكتر.
   /// [threshold] بييجي من إعدادات النظام (struggle_failed_attempts).
-  Future<List<StrugglingStudent>> fetchStruggling(int threshold) async {
+  Future<List<StrugglingStudent>> fetchStruggling(
+    int threshold, {
+    int offset = 0,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('portion_ledger_entry')
         .select(
@@ -152,6 +155,9 @@ class SupervisorEvalRepository {
         .eq('state', 'failed_retry')
         .gte('attempts_count', threshold)
         .order('attempts_count', ascending: false)
+        .order('student_person_id')
+        .order('portion_id')
+        .range(offset, offset + 49)
         .timeout(const Duration(seconds: 12));
     return rows.map(StrugglingStudent.fromMap).toList();
   }

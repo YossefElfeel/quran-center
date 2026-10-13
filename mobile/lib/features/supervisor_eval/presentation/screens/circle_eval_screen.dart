@@ -9,6 +9,7 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/monthly_circle_report.dart';
@@ -31,7 +32,7 @@ class CircleEvalScreen extends ConsumerWidget {
   final String circleName;
 
   void _openEval(BuildContext context, EvalStudent s) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) => CriteriaEvalSheet(
@@ -92,6 +93,11 @@ class CircleEvalScreen extends ConsumerWidget {
             return EmptyState(
               message: l.supNoStudentsInCircle,
               icon: Icons.groups_outlined,
+              action: TextButton(
+                onPressed: () =>
+                    ref.invalidate(circleEvalControllerProvider(circleId)),
+                child: const Text('تحديث البيانات'),
+              ),
             );
           }
           final CircleEvalController notifier = ref.read(

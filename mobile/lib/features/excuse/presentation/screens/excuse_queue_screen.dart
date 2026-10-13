@@ -8,10 +8,12 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/excuse_repository.dart';
 import '../../domain/pending_excuse.dart';
 import '../controllers/pending_excuses_controller.dart';
 import '../widgets/excuse_decision_tile.dart';
@@ -101,7 +103,15 @@ class ExcuseQueueScreen extends ConsumerWidget {
         ),
         data: (List<PendingExcuse> items) {
           if (items.isEmpty) {
-            return EmptyState(message: l.excEmpty, icon: Icons.event_available);
+            return EmptyState(
+              message: l.excEmpty,
+              icon: Icons.event_available,
+              action: TextButton(
+                onPressed: () =>
+                    ref.invalidate(pendingExcusesControllerProvider),
+                child: const Text('تحديث البيانات'),
+              ),
+            );
           }
           final PendingExcusesController notifier = ref.read(
             pendingExcusesControllerProvider.notifier,
@@ -109,16 +119,21 @@ class ExcuseQueueScreen extends ConsumerWidget {
           return AppRefreshIndicator(
             onRefresh: () async =>
                 ref.invalidate(pendingExcusesControllerProvider),
-            child: ListView.builder(
+            child: AppPagedList<PendingExcuse>(
+              items: items,
+              loadPage: (offset) => ref
+                  .read(excuseRepositoryProvider)
+                  .fetchPending(offset: offset),
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              itemCount: items.length,
-              itemBuilder: (BuildContext context, int i) => ExcuseDecisionTile(
-                key: ValueKey<String>(items[i].id),
-                excuse: items[i],
-                onApprove: () => notifier.decide(items[i], approve: true),
-                onReject: () => notifier.decide(items[i], approve: false),
-                onTap: () => _openDetails(context, items[i]),
-              ),
+
+              itemBuilder: (BuildContext context, PendingExcuse item, int i) =>
+                  ExcuseDecisionTile(
+                    key: ValueKey<String>(item.id),
+                    excuse: item,
+                    onApprove: () => notifier.decide(item, approve: true),
+                    onReject: () => notifier.decide(item, approve: false),
+                    onTap: () => _openDetails(context, item),
+                  ),
             ),
           );
         },

@@ -59,6 +59,11 @@ class CircleScoresScreen extends ConsumerWidget {
                 EmptyState(
                   message: l.supNoStudentsInCircle,
                   icon: Icons.groups_outlined,
+                  action: TextButton(
+                    onPressed: () =>
+                        ref.invalidate(circleRosterScoresProvider(circleId)),
+                    child: const Text('تحديث البيانات'),
+                  ),
                 )
               else
                 for (final CircleRosterScore s in scores.students)

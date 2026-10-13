@@ -5,6 +5,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../domain/circle_option.dart';
 import '../controllers/waiting_list_controller.dart';
 
@@ -46,9 +47,7 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       final AppL10n l = AppL10n.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.itkEnrollError)));
+      AppSnackbar.error(context, l.itkEnrollError);
     }
   }
 
@@ -59,11 +58,11 @@ class _EnrollSheetState extends ConsumerState<EnrollSheet> {
       circlesOfLevelProvider(widget.levelId),
     );
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

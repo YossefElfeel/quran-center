@@ -6,10 +6,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_async_form_sheet.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -37,41 +40,35 @@ class CompetitionDetailScreen extends ConsumerWidget {
   ) async {
     final AppL10n l = AppL10n.of(context);
     final TextEditingController c = TextEditingController();
-    final bool? ok = await showDialog<bool>(
+    await showAppModalSheet<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text('${l.cmpScore} ${app.applicantName}'),
-        content: AppTextField(
-          controller: c,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          label: l.cmpScoreOutOf100,
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.cmpSave),
+      title: '${l.cmpScore} ${app.applicantName}',
+      builder: (BuildContext context) => AppAsyncFormSheet(
+        submitLabel: l.cmpSave,
+        successMessage: 'الدرجة اتحفظت',
+        onSubmit: () => ref
+            .read(competitionApplicationsProvider(competitionId).notifier)
+            .score(app.id, parseLocalizedDouble(c.text)!),
+        fields: [
+          AppTextField(
+            controller: c,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            label: l.cmpScoreOutOf100,
+            validator: (v) {
+              final value = parseLocalizedDouble(v ?? '');
+              return value == null ||
+                      !value.isFinite ||
+                      value < 0 ||
+                      value > 100
+                  ? 'اكتب درجة من ٠ إلى ١٠٠'
+                  : null;
+            },
           ),
         ],
       ),
     );
-    final double? value = double.tryParse(c.text.trim());
     c.dispose();
-    if (ok == true && value != null && value >= 0 && value <= 100) {
-      try {
-        await ref
-            .read(competitionApplicationsProvider(competitionId).notifier)
-            .score(app.id, value);
-      } catch (_) {
-        if (context.mounted) {
-          AppSnackbar.error(context, l.cmpScoreForbidden);
-        }
-      }
-    }
   }
 
   Future<void> _watchRecitation(BuildContext context, String url) async {
@@ -133,7 +130,16 @@ class CompetitionDetailScreen extends ConsumerWidget {
               ref.invalidate(competitionApplicationsProvider(competitionId)),
         ),
         data: (List<CompetitionApplicationRow> items) => items.isEmpty
-            ? EmptyState(message: l.cmpNoApplicants, icon: Icons.how_to_reg)
+            ? EmptyState(
+                message: l.cmpNoApplicants,
+                icon: Icons.how_to_reg,
+                action: TextButton(
+                  onPressed: () => ref.invalidate(
+                    competitionApplicationsProvider(competitionId),
+                  ),
+                  child: const Text('تحديث البيانات'),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(
                   competitionApplicationsProvider(competitionId),

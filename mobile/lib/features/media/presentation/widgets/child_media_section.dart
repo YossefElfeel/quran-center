@@ -8,7 +8,9 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/auth/auth_providers.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/media_repository.dart';
 import '../../domain/image_watermark.dart';
@@ -70,7 +72,7 @@ class ChildMediaSection extends ConsumerWidget {
 
   void _showSourceSheet(BuildContext context, WidgetRef ref) {
     final AppL10n l = AppL10n.of(context);
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       builder: (BuildContext sheetCtx) => SafeArea(
         child: Column(
@@ -120,8 +122,7 @@ class ChildMediaSection extends ConsumerWidget {
               children: <Widget>[
                 Text(
                   l.ppMediaSection,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: AppTextStyles.labelSm.copyWith(
                     color: context.palette.textSecondary,
                   ),
                 ),
@@ -205,7 +206,7 @@ class _MediaTile extends ConsumerWidget {
   }
 
   void _openPhoto(BuildContext context, String url) {
-    showDialog<void>(
+    showAppModalSheet<void>(
       context: context,
       builder: (BuildContext _) => Dialog(
         child: InteractiveViewer(child: CachedNetworkImage(imageUrl: url)),

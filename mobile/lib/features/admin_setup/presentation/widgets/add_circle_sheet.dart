@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/teacher_option.dart';
 import '../controllers/circles_controller.dart';
@@ -23,6 +25,7 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _maxSize = TextEditingController(text: '30');
   String? _teacherId;
+  final GlobalKey<FormState> _form = GlobalKey<FormState>();
   bool _saving = false;
 
   @override
@@ -33,21 +36,28 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
   }
 
   Future<void> _save() async {
+    if (_saving || !(_form.currentState?.validate() ?? false)) return;
     final String name = _name.text.trim();
-    final int maxSize = int.tryParse(_maxSize.text.trim()) ?? 30;
+    final int? parsedSize = parseLocalizedInt(_maxSize.text.trim());
+    if (parsedSize == null || parsedSize <= 0) {
+      AppSnackbar.error(context, 'اكتب سعة الحلقة كرقم أكبر من صفر');
+      return;
+    }
+    final int maxSize = parsedSize;
     if (name.isEmpty || maxSize <= 0) return;
     setState(() => _saving = true);
     try {
       await ref
           .read(circlesControllerProvider(widget.levelId).notifier)
           .add(name: name, maxSize: maxSize, teacherId: _teacherId);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        AppSnackbar.success(context, 'اتحفظ بنجاح');
+        Navigator.of(context).pop();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context).admCircleSaveError)),
-      );
+      AppSnackbar.error(context, AppL10n.of(context).admCircleSaveError);
     }
   }
 
@@ -58,62 +68,70 @@ class _AddCircleSheetState extends ConsumerState<AddCircleSheet> {
       teacherOptionsProvider,
     );
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(
-            l.admNewCircle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AppTextField(controller: _name, label: l.admCircleNameLabel),
-          const SizedBox(height: AppSpacing.md),
-          AppTextField(
-            controller: _maxSize,
-            keyboardType: TextInputType.number,
-            label: l.admCircleMaxSizeLabel,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(l.admTeacherLabel),
-          ),
-          teachers.when(
-            loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => AppErrorView(
-              message: l.admTeachersLoadError,
-              onRetry: () => ref.invalidate(teacherOptionsProvider),
+      child: Form(
+        key: _form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              l.admNewCircle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            data: (List<TeacherOption> list) => DropdownButton<String?>(
-              isExpanded: true,
-              value: _teacherId,
-              hint: Text(l.admNoTeacher),
-              items: <DropdownMenuItem<String?>>[
-                DropdownMenuItem<String?>(child: Text(l.admNoTeacher)),
-                ...list.map(
-                  (TeacherOption t) => DropdownMenuItem<String?>(
-                    value: t.id,
-                    child: Text(t.fullName),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              controller: _name,
+              label: l.admCircleNameLabel,
+              validator: (String? v) =>
+                  v == null || v.trim().isEmpty ? 'املا الحقل ده' : null,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              controller: _maxSize,
+              keyboardType: TextInputType.number,
+              label: l.admCircleMaxSizeLabel,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(l.admTeacherLabel),
+            ),
+            teachers.when(
+              loading: () => const LinearProgressIndicator(),
+              error: (Object e, StackTrace _) => AppErrorView(
+                message: l.admTeachersLoadError,
+                onRetry: () => ref.invalidate(teacherOptionsProvider),
+              ),
+              data: (List<TeacherOption> list) => DropdownButton<String?>(
+                isExpanded: true,
+                value: _teacherId,
+                hint: Text(l.admNoTeacher),
+                items: <DropdownMenuItem<String?>>[
+                  DropdownMenuItem<String?>(child: Text(l.admNoTeacher)),
+                  ...list.map(
+                    (TeacherOption t) => DropdownMenuItem<String?>(
+                      value: t.id,
+                      child: Text(t.fullName),
+                    ),
                   ),
-                ),
-              ],
-              onChanged: (String? v) => setState(() => _teacherId = v),
+                ],
+                onChanged: (String? v) => setState(() => _teacherId = v),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AppButton(
-            label: _saving ? l.admSaving : l.admSave,
-            onPressed: _saving ? null : _save,
-          ),
-        ],
+            const SizedBox(height: AppSpacing.lg),
+            AppButton(
+              label: _saving ? l.admSaving : l.admSave,
+              onPressed: _saving ? null : _save,
+            ),
+          ],
+        ),
       ),
     );
   }

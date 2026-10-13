@@ -10,9 +10,11 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/feedback_repository.dart';
 import '../../domain/teacher_rating_row.dart';
 import '../controllers/feedback_controllers.dart';
 
@@ -39,14 +41,26 @@ class TeacherRatingsScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(teacherRatingsProvider),
         ),
         data: (List<TeacherRatingRow> items) => items.isEmpty
-            ? EmptyState(message: l.fbkNoRatings, icon: Icons.star_outline)
+            ? EmptyState(
+                message: l.fbkNoRatings,
+                icon: Icons.star_outline,
+                action: TextButton(
+                  onPressed: () => ref.invalidate(teacherRatingsProvider),
+                  child: const Text('تحديث البيانات'),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(teacherRatingsProvider),
-                child: ListView.builder(
+                child: AppPagedList<TeacherRatingRow>(
+                  items: items,
+                  loadPage: (offset) => ref
+                      .read(feedbackRepositoryProvider)
+                      .fetchTeacherRatings(offset: offset),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) =>
-                      _RatingCard(rating: items[i], isAdmin: isAdmin),
+
+                  itemBuilder:
+                      (BuildContext context, TeacherRatingRow item, int i) =>
+                          _RatingCard(rating: item, isAdmin: isAdmin),
                 ),
               ),
       ),

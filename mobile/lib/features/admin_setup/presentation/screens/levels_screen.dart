@@ -5,8 +5,10 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
+import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -35,7 +37,7 @@ class LevelsScreen extends ConsumerWidget {
     return AppScaffold(
       title: curriculumName,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showModalBottomSheet<void>(
+        onPressed: () => showAppModalSheet<void>(
           context: context,
           isScrollControlled: true,
           builder: (BuildContext _) =>
@@ -51,7 +53,16 @@ class LevelsScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(levelsControllerProvider(curriculumId)),
         ),
         data: (List<Level> items) => items.isEmpty
-            ? EmptyState(message: l.admLevelsEmpty)
+            ? EmptyState(
+                message: l.admLevelsEmpty,
+                action: AppButton(
+                  label: l.admNewLevel,
+                  onPressed: () => showAppModalSheet<void>(
+                    context: context,
+                    builder: (_) => AddLevelSheet(curriculumId: curriculumId),
+                  ),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(levelsControllerProvider(curriculumId)),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/presentation/domain_labels.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
 import '../../domain/circle.dart';
@@ -24,7 +25,7 @@ class CircleTile extends StatelessWidget {
         arabicNumber(circle.maxSize),
       ),
       trailing: AppStatusBadge(
-        label: circle.status.labelAr,
+        label: circle.status.label(AppL10n.of(context)),
         kind: _kind(circle.status),
       ),
       onTap: onTap,
