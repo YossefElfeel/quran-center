@@ -47,7 +47,7 @@ class DebtStrip extends StatelessWidget {
             ),
             if (onTap != null) ...<Widget>[
               const Spacer(),
-              Icon(Icons.chevron_left, color: p.textSecondary, size: 20),
+              Icon(Icons.chevron_right, color: p.textSecondary, size: 20),
             ],
           ],
         ),

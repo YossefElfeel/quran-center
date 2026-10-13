@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/utils/arabic_numerals.dart';
+
 /// حقل إدخال موحّد فوق [InputDecorationTheme] (filled + outline).
 class AppTextField extends StatelessWidget {
   const AppTextField({
@@ -20,6 +22,8 @@ class AppTextField extends StatelessWidget {
     this.minLines,
     this.autofocus = false,
     this.inputFormatters,
+    this.autofillHints,
+    this.textDirection,
     super.key,
   });
 
@@ -39,6 +43,8 @@ class AppTextField extends StatelessWidget {
   final int? minLines;
   final bool autofocus;
   final List<TextInputFormatter>? inputFormatters;
+  final Iterable<String>? autofillHints;
+  final TextDirection? textDirection;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +60,14 @@ class AppTextField extends StatelessWidget {
       maxLines: obscureText ? 1 : maxLines,
       minLines: obscureText ? 1 : minLines,
       autofocus: autofocus,
-      inputFormatters: inputFormatters,
+      autofillHints: autofillHints,
+      textDirection: textDirection,
+      inputFormatters: <TextInputFormatter>[
+        if (keyboardType?.index == TextInputType.number.index ||
+            keyboardType == TextInputType.phone)
+          ArabicDigitsInputFormatter(),
+        ...?inputFormatters,
+      ],
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

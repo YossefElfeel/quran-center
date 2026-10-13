@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -46,8 +48,8 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
 
   Future<void> _save(List<SurahOption> surahs) async {
     final String name = _name.text.trim();
-    final int? as = int.tryParse(_ayahStart.text.trim());
-    final int? ae = int.tryParse(_ayahEnd.text.trim());
+    final int? as = parseLocalizedInt(_ayahStart.text.trim());
+    final int? ae = parseLocalizedInt(_ayahEnd.text.trim());
     final String? err = portionRangeError(
       surahs: surahs,
       name: name,
@@ -98,11 +100,11 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
     final AppL10n l = AppL10n.of(context);
     final AsyncValue<List<SurahOption>> surahsAsync = ref.watch(surahsProvider);
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
       child: surahsAsync.when(
         loading: () => const SizedBox(
@@ -120,10 +122,7 @@ class _SetPortionSheetState extends ConsumerState<SetPortionSheet> {
                     ? l.sesNewAdvancePortion
                     : l.sesCurrentPortion,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.titleSm,
               ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(controller: _name, label: l.sesPortionNameLabel),

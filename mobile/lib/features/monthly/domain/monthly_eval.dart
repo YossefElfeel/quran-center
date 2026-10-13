@@ -6,6 +6,7 @@ class MonthlyEvalStudent {
     this.status,
     this.summary,
     this.behavior,
+    this.returnReason,
   });
 
   final String studentPersonId;
@@ -13,6 +14,8 @@ class MonthlyEvalStudent {
   final String? status;
   final String? summary;
   final String? behavior;
+
+  final String? returnReason;
 
   bool get isApproved => status == 'approved';
   bool get isSubmitted => status == 'submitted';

@@ -60,16 +60,72 @@ class SubscriptionRepository {
     });
   }
 
+  Future<String> recordPayment({
+    required String householdId,
+    required double amount,
+    required DateTime month,
+    required String method,
+    String? recordedBy,
+  }) async {
+    final Map<String, dynamic> row = await _client
+        .from('subscription_payment')
+        .insert(<String, dynamic>{
+          'household_id': householdId,
+          'amount': amount,
+          'period_month':
+              '${month.year}-${month.month.toString().padLeft(2, '0')}-01',
+          'method': method,
+          'recorded_by': ?recordedBy,
+        })
+        .select('id')
+        .single();
+    return row['id'] as String;
+  }
+
+  Future<void> voidPayment(String id, String reason) async {
+    await _client
+        .from('subscription_payment')
+        .update(<String, dynamic>{'voided': true, 'void_reason': reason})
+        .eq('id', id)
+        .select('id')
+        .single();
+  }
+
   /// سجلّ دفعات أسرة (الأحدث أولًا) — لتفصيل بلاطة الاشتراك.
-  Future<List<PaymentRow>> fetchPaymentHistory(String householdId) async {
+  Future<List<PaymentRow>> fetchPaymentHistory(
+    String householdId, {
+    int offset = 0,
+  }) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('subscription_payment')
         .select('period_month, amount, paid_at, voided')
         .eq('household_id', householdId)
         .order('period_month', ascending: false)
-        .limit(24)
+        .order('paid_at', ascending: false)
+        .order('id')
+        .range(offset, offset + 23)
         .timeout(const Duration(seconds: 12));
     return rows.map(PaymentRow.fromMap).toList();
+  }
+
+  Future<List<DateTime>> fetchPaidMonths(
+    String householdId,
+    DateTime since,
+  ) async {
+    final rows = await _client
+        .from('subscription_payment')
+        .select('period_month')
+        .eq('household_id', householdId)
+        .eq('voided', false)
+        .gte(
+          'period_month',
+          '${since.year}-${since.month.toString().padLeft(2, '0')}-01',
+        )
+        .order('period_month', ascending: false)
+        .timeout(const Duration(seconds: 12));
+    return rows
+        .map((row) => DateTime.parse(row['period_month'] as String))
+        .toList();
   }
 
   /// هل اشتراك المستخدم الحالي (ولي الأمر) نشط؟ (لبوابة الوصول).
@@ -81,11 +137,13 @@ class SubscriptionRepository {
   }
 
   /// كل الأشخاص (لاختيار فرد يتضاف للأسرة).
-  Future<List<PersonOption>> fetchAllPersons() async {
+  Future<List<PersonOption>> fetchAllPersons({String query = ''}) async {
     final List<Map<String, dynamic>> rows = await _client
         .from('person')
         .select('id, full_name')
+        .ilike('full_name', '%${query.trim()}%')
         .order('full_name', ascending: true)
+        .range(0, 49)
         .timeout(const Duration(seconds: 12));
     return rows
         .map(

@@ -12,6 +12,23 @@ export async function proxy(request: NextRequest) {
   }
 
   let response = NextResponse.next({ request });
+  let clearImpersonation = false;
+  const impersonation = request.cookies.get("imp_token")?.value;
+  if (impersonation) {
+    try {
+      // Expiry metadata only decides whether to clear a cookie; it grants no access.
+      const claims = JSON.parse(Buffer.from(impersonation.split(".")[1], "base64url").toString());
+      clearImpersonation = typeof claims.exp !== "number" || claims.exp * 1000 <= Date.now();
+    } catch { clearImpersonation = true; }
+    if (clearImpersonation) request.cookies.delete("imp_token");
+  }
+  const finish = (result: NextResponse) => {
+    if (result !== response) {
+      for (const cookie of response.cookies.getAll()) result.cookies.set(cookie);
+    }
+    if (clearImpersonation) result.cookies.set("imp_token", "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+    return result;
+  };
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
@@ -41,15 +58,15 @@ export async function proxy(request: NextRequest) {
   if (!user && !isLoginRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
-    return NextResponse.redirect(redirectUrl);
+    return finish(NextResponse.redirect(redirectUrl));
   }
   if (user && isLoginRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
-    return NextResponse.redirect(redirectUrl);
+    return finish(NextResponse.redirect(redirectUrl));
   }
 
-  return response;
+  return finish(response);
 }
 
 export const config = {

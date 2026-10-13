@@ -16,7 +16,7 @@ export async function getActiveImpersonation(
   superAdminPersonId: string,
 ): Promise<ActiveImpersonation | null> {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("impersonation_session")
     .select(
       "id, subject_person_id, reason, started_at, subject:subject_person_id(full_name)",
@@ -27,6 +27,7 @@ export async function getActiveImpersonation(
     .limit(1)
     .maybeSingle();
 
+  if (error) throw new Error("impersonation_load_failed");
   if (!data) return null;
 
   const row = data as unknown as {
@@ -37,6 +38,11 @@ export async function getActiveImpersonation(
     subject: { full_name: string } | null;
   };
 
+  if (Date.now() - new Date(row.started_at).getTime() >= TIMEBOX_MS) {
+    const { error: closeError } = await supabase.from('impersonation_session').update({ ended_at: new Date().toISOString() }).eq('id', row.id).is('ended_at', null);
+    if (closeError) throw new Error("impersonation_expiry_failed");
+    return null;
+  }
   return {
     id: row.id,
     subjectPersonId: row.subject_person_id,

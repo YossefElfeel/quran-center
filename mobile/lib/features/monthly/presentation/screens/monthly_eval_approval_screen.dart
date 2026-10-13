@@ -5,15 +5,16 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import '../../../../core/utils/arabic_numerals.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
-import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_approval_actions.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
 import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_modal_sheet.dart';
+import '../../../../shared/widgets/app_paged_list.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import '../../data/monthly_eval_repository.dart';
 import '../../domain/monthly_eval.dart';
 import '../controllers/monthly_eval_controllers.dart';
 
@@ -53,18 +54,12 @@ class MonthlyEvalApprovalScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.md),
             _PreviewField(label: l.monBehaviorLabel, value: e.behavior),
             const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: l.monApprove,
-              icon: Icons.check_circle,
-              onPressed: () async {
-                await ref
-                    .read(pendingMonthlyEvalsProvider.notifier)
-                    .approve(e.id);
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                  AppSnackbar.success(context, l.monApproved);
-                }
-              },
+            AppApprovalActions(
+              onApprove: () =>
+                  ref.read(pendingMonthlyEvalsProvider.notifier).approve(e.id),
+              onReturn: (String reason) => ref
+                  .read(pendingMonthlyEvalsProvider.notifier)
+                  .returnForRevision(e.id, reason),
             ),
           ],
         );
@@ -87,30 +82,34 @@ class MonthlyEvalApprovalScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(pendingMonthlyEvalsProvider),
         ),
         data: (List<PendingMonthlyEval> items) => items.isEmpty
-            ? EmptyState(message: l.monNoPendingEvals, icon: Icons.done_all)
+            ? EmptyState(
+                message: l.monNoPendingEvals,
+                icon: Icons.done_all,
+                title: 'كل التقييمات متراجعة',
+                action: TextButton(
+                  onPressed: () => ref.invalidate(pendingMonthlyEvalsProvider),
+                  child: const Text('تحديث التقييمات'),
+                ),
+              )
             : AppRefreshIndicator(
                 onRefresh: () async =>
                     ref.invalidate(pendingMonthlyEvalsProvider),
-                child: ListView.builder(
+                child: AppPagedList<PendingMonthlyEval>(
+                  items: items,
+                  loadPage: (offset) => ref
+                      .read(monthlyEvalRepositoryProvider)
+                      .fetchPending(offset: offset),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: items.length,
-                  itemBuilder: (BuildContext context, int i) {
-                    final PendingMonthlyEval e = items[i];
-                    return AppListCard(
-                      leadingIcon: Icons.grading,
-                      title: e.studentName,
-                      subtitle: '${e.summary ?? '—'}\n${_monthLabel(e)}',
-                      onTap: () => _openPreview(context, ref, e),
-                      trailing: AppButton(
-                        label: l.monApprove,
-                        onPressed: () => ref
-                            .read(pendingMonthlyEvalsProvider.notifier)
-                            .approve(e.id),
-                        variant: AppButtonVariant.tonal,
-                        expanded: false,
-                      ),
-                    );
-                  },
+                  itemBuilder:
+                      (BuildContext context, PendingMonthlyEval e, int i) {
+                        return AppListCard(
+                          leadingIcon: Icons.grading,
+                          title: e.studentName,
+                          subtitle: '${e.summary ?? '—'}\n${_monthLabel(e)}',
+                          onTap: () => _openPreview(context, ref, e),
+                          trailing: const Icon(Icons.chevron_right),
+                        );
+                      },
                 ),
               ),
       ),

@@ -10,6 +10,10 @@ abstract final class Env {
   );
 
   static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  static const String webUrl = String.fromEnvironment(
+    'WEB_URL',
+    defaultValue: 'https://quran-web-sage.vercel.app',
+  );
 
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',

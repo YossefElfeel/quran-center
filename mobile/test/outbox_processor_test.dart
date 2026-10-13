@@ -75,6 +75,7 @@ class _FakeStore implements OutboxStore {
             type: e.op.type,
             attempts: e.attempts,
             lastError: e.lastError,
+            sessionId: e.op.payload['session_id'] as String?,
           ),
         )
         .toList();
@@ -124,6 +125,28 @@ class TerminalError implements Exception {
 bool _isTransient(Object e) => e is SocketLikeError;
 
 void main() {
+  test(
+    'One flush drains multiple pages and concurrent callers wait for the same drain',
+    () async {
+      final _FakeStore store = _FakeStore();
+      for (int i = 0; i < 235; i++) {
+        await store.enqueue(_op('op-$i'));
+      }
+      final List<String> sent = <String>[];
+      final OutboxProcessor processor = OutboxProcessor(store, (op) async {
+        await Future<void>.delayed(Duration.zero);
+        sent.add(op.id);
+      }, isTransient: _isTransient);
+      await Future.wait<void>(<Future<void>>[
+        processor.flush(),
+        processor.flush(),
+        processor.flush(),
+      ]);
+      expect(sent.length, 235);
+      expect(sent.toSet().length, 235);
+      expect(await store.pendingCount(), 0);
+    },
+  );
   group('OutboxOp', () {
     test('payload يعمل round-trip عبر JSON', () {
       const OutboxOp op = OutboxOp(
@@ -145,6 +168,78 @@ void main() {
   });
 
   group('OutboxProcessor.flush', () {
+    test(
+      'Rejected grade blocks its close across retries, while another session syncs',
+      () async {
+        final store = _FakeStore();
+        for (final op in <OutboxOp>[
+          const OutboxOp(
+            id: 'grade',
+            type: OutboxOpType.tasmeeRecord,
+            payload: {'session_id': 's1'},
+          ),
+          const OutboxOp(
+            id: 'close',
+            type: OutboxOpType.sessionClose,
+            payload: {'session_id': 's1'},
+          ),
+          const OutboxOp(
+            id: 'other',
+            type: OutboxOpType.sessionClose,
+            payload: {'session_id': 's2'},
+          ),
+        ]) {
+          await store.enqueue(op);
+        }
+        bool reject = true;
+        final sent = <String>[];
+        final processor = OutboxProcessor(store, (op) async {
+          if (op.id == 'grade' && reject) throw const TerminalError();
+          sent.add(op.id);
+        }, isTransient: _isTransient);
+        await processor.flush();
+        expect(sent, ['other']);
+        expect(store.deadCount, 2);
+        await store.requeue('close');
+        await processor.flush();
+        expect(sent, ['other']);
+        reject = false;
+        await store.requeue('grade');
+        await store.requeue('close');
+        await processor.flush();
+        expect(sent, ['other', 'grade', 'close']);
+        expect(store.deadCount, 0);
+      },
+    );
+
+    test(
+      'Rejected offline session open prevents dependent attendance from being sent',
+      () async {
+        final store = _FakeStore();
+        await store.enqueue(
+          const OutboxOp(
+            id: 'open',
+            type: OutboxOpType.sessionOpen,
+            payload: {'session_id': 's1'},
+          ),
+        );
+        await store.enqueue(
+          const OutboxOp(
+            id: 'attendance',
+            type: OutboxOpType.attendanceMark,
+            payload: {'session_id': 's1'},
+          ),
+        );
+        final sent = <String>[];
+        final processor = OutboxProcessor(store, (op) async {
+          sent.add(op.id);
+          if (op.id == 'open') throw const TerminalError();
+        }, isTransient: _isTransient);
+        await processor.flush();
+        expect(sent, ['open']);
+        expect(store.deadCount, 2);
+      },
+    );
     test('يفرّغ كل المعلّق بترتيب FIFO ويعلّمه synced', () async {
       final _FakeStore store = _FakeStore();
       await store.enqueue(_op('a'));
@@ -224,27 +319,24 @@ void main() {
       expect(await store.pendingCount(), 0);
     });
 
-    test(
-      'عابر بيتكرّر بيتحوّل dead-letter بعد maxAttempts (احتياطي)',
-      () async {
-        final _FakeStore store = _FakeStore();
-        await store.enqueue(_op('x'));
-        final OutboxProcessor p = OutboxProcessor(
-          store,
-          (OutboxOp op) async => throw const SocketLikeError(),
-          isTransient: _isTransient,
-          maxAttempts: 3,
-        );
+    test('انقطاع طويل يحافظ على الدرجة حتى بعد محاولات كتير', () async {
+      final _FakeStore store = _FakeStore();
+      await store.enqueue(_op('x'));
+      final OutboxProcessor p = OutboxProcessor(
+        store,
+        (OutboxOp op) async => throw const SocketLikeError(),
+        isTransient: _isTransient,
+        maxAttempts: 3,
+      );
 
-        await p.flush(); // attempts 0→1، وقف
-        expect(await store.pendingCount(), 1);
-        await p.flush(); // attempts 1→2، وقف
-        expect(await store.pendingCount(), 1);
-        await p.flush(); // attempts 2، 2+1>=3 → dead-letter
-        expect(await store.pendingCount(), 0);
-        expect(store.deadCount, 1);
-      },
-    );
+      await p.flush(); // attempts 0→1، وقف
+      expect(await store.pendingCount(), 1);
+      await p.flush(); // attempts 1→2، وقف
+      expect(await store.pendingCount(), 1);
+      await p.flush(); // محاولة أخرى: الدرجة تفضل محفوظة ومعلّقة
+      expect(await store.pendingCount(), 1);
+      expect(store.deadCount, 0);
+    });
 
     test(
       'enqueue لنفس الـ id مرّتين = عملية واحدة (insert-or-ignore)',

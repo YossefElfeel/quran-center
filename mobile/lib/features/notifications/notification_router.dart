@@ -46,9 +46,22 @@ String? notificationRoute(
       return null;
 
     // تقييمات شهرية ناقصة → اعتماد التقييم الشهري (المشرف).
+    case 'monthly_eval_returned':
     case 'monthly_eval_missed':
+      if (has('teacher')) {
+        return n.circleId == null
+            ? Routes.teacherCircles
+            : '${Routes.monthlyEval(n.circleId!, 'الحلقة')}${n.month == null ? '' : '&month=${Uri.encodeComponent(n.month!)}'}';
+      }
       if (isStaff) return Routes.supervisorMonthlyEval;
       return null;
+
+    case 'development_returned':
+      return has('teacher') ? Routes.teacherDevelopment : null;
+    case 'excuse_decided':
+      return has('teacher') && n.circleId != null
+          ? Routes.session(n.circleId!, 'الحلقة')
+          : (has('teacher') ? Routes.teacherCircles : null);
 
     // شكوى متأخّرة → صندوق الشكاوى (المدير/المشرف).
     case 'complaint_overdue':
@@ -63,7 +76,7 @@ String? notificationRoute(
     // اشتراك متأخّر → الاشتراكات (للأدمن) أو لا وجهة لولي الأمر.
     case 'subscription_overdue':
       if (has('admin') || has('super_admin')) return Routes.adminSubscriptions;
-      return null;
+      return '/parent/subscription';
 
     default:
       return null;

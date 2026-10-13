@@ -1,7 +1,7 @@
 import { formatDateTime } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
-import { respondToComplaint } from "./actions";
+import { ComplaintResponseForm } from "./forms";
 
 const CATEGORY: Record<string, string> = {
   academic: "أكاديمي",
@@ -28,14 +28,15 @@ type Complaint = {
 };
 
 export default async function ComplaintsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const supabase = await getDataClient();
+  const { data, error } = await supabase
     .from("complaint")
     .select("id, category, body, status, manager_response, responded_at, created_at")
     .order("status", { ascending: true })
     .order("created_at", { ascending: false })
     .limit(100);
 
+  if (error) throw new Error("complaints_load_failed");
   const rows = (data ?? []) as Complaint[];
 
   return (
@@ -78,25 +79,7 @@ export default async function ComplaintsPage() {
 
                 <p className="whitespace-pre-wrap text-sm">{c.body}</p>
 
-                <form
-                  action={respondToComplaint}
-                  className="flex flex-col gap-2 border-t border-border pt-3"
-                >
-                  <input type="hidden" name="id" value={c.id} />
-                  <textarea
-                    name="response"
-                    rows={2}
-                    defaultValue={c.manager_response ?? ""}
-                    placeholder="رد المدير…"
-                    className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-                  <button
-                    type="submit"
-                    className="self-start rounded-lg bg-primary px-4 py-1.5 text-sm font-bold text-white hover:opacity-90"
-                  >
-                    {answered ? "تحديث الرد" : "رد"}
-                  </button>
-                </form>
+                <ComplaintResponseForm id={c.id} response={c.manager_response} status={c.status} />
               </div>
             );
           })}

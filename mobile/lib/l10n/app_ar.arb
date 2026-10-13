@@ -1,48 +1,58 @@
 {
   "@@locale": "ar",
-
   "appTitle": "مركز تحفيظ القرآن",
-  "@appTitle": { "description": "اسم التطبيق" },
-
+  "@appTitle": {
+    "description": "اسم التطبيق"
+  },
   "retry": "إعادة المحاولة",
-  "@retry": { "description": "زر إعادة المحاولة بعد خطأ" },
-
+  "@retry": {
+    "description": "زر إعادة المحاولة بعد خطأ"
+  },
   "loading": "بنحمّل...",
-  "@loading": { "description": "حالة التحميل" },
-
+  "@loading": {
+    "description": "حالة التحميل"
+  },
   "genericError": "حصل خطأ، حاول تاني",
-  "@genericError": { "description": "رسالة خطأ عامة" },
-
+  "@genericError": {
+    "description": "رسالة خطأ عامة"
+  },
   "noConnection": "مفيش اتصال بالنت",
-  "@noConnection": { "description": "رسالة انقطاع الاتصال" },
-
+  "@noConnection": {
+    "description": "رسالة انقطاع الاتصال"
+  },
   "emptyState": "مفيش حاجة هنا لسه",
-  "@emptyState": { "description": "حالة فاضية" },
-
+  "@emptyState": {
+    "description": "حالة فاضية"
+  },
   "loginTitle": "تسجيل الدخول",
-  "@loginTitle": { "description": "عنوان شاشة الدخول" },
-
+  "@loginTitle": {
+    "description": "عنوان شاشة الدخول"
+  },
   "roleTeacher": "معلّم",
   "roleSupervisor": "مشرف",
   "roleAdmin": "أدمن",
   "roleParent": "ولي أمر",
-
   "emailLabel": "الإيميل",
-  "@emailLabel": { "description": "حقل الإيميل في الدخول" },
+  "@emailLabel": {
+    "description": "حقل الإيميل في الدخول"
+  },
   "emailRequired": "اكتب الإيميل",
   "passwordLabel": "الباسورد",
   "passwordRequired": "اكتب الباسورد",
   "signIn": "دخول",
   "signingIn": "بنحاول…",
   "loginFailed": "فشل الدخول — اتأكد من الإيميل والباسورد",
-
   "welcome": "أهلاً بيك",
   "noRoleYet": "لسه مفيش دور متسنّد لحسابك — كلّم الأدمن.",
   "logout": "خروج",
   "accountSuspendedTitle": "تم إيقاف حسابك",
-  "@accountSuspendedTitle": { "description": "عنوان شاشة الحساب الموقوف/المحظور" },
+  "@accountSuspendedTitle": {
+    "description": "عنوان شاشة الحساب الموقوف/المحظور"
+  },
   "accountSuspendedMessage": "حسابك متوقّف حاليًا. لو فيه لبس، تواصل مع الإدارة.",
-  "@accountSuspendedMessage": { "description": "رسالة الحساب الموقوف/المحظور" },
+  "@accountSuspendedMessage": {
+    "description": "رسالة الحساب الموقوف/المحظور"
+  },
   "notificationsTooltip": "الإشعارات",
   "roleSuperAdmin": "سوبر أدمن",
   "navCurriculaCircles": "المناهج والحلقات",
@@ -65,7 +75,6 @@
   "navCompetitions": "المسابقات",
   "navHonorBoard": "لوحة الشرف",
   "navCourses": "الكورسات",
-
   "tabHome": "الرئيسية",
   "tabMore": "المزيد",
   "tabReviews": "المراجعات",
@@ -106,7 +115,6 @@
   "settingsHighContrast": "تباين عالي",
   "settingsHighContrastDesc": "ألوان أوضح ونصّ أغمق لسهولة القراءة",
   "settingsAccessibility": "سهولة الوصول",
-
   "onbTitle1": "كل حاجة في مكانها",
   "onbBody1": "لوحة رئيسية بتجمّع مهامك وأرقامك المهمة في نظرة واحدة.",
   "onbTitle2": "تنقّل أسهل وأسرع",
@@ -116,7 +124,6 @@
   "onbSkip": "تخطّي",
   "onbNext": "التالي",
   "onbStart": "يلا نبدأ",
-
   "notificationsTitle": "الإشعارات",
   "markAllRead": "علّم الكل مقروء",
   "notificationsLoadError": "مش قادرين نحمّل الإشعارات",
@@ -131,7 +138,6 @@
   "videoOpenError": "مش قادرين نفتح الفيديو",
   "cancel": "إلغاء",
   "add": "إضافة",
-
   "fbkInboxTitle": "صندوق الشكاوى",
   "fbkRespondDialogTitle": "الرد على الشكوى",
   "fbkResponseLabel": "ردّك",
@@ -149,17 +155,34 @@
   "fbkNoComplaintsParent": "مفيش شكاوى — رقم المدير متاح لو محتاج",
   "fbkManagerResponseLabel": "ردّ المدير",
   "fbkComplaintNumber": "شكوى رقم {number}",
-  "@fbkComplaintNumber": { "placeholders": { "number": { "type": "String" } } },
+  "@fbkComplaintNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
   "fbkSubmittedAt": "قُدّمت في {date}",
-  "@fbkSubmittedAt": { "placeholders": { "date": { "type": "String" } } },
+  "@fbkSubmittedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "fbkRespondedAt": "تم الرد في {date}",
-  "@fbkRespondedAt": { "placeholders": { "date": { "type": "String" } } },
+  "@fbkRespondedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "fbkTeacherRatingsTitle": "تقييمات المحفّظين",
   "fbkLoadRatingsError": "مش قادرين نحمّل التقييمات",
   "fbkNoRatings": "لسه مفيش تقييمات",
   "fbkShow": "إظهار",
   "fbkHide": "إخفاء",
-
   "cmpNewCompetition": "مسابقة جديدة",
   "cmpCompetitionName": "اسم المسابقة",
   "cmpLoadError": "مش قادرين نحمّل المسابقات",
@@ -180,27 +203,65 @@
   "cmpResultsLoadError": "مش قادرين نحمّل النتائج",
   "cmpNoResults": "مفيش نتائج لسه (محتاج متقدّمين مقبولين + درجات)",
   "cmpJudgeCount": "عدد المحكّمين",
-
   "supAttentionCirclesSection": "حلقات محتاجة انتباه",
   "supAttentionStrugglingSection": "طلبة متعثّرين",
   "supCirclesLoadError": "مش قادرين نحمّل الحلقات",
   "supAllCirclesAboveHalf": "كل الحلقات فوق النص 👍",
   "supCirclePassedOf": "عدّى {passed} من {active}",
-  "@supCirclePassedOf": { "placeholders": { "passed": { "type": "String" }, "active": { "type": "String" } } },
+  "@supCirclePassedOf": {
+    "placeholders": {
+      "passed": {
+        "type": "String"
+      },
+      "active": {
+        "type": "String"
+      }
+    }
+  },
   "supPercent": "{value}٪",
-  "@supPercent": { "placeholders": { "value": { "type": "String" } } },
+  "@supPercent": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "supListLoadError": "مش قادرين نحمّل القايمة",
   "supNoStrugglingStudents": "مفيش طلبة متعثّرين دلوقتي",
   "supStudentDebt": "عليه دَيْن على {portion} — حاول {attempts} مرّات",
-  "@supStudentDebt": { "placeholders": { "portion": { "type": "String" }, "attempts": { "type": "String" } } },
+  "@supStudentDebt": {
+    "placeholders": {
+      "portion": {
+        "type": "String"
+      },
+      "attempts": {
+        "type": "String"
+      }
+    }
+  },
   "supStrugglingDetail": "متعثّر في {portion} — رسب {attempts} مرّات في نفس المقطع",
-  "@supStrugglingDetail": { "placeholders": { "portion": { "type": "String" }, "attempts": { "type": "String" } } },
+  "@supStrugglingDetail": {
+    "placeholders": {
+      "portion": {
+        "type": "String"
+      },
+      "attempts": {
+        "type": "String"
+      }
+    }
+  },
   "supAttemptsHistory": "سجلّ المحاولات",
   "supNoAttempts": "لسه مفيش محاولات مسجّلة",
   "supViewStudentDetail": "عرض التفاصيل",
   "supCircleNoCurrentPortion": "الحلقة مفيهاش مقطع حالي",
   "supCirclePortionLabel": "المقطع الحالي: {portion}",
-  "@supCirclePortionLabel": { "placeholders": { "portion": { "type": "String" } } },
+  "@supCirclePortionLabel": {
+    "placeholders": {
+      "portion": {
+        "type": "String"
+      }
+    }
+  },
   "supScorePassed": "عدّى",
   "supScoreFailed": "متعثّر",
   "supScorePending": "لسه ماتسمّعش",
@@ -210,7 +271,6 @@
   "supRandomPick": "اختيار عشوائي (٣)",
   "supPrintMonthlyReport": "اطبع تقرير الحلقة الشهري",
   "supMonthlyReportError": "مش قادرين نجهّز التقرير — جرّب تاني",
-
   "admCurriculaTitle": "المناهج",
   "admNewCurriculum": "منهج جديد",
   "admCurriculaLoadError": "مش قادرين نحمّل المناهج",
@@ -234,8 +294,16 @@
   "admSave": "حفظ",
   "admSaving": "بنحفظ…",
   "admCircleSubtitle": "{teacher} • سعة {capacity}",
-  "@admCircleSubtitle": { "placeholders": { "teacher": { "type": "String" }, "capacity": { "type": "String" } } },
-
+  "@admCircleSubtitle": {
+    "placeholders": {
+      "teacher": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
   "subsNewHousehold": "أسرة جديدة",
   "subsHouseholdNameLabel": "اسم الأسرة",
   "subsLoadError": "مش قادرين نحمّل الاشتراكات",
@@ -246,7 +314,13 @@
   "subsInactiveTitle": "اشتراكك مش نشط",
   "subsInactiveBody": "لازم تدفع اشتراك الشهر كاش في الدار عشان تتابع بيانات ابنك.",
   "subsMonthlyAmount": "الاشتراك الشهري: {amount} ج",
-  "@subsMonthlyAmount": { "placeholders": { "amount": { "type": "String" } } },
+  "@subsMonthlyAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "subsPaidThisMonth": "مدفوع الشهر ده ✓",
   "subsRecordPayment": "سجّل دفعة",
   "subsPaymentHistory": "سجلّ الدفعات",
@@ -262,7 +336,6 @@
   "subsRoleStudent": "طالب",
   "subsAdding": "بنضيف…",
   "subsAddMemberButton": "ضيف",
-
   "tchProfileTitle": "ملفّي",
   "tchProfileLoadFailed": "مش قادرين نحمّل الملف",
   "tchProfileSaved": "اتسجّل ملفّك",
@@ -284,7 +357,13 @@
   "tchNoDevEntries": "لسه مفيش قيود — ضيف تطوّرك بالزرّ فوق",
   "tchPassRateTitle": "نسبة نجاح طلبتك",
   "tchPassRatePercent": "{rate}٪",
-  "@tchPassRatePercent": { "placeholders": { "rate": { "type": "String" } } },
+  "@tchPassRatePercent": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "tchApproved": "معتمد",
   "tchPendingApproval": "في انتظار الاعتماد",
   "tchQueueLoadFailed": "مش قادرين نحمّل الطابور",
@@ -304,7 +383,13 @@
   "tchDevProgressLabel": "اللي اتطوّر",
   "tchDevApprovedNote": "اعتمده المشرف — مسجّل في تطوّرك.",
   "tchApprovedAt": "تم الاعتماد في {date}",
-  "@tchApprovedAt": { "placeholders": { "date": { "type": "String" } } },
+  "@tchApprovedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "tchDevSubmittedNote": "مستني اعتماد المشرف. تقدر تضيف قيود تانية لحد ما يتعتمد.",
   "tchProfileIntro": "خصّص ملفك: اكتب نبذة عنك، وارفع سيرتك الذاتية وشهاداتك (PDF أو صورة) عشان الإدارة وأولياء الأمور يشوفوا خبرتك.",
   "tchAboutMeLabel": "نبذة عني",
@@ -323,7 +408,6 @@
   "tchDocsLoadFailed": "مش قادرين نحمّل المستندات",
   "tchCantOpenDoc": "مش قادرين نفتح المستند",
   "delete": "حذف",
-
   "monLoadQueueFailed": "مش قادرين نحمّل الطابور",
   "monNoPendingEvals": "مفيش تقييمات مستنية اعتماد",
   "monApprove": "اعتمد",
@@ -331,7 +415,13 @@
   "monPlanSaved": "اتسجّلت خطة الشهر",
   "monPlanSaveFailed": "مش قادرين نحفظ — جرّب تاني",
   "monPlanEditorTitle": "خطة الشهر — {circleName}",
-  "@monPlanEditorTitle": { "placeholders": { "circleName": { "type": "String" } } },
+  "@monPlanEditorTitle": {
+    "placeholders": {
+      "circleName": {
+        "type": "String"
+      }
+    }
+  },
   "monLoadPlanFailed": "مش قادرين نحمّل الخطة",
   "monPlanVisibleToParents": "الخطة بتظهر لأولياء أمور طلبة الحلقة",
   "monCurriculumLabel": "منهج الشهر",
@@ -340,15 +430,33 @@
   "monSaving": "بنحفظ…",
   "monSavePlan": "حفظ الخطة",
   "monEvalStudentTitle": "تقييم {name}",
-  "@monEvalStudentTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@monEvalStudentTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "monPerformanceSummaryLabel": "ملخّص الأداء",
   "monBehaviorLabel": "السلوك",
   "monSubmitForApproval": "إرسال للاعتماد",
   "monPickTopTitle": "اختار متفوّق الشهر",
   "monTopStudentSnack": "{name} متفوّق الشهر 🏆",
-  "@monTopStudentSnack": { "placeholders": { "name": { "type": "String" } } },
+  "@monTopStudentSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "monEvalScreenTitle": "تقييم شهري — {circleName}",
-  "@monEvalScreenTitle": { "placeholders": { "circleName": { "type": "String" } } },
+  "@monEvalScreenTitle": {
+    "placeholders": {
+      "circleName": {
+        "type": "String"
+      }
+    }
+  },
   "monTopStudentTooltip": "متفوّق الشهر",
   "monLoadStudentsFailed": "مش قادرين نحمّل الطلبة",
   "monNoStudentsInCircle": "مفيش طلبة في الحلقة",
@@ -387,9 +495,21 @@
   "excReasonLabel": "سبب الغياب",
   "excNoReason": "لم يُكتب سبب",
   "excSubmittedAt": "أُرسل في {date}",
-  "@excSubmittedAt": { "placeholders": { "date": { "type": "String" } } },
+  "@excSubmittedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "excDecidedAt": "تم اتخاذ القرار في {date}",
-  "@excDecidedAt": { "placeholders": { "date": { "type": "String" } } },
+  "@excDecidedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "enrEnrollStudent": "تسجيل طالب",
   "enrRosterLoadError": "مش قادرين نحمّل الطلبة",
   "enrRosterEmpty": "مفيش طلبة في الحلقة لسه — سجّل أول طالب",
@@ -409,9 +529,24 @@
   "enrRescan": "صوّر تاني",
   "enrCaptureCard": "صوّر البطاقة",
   "docCertificateForTitle": "شهادة لـ {studentName}",
-  "@docCertificateForTitle": { "placeholders": { "studentName": { "type": "String" } } },
+  "@docCertificateForTitle": {
+    "placeholders": {
+      "studentName": {
+        "type": "String"
+      }
+    }
+  },
   "docIssuedSnack": "تم إصدار {kindLabel} لـ {studentName}",
-  "@docIssuedSnack": { "placeholders": { "kindLabel": { "type": "String" }, "studentName": { "type": "String" } } },
+  "@docIssuedSnack": {
+    "placeholders": {
+      "kindLabel": {
+        "type": "String"
+      },
+      "studentName": {
+        "type": "String"
+      }
+    }
+  },
   "docIssueError": "مش قادرين نصدر الشهادة — جرّب تاني",
   "docIssueCertificatesTitle": "إصدار الشهادات",
   "docEligibleLoadError": "مش قادرين نحمّل المؤهّلين",
@@ -423,7 +558,16 @@
   "famLinksLoadError": "مش قادرين نحمّل الروابط",
   "famNoLinks": "لسه مفيش روابط — اربط ولي أمر بطفل",
   "famLinkRelationSubtitle": "{relation} لـ {child}",
-  "@famLinkRelationSubtitle": { "placeholders": { "relation": { "type": "String" }, "child": { "type": "String" } } },
+  "@famLinkRelationSubtitle": {
+    "placeholders": {
+      "relation": {
+        "type": "String"
+      },
+      "child": {
+        "type": "String"
+      }
+    }
+  },
   "famLinkSheetTitle": "ربط ولي أمر بطفل",
   "famGuardianNameLabel": "اسم ولي الأمر",
   "famChildLabel": "الطفل",
@@ -441,7 +585,13 @@
   "itkWaitingListLoadError": "مش قادرين نحمّل القائمة",
   "itkNoApplicants": "مفيش متقدّمين في الانتظار",
   "itkTargetLevelLabel": "المستوى المستهدف: {level}",
-  "@itkTargetLevelLabel": { "placeholders": { "level": { "type": "String" } } },
+  "@itkTargetLevelLabel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
   "itkSetLevel": "تحديد المستوى",
   "itkAssignToCircle": "إسناد لحلقة",
   "itkApplicantNameLabel": "اسم المتقدّم",
@@ -477,16 +627,40 @@
   "sesOpenTodaySession": "افتح حصة النهارده",
   "sesAdvanceConfirmTitle": "تأكيد نقل المجموعة",
   "sesAdvanceConfirmCount": "عدّى {passed} من {active} طالب على المقطع الحالي.",
-  "@sesAdvanceConfirmCount": { "placeholders": { "passed": { "type": "String" }, "active": { "type": "String" } } },
+  "@sesAdvanceConfirmCount": {
+    "placeholders": {
+      "passed": {
+        "type": "String"
+      },
+      "active": {
+        "type": "String"
+      }
+    }
+  },
   "sesAdvanceConfirmWarning": "اللي ماعدّوش هيفضل عليهم دَيْن على المقطع ده. تنقل المجموعة لمقطع جديد؟",
   "sesCancel": "إلغاء",
   "sesAdvance": "انقل",
   "sesAdvanceReady": "المجموعة جاهزة تنتقل",
   "sesAdvanceReadySubtitle": "عدّى {passed} من {active} — أكتر من النص",
-  "@sesAdvanceReadySubtitle": { "placeholders": { "passed": { "type": "String" }, "active": { "type": "String" } } },
+  "@sesAdvanceReadySubtitle": {
+    "placeholders": {
+      "passed": {
+        "type": "String"
+      },
+      "active": {
+        "type": "String"
+      }
+    }
+  },
   "sesAdvanceGroup": "انقل المجموعة",
   "sesBehavioralNoteTitle": "ملاحظة سلوك: {name}",
-  "@sesBehavioralNoteTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@sesBehavioralNoteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "sesNoteVisibilityParent": "يشوفها ولي الأمر",
   "sesNoteVisibilityInternal": "داخلية",
   "sesNoteHint": "اكتب الملاحظة…",
@@ -513,7 +687,13 @@
   "sesAyahLabel": "الآية",
   "sesRequiredRevisionToday": "المراجعة المطلوبة النهارده",
   "sesTasmeeTitle": "تسميع: {name}",
-  "@sesTasmeeTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@sesTasmeeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "sesTasmeeKindMemorization": "حفظ",
   "sesTasmeeKindRevision": "مراجعة",
   "sesTasmeePassed": "ناجح ✓",
@@ -539,13 +719,31 @@
   "ppNotInCircle": "مش في حلقة دلوقتي",
   "ppLastTasmee": "آخر تسميع",
   "ppLastTasmeeValue": "{portion} — {score}/١٠ ({status})",
-  "@ppLastTasmeeValue": { "placeholders": { "portion": { "type": "String" }, "score": { "type": "String" }, "status": { "type": "String" } } },
+  "@ppLastTasmeeValue": {
+    "placeholders": {
+      "portion": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "ppPassed": "ناجح",
   "ppNeedsRetry": "محتاج إعادة",
   "ppViewFullHistory": "عرض السجلّ الكامل",
   "ppViewAttendanceLog": "عرض كل الحضور",
   "ppHistoryTitle": "سجلّ {name}",
-  "@ppHistoryTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@ppHistoryTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "ppTabTasmee": "التسميع",
   "ppTabAttendance": "الحضور",
   "ppHistoryLoadError": "مش قادرين نحمّل السجلّ",
@@ -554,7 +752,13 @@
   "ppKindMemorization": "حفظ",
   "ppKindRevision": "مراجعة",
   "ppScoreOf10": "{score}/١٠",
-  "@ppScoreOf10": { "placeholders": { "score": { "type": "String" } } },
+  "@ppScoreOf10": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
   "ppNoDate": "بدون تاريخ",
   "ppAttendance": "الحضور",
   "ppPresent": "حاضر",
@@ -562,7 +766,16 @@
   "ppExcused": "بعذر",
   "ppLate": "متأخّر",
   "ppPillLabel": "{label}: {count}",
-  "@ppPillLabel": { "placeholders": { "label": { "type": "String" }, "count": { "type": "String" } } },
+  "@ppPillLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "ppMyChildren": "أولادي",
   "ppSubscriptionCheckError": "مش قادرين نتأكّد من الاشتراك",
   "ppChildrenLoadError": "مش قادرين نحمّل البيانات",
@@ -593,7 +806,16 @@
   "ppMediaImageError": "تعذّر العرض",
   "ppChildJourney": "رحلة الطفل",
   "ppJourneyStopTitle": "{circle} — مع {teacher}",
-  "@ppJourneyStopTitle": { "placeholders": { "circle": { "type": "String" }, "teacher": { "type": "String" } } },
+  "@ppJourneyStopTitle": {
+    "placeholders": {
+      "circle": {
+        "type": "String"
+      },
+      "teacher": {
+        "type": "String"
+      }
+    }
+  },
   "ppMonthlyPlan": "خطة الشهر",
   "fbkRateTeacherTitle": "قيّم المحفّظ",
   "fbkRatePrivateNote": "تقييمك خاص للإدارة — المحفّظ مش هيشوفه",
@@ -605,20 +827,55 @@
   "supEvaluate": "قيّم",
   "supViewEvaluation": "عرض",
   "supEvaluationResult": "تم التقييم · {score}/١٠ · {level}",
-  "@supEvaluationResult": { "placeholders": { "score": { "type": "String" }, "level": { "type": "String" } } },
+  "@supEvaluationResult": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      }
+    }
+  },
   "supEvaluationBreakdown": "الحفظ، التلاوة، المصحف: {scores}",
-  "@supEvaluationBreakdown": { "placeholders": { "scores": { "type": "String" } } },
+  "@supEvaluationBreakdown": {
+    "placeholders": {
+      "scores": {
+        "type": "String"
+      }
+    }
+  },
   "supEvalStudentTitle": "تقييم: {name}",
-  "@supEvalStudentTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@supEvalStudentTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "supSaving": "بنحفظ…",
   "supSaveEval": "حفظ التقييم",
   "supSaveEvalError": "مش قادرين نحفظ التقييم — جرّب تاني",
   "syncStatusTitle": "حالة المزامنة",
-  "@syncStatusTitle": { "description": "عنوان شيت حالة مزامنة الطابور" },
+  "@syncStatusTitle": {
+    "description": "عنوان شيت حالة مزامنة الطابور"
+  },
   "syncPending": "{count} في انتظار المزامنة",
-  "@syncPending": { "placeholders": { "count": { "type": "String" } } },
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "syncFailedBanner": "فشلت مزامنة {count} عملية",
-  "@syncFailedBanner": { "placeholders": { "count": { "type": "String" } } },
+  "@syncFailedBanner": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "syncReview": "مراجعة",
   "syncFailedSection": "عمليات فشلت",
   "syncNoFailures": "مفيش عمليات فاشلة دلوقتي",
@@ -630,9 +887,50 @@
   "syncOpAttendance": "تسجيل حضور",
   "syncOpUnknown": "عملية",
   "syncAttempts": "{count} محاولات",
-  "@syncAttempts": { "placeholders": { "count": { "type": "String" } } },
+  "@syncAttempts": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "famHouseholdLabel": "الأسرة (للاشتراك)",
-  "@famHouseholdLabel": { "description": "تسمية اختيار أسرة ولي الأمر في شيت الربط" },
+  "@famHouseholdLabel": {
+    "description": "تسمية اختيار أسرة ولي الأمر في شيت الربط"
+  },
   "famHouseholdNew": "أسرة جديدة (باسم ولي الأمر)",
-  "famHouseholdsLoadError": "مش قادرين نحمّل الأسر — جرّب تاني"
+  "famHouseholdsLoadError": "مش قادرين نحمّل الأسر — جرّب تاني",
+  "enumCurriculumTypequran": "قرآن",
+  "enumCurriculumTypearabicFoundation": "تأسيس عربي",
+  "enumCircleStatusforming": "بتتجمّع",
+  "enumCircleStatusactive": "شغّالة",
+  "enumCircleStatusgraduated": "اتخرّجت",
+  "enumAttendanceStatuspresent": "حاضر",
+  "enumAttendanceStatusabsent": "غايب",
+  "enumAttendanceStatusabsentExcused": "غايب بعذر",
+  "enumAttendanceStatuslate": "متأخّر",
+  "enumEvalSelectionrandom": "عشوائي",
+  "enumEvalSelectionmanual": "يدوي",
+  "enumEvalCriterionmemorization": "الحفظ",
+  "enumEvalCriterionrecitation": "التلاوة",
+  "enumEvalCriterionmushafReading": "القراءة من المصحف",
+  "enumSubscriptionStatusactive": "نشط",
+  "enumSubscriptionStatusgrace": "فترة سماح",
+  "enumSubscriptionStatusoverdue": "متأخّر",
+  "enumSubscriptionStatusinactive": "غير مفعّل",
+  "enumCertificateKindjuzAmma": "إتمام جزء عمّ",
+  "enumCertificateKindhalf": "إتمام نصف القرآن",
+  "enumCertificateKindfull": "إتمام القرآن الكريم",
+  "enumCertificateKindhonor": "شهادة تفوّق",
+  "enumGendermale": "ولد",
+  "enumGenderfemale": "بنت",
+  "exceptionPermissionDenied": "الصلاحية مرفوضة",
+  "exceptionNotFound": "مش موجود",
+  "exceptionValidation": "بيانات غير صحيحة",
+  "exceptionSyncPending": "لسه في انتظار المزامنة",
+  "exceptionUnknown": "حصل خطأ غير متوقّع",
+  "commonCircle": "الحلقة",
+  "commonStudent": "الطالب",
+  "commonCurriculum": "المنهج",
+  "commonLevel": "المستوى"
 }

@@ -10,25 +10,25 @@ sealed class AppException implements Exception {
 }
 
 class NetworkException extends AppException {
-  const NetworkException([super.message = 'مفيش اتصال بالنت']);
+  const NetworkException([super.message = '']);
 }
 
 class PermissionDeniedException extends AppException {
-  const PermissionDeniedException([super.message = 'الصلاحية مرفوضة']);
+  const PermissionDeniedException([super.message = '']);
 }
 
 class NotFoundException extends AppException {
-  const NotFoundException([super.message = 'مش موجود']);
+  const NotFoundException([super.message = '']);
 }
 
 class ValidationException extends AppException {
-  const ValidationException([super.message = 'بيانات غير صحيحة']);
+  const ValidationException([super.message = '']);
 }
 
 class SyncPendingException extends AppException {
-  const SyncPendingException([super.message = 'لسه في انتظار المزامنة']);
+  const SyncPendingException([super.message = '']);
 }
 
 class UnknownException extends AppException {
-  const UnknownException([super.message = 'حصل خطأ غير متوقّع']);
+  const UnknownException([super.message = '']);
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { ApplicationDecision } from "../forms";
 
@@ -22,7 +23,7 @@ type App = {
   status: string;
   youtube_url: string | null;
   student: { full_name: string } | null;
-  reg: { name: string } | null;
+  reg: { name: string; phone: string } | null;
 };
 
 export default async function CompetitionDetailPage({
@@ -31,32 +32,37 @@ export default async function CompetitionDetailPage({
   params: Promise<{ competitionId: string }>;
 }) {
   const { competitionId } = await params;
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
 
-  const { data: comp } = await supabase
+  const { data: comp, error: compError } = await supabase
     .from("competition")
     .select("name, status")
     .eq("id", competitionId)
     .maybeSingle();
 
-  const { data: appData } = await supabase
+  if (compError) throw new Error("competition_load_failed");
+  if (!comp) notFound();
+
+  const { data: appData, error: appError } = await supabase
     .from("competition_application")
     .select(
-      "id, origin, status, youtube_url, student:student_person_id(full_name), reg:public_registration_id(name)",
+      "id, origin, status, youtube_url, student:student_person_id(full_name), reg:public_registration_id(name, phone)",
     )
     .eq("competition_id", competitionId)
     .order("created_at", { ascending: true });
+  if (appError) throw new Error("applicants_load_failed");
   const apps = (appData ?? []) as unknown as App[];
 
   const scoreAvg = new Map<string, { sum: number; n: number }>();
   if (apps.length) {
-    const { data: scores } = await supabase
+    const { data: scores, error: loadError1 } = await supabase
       .from("competition_score")
       .select("application_id, score")
       .in(
         "application_id",
         apps.map((a) => a.id),
       );
+  if (loadError1) throw new Error('data_load_failed');
     for (const s of (scores ?? []) as {
       application_id: string;
       score: number;
@@ -78,7 +84,7 @@ export default async function CompetitionDetailPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <Link href="/content" className="text-sm text-primary hover:underline">
-          ← المحتوى
+          → المحتوى
         </Link>
         <h1 className="text-2xl font-bold">{(comp?.name as string) ?? "المسابقة"}</h1>
         <p className="text-sm text-foreground/50">
@@ -87,7 +93,7 @@ export default async function CompetitionDetailPage({
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border bg-white">
-        <table className="w-full min-w-[640px] text-right text-sm">
+        <table className="w-full min-w-[640px] text-start text-sm">
           <thead className="border-b border-border bg-background/50 text-foreground/60">
             <tr>
               <th className="px-4 py-2 font-medium">المتقدّم</th>
@@ -120,6 +126,7 @@ export default async function CompetitionDetailPage({
                     ) : (
                       applicantName(a)
                     )}
+                    {a.reg?.phone && <div className="mt-2 flex flex-wrap gap-3"><a href={`tel:${a.reg.phone}`} dir="ltr" className="text-primary underline">{a.reg.phone}</a><a href={`https://wa.me/${a.reg.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-primary underline">واتساب</a></div>}
                   </td>
                   <td className="px-4 py-2 text-foreground/60">
                     {a.origin === "public" ? "عام" : "طالب"}

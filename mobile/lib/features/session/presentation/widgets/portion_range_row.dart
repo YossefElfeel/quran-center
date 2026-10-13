@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/app_search_picker.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/surah_option.dart';
 
@@ -28,7 +29,7 @@ class PortionRangeRow extends StatelessWidget {
     return Row(
       children: <Widget>[
         SizedBox(
-          width: 28,
+          width: 48,
           child: Text(
             title,
             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -36,19 +37,24 @@ class PortionRangeRow extends StatelessWidget {
         ),
         Expanded(
           flex: 3,
-          child: DropdownButton<int>(
-            isExpanded: true,
-            value: surah,
-            hint: Text(l.sesSurahHint),
-            items: surahs
-                .map(
-                  (SurahOption s) => DropdownMenuItem<int>(
-                    value: s.number,
-                    child: Text(s.name, overflow: TextOverflow.ellipsis),
-                  ),
-                )
-                .toList(),
-            onChanged: onSurah,
+          child: OutlinedButton(
+            onPressed: () async {
+              final SurahOption? choice =
+                  await showAppSearchPicker<SurahOption>(
+                    context: context,
+                    title: l.sesSurahHint,
+                    items: surahs,
+                    label: (SurahOption s) => s.name,
+                  );
+              if (choice != null) onSurah(choice.number);
+            },
+            child: Text(
+              surah == null
+                  ? l.sesSurahHint
+                  : surahs
+                        .firstWhere((SurahOption s) => s.number == surah)
+                        .name,
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),

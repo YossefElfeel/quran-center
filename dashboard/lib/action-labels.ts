@@ -1,6 +1,6 @@
 // أسماء عربية مختصرة لعمليات سجل التدقيق + تصنيف الخطورة. مشترك بين سجل النشاط
 // والتنبيهات الفورية (client-safe — مفيهوش أي استيراد server).
-const ACTION_LABEL: Record<string, string> = {
+export const ACTION_LABEL: Record<string, string> = {
   role_granted: "منح دور",
   role_revoked: "سحب دور",
   user_blocked: "حظر مستخدم",
@@ -21,6 +21,16 @@ const ACTION_LABEL: Record<string, string> = {
   cron_set_active: "تبديل مهمّة",
   media_access: "وصول وسائط",
   impersonation_started: "بدء تقمّص",
+  impersonation_stopped: "إيقاف التقمّص",
+  settings_updated: "تحديث الإعدادات",
+  certificate_issued: "إصدار شهادة",
+  certificate_revoked: "سحب شهادة",
+  payment_recorded: "تسجيل دفعة",
+  payment_voided: "إلغاء دفعة",
+  household_member_added: "إضافة فرد للأسرة",
+  household_member_removed: "إزالة فرد من الأسرة",
+  monthly_eval_returned: "إرجاع تقييم",
+  teacher_development_returned: "إرجاع تطوير المعلّم",
 };
 
 export function actionLabel(action: string): string {

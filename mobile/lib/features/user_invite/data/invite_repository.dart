@@ -18,6 +18,7 @@ class InviteRepository {
     required String email,
     required String fullName,
     required String role,
+    String? existingPersonId,
   }) async {
     try {
       final FunctionResponse res = await _client.functions.invoke(
@@ -26,13 +27,16 @@ class InviteRepository {
           'email': email,
           'full_name': fullName,
           'role': role,
+          'existing_person_id': ?existingPersonId,
         },
       );
       final dynamic data = res.data;
       if (data is Map && data['action_link'] is String) {
         return data['action_link'] as String;
       }
-      return null;
+      throw const ValidationException(
+        'اتعمل الحساب لكن رابط الدعوة مرجعش — تواصل مع الإدارة',
+      );
     } on FunctionException catch (e) {
       if (e.status == 403) {
         throw const PermissionDeniedException('الدعوة للأدمن بس');

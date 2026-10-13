@@ -12,14 +12,15 @@ class GuardianLinksController extends _$GuardianLinksController {
   Future<List<GuardianLinkRow>> build() =>
       ref.watch(familyRepositoryProvider).fetchLinks();
 
-  Future<void> createLink({
+  Future<String> createLink({
     required String guardianName,
     required String childPersonId,
     required String relation,
     String? householdId,
     String? newHouseholdName,
+    String? phone,
   }) async {
-    await ref
+    final String personId = await ref
         .read(familyRepositoryProvider)
         .createGuardianWithHousehold(
           guardianName: guardianName,
@@ -27,8 +28,10 @@ class GuardianLinksController extends _$GuardianLinksController {
           relation: relation,
           householdId: householdId,
           newHouseholdName: newHouseholdName,
+          phone: phone,
         );
     ref.invalidateSelf();
     await future;
+    return personId;
   }
 }

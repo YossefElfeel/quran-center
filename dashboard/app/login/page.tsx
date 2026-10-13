@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/button";
 import { signIn } from "./actions";
 
 export default async function LoginPage({
@@ -28,7 +29,7 @@ export default async function LoginPage({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          الباسورد
+          كلمة السر
           <input
             name="password"
             type="password"
@@ -40,18 +41,14 @@ export default async function LoginPage({
 
         {error ? (
           <p className="text-sm text-red-600">
-            بيانات الدخول غلط — جرّب تاني.
+            {error === "network" ? "تعذّر الاتصال — جرّب تاني." : error === "suspended" ? "الحساب موقوف — تواصل مع الإدارة." : "الإيميل أو كلمة السر مش صحيحين."}
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          className="rounded-lg bg-primary px-4 py-2 font-bold text-white transition-opacity hover:opacity-90"
-        >
-          دخول
-        </button>
+        <SubmitButton>دخول</SubmitButton>
       </form>
 
+      <a href={`${process.env.NEXT_PUBLIC_WEB_URL ?? "https://quran-web-sage.vercel.app"}/auth/forgot`} className="text-center text-primary underline">نسيت كلمة السر؟</a>
       <p className="text-center text-xs text-foreground/50">
         الدخول للسوبر أدمن بس.
       </p>

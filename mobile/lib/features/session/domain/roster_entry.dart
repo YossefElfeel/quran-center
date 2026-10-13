@@ -15,6 +15,9 @@ class RosterEntry {
     required this.studentName,
     required this.attendance,
     this.gender,
+    this.attendanceRecorded = false,
+    this.excuseRequested = false,
+    this.tasmeeRecorded = false,
     this.ledgerState,
   });
 
@@ -23,6 +26,9 @@ class RosterEntry {
   final String studentName;
   final AttendanceStatus attendance;
   final Gender? gender;
+  final bool attendanceRecorded;
+  final bool excuseRequested;
+  final bool tasmeeRecorded;
 
   /// حالة الطالب على المقطع الحالي (null = لسه متسمّعش عليه).
   final LedgerState? ledgerState;
@@ -30,6 +36,9 @@ class RosterEntry {
   /// [ledgerState] بيقبل null صريح (لتصفير الحالة بعد الانتقال) عبر الحارس.
   RosterEntry copyWith({
     AttendanceStatus? attendance,
+    bool? attendanceRecorded,
+    bool? excuseRequested,
+    bool? tasmeeRecorded,
     Object? ledgerState = _unset,
   }) => RosterEntry(
     enrollmentId: enrollmentId,
@@ -37,6 +46,9 @@ class RosterEntry {
     studentName: studentName,
     attendance: attendance ?? this.attendance,
     gender: gender,
+    attendanceRecorded: attendanceRecorded ?? this.attendanceRecorded,
+    excuseRequested: excuseRequested ?? this.excuseRequested,
+    tasmeeRecorded: tasmeeRecorded ?? this.tasmeeRecorded,
     ledgerState: identical(ledgerState, _unset)
         ? this.ledgerState
         : ledgerState as LedgerState?,
@@ -52,9 +64,17 @@ class TodaySession {
     this.currentPortion,
     this.activeAtOpen = 0,
     this.requiredRevision,
+    this.closedToday = false,
+    this.presentCount = 0,
+    this.absentCount = 0,
+    this.tasmeeCount = 0,
   });
 
   final String? sessionId;
+  final bool closedToday;
+  final int presentCount;
+  final int absentCount;
+  final int tasmeeCount;
   final Portion? currentPortion;
 
   /// المقام المجمّد: عدد النشطين وقت فتح المقطع الحالي (٠ لو مفيش مقطع).
@@ -65,7 +85,44 @@ class TodaySession {
 
   final List<RosterEntry> roster;
 
-  bool get isOpen => sessionId != null;
+  /// Keep the offline summary and details consistent with queued attendance.
+  TodaySession closedLocally({required bool markUnrecordedPresent}) {
+    final List<RosterEntry> recorded = roster
+        .map(
+          (e) => markUnrecordedPresent && !e.attendanceRecorded
+              ? e.copyWith(
+                  attendance: AttendanceStatus.present,
+                  attendanceRecorded: true,
+                )
+              : e,
+        )
+        .toList();
+    return TodaySession(
+      sessionId: sessionId,
+      closedToday: true,
+      currentPortion: currentPortion,
+      requiredRevision: requiredRevision,
+      activeAtOpen: activeAtOpen,
+      roster: recorded,
+      presentCount: recorded
+          .where(
+            (e) =>
+                e.attendanceRecorded &&
+                (e.attendance == AttendanceStatus.present ||
+                    e.attendance == AttendanceStatus.late),
+          )
+          .length,
+      absentCount: recorded
+          .where(
+            (e) =>
+                e.attendanceRecorded && e.attendance == AttendanceStatus.absent,
+          )
+          .length,
+      tasmeeCount: recorded.where((e) => e.tasmeeRecorded).length,
+    );
+  }
+
+  bool get isOpen => sessionId != null && !closedToday;
   bool get hasPortion => currentPortion != null;
 
   /// عدد اللي عدّوا المقطع الحالي.
@@ -87,8 +144,16 @@ class TodaySession {
         passedCount: passedCount,
       ).shouldAdvance;
 
-  TodaySession copyWith({List<RosterEntry>? roster}) => TodaySession(
-    sessionId: sessionId,
+  TodaySession copyWith({
+    List<RosterEntry>? roster,
+    String? sessionId,
+    bool? closedToday,
+  }) => TodaySession(
+    sessionId: sessionId ?? this.sessionId,
+    closedToday: closedToday ?? this.closedToday,
+    presentCount: presentCount,
+    absentCount: absentCount,
+    tasmeeCount: tasmeeCount,
     currentPortion: currentPortion,
     activeAtOpen: activeAtOpen,
     requiredRevision: requiredRevision,

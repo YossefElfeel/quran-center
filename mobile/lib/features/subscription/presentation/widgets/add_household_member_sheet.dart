@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
-
-import '../../../../core/error/app_exception.dart';
-import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
-import '../../../../shared/widgets/app_error_view.dart';
+import '../../../../shared/widgets/app_search_picker.dart';
+import '../../../../shared/widgets/app_select_field.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../data/subscription_repository.dart';
 import '../../domain/person_option.dart';
-import '../controllers/all_persons_controller.dart';
 import '../controllers/household_members_controller.dart';
 
-/// شيت إضافة فرد لأسرة (شخص موجود + دور).
 class AddHouseholdMemberSheet extends ConsumerStatefulWidget {
   const AddHouseholdMemberSheet({required this.householdId, super.key});
-
   final String householdId;
-
   @override
   ConsumerState<AddHouseholdMemberSheet> createState() =>
       _AddHouseholdMemberSheetState();
@@ -23,104 +19,87 @@ class AddHouseholdMemberSheet extends ConsumerStatefulWidget {
 
 class _AddHouseholdMemberSheetState
     extends ConsumerState<AddHouseholdMemberSheet> {
-  String? _personId;
+  PersonOption? _person;
   String _role = 'guardian';
   bool _saving = false;
-
+  String? _error;
   Future<void> _save() async {
-    final String? personId = _personId;
-    if (personId == null) return;
-    setState(() => _saving = true);
+    if (_saving) return;
+    if (_person == null) {
+      setState(() => _error = 'اختار الفرد');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
       await ref
           .read(householdMembersControllerProvider(widget.householdId).notifier)
-          .addMember(personId: personId, role: _role);
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      final AppL10n l = AppL10n.of(context);
-      final String msg = e is AppException ? e.message : l.subsAddMemberError;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+          .addMember(personId: _person!.personId, role: _role);
+      if (mounted) {
+        AppSnackbar.success(context, 'الفرد اتضاف للأسرة');
+        Navigator.of(context).pop();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = 'تعذّر إضافة الفرد — ممكن يكون مرتبط بأسرة بالفعل',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final AppL10n l = AppL10n.of(context);
-    final AsyncValue<List<PersonOption>> persons = ref.watch(
-      allPersonsProvider,
-    );
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.lg,
-        right: AppSpacing.lg,
-        top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
+    final l = AppL10n.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        TextButton(
+          onPressed: _saving
+              ? null
+              : () async {
+                  final person = await showAppServerSearchPicker<PersonOption>(
+                    context: context,
+                    title: l.subsPickPerson,
+                    search: (q) => ref
+                        .read(subscriptionRepositoryProvider)
+                        .fetchAllPersons(query: q),
+                    label: (p) => p.fullName,
+                  );
+                  if (person != null && mounted) {
+                    setState(() => _person = person);
+                  }
+                },
+          child: Text(_person?.fullName ?? l.subsPickPerson),
+        ),
+        AppSelectField<String>(
+          label: l.subsRoleLabel,
+          value: _role,
+          items: <DropdownMenuItem<String>>[
+            DropdownMenuItem(
+              value: 'guardian',
+              child: Text(l.subsRoleGuardian),
+            ),
+            DropdownMenuItem(value: 'student', child: Text(l.subsRoleStudent)),
+          ],
+          onChanged: _saving ? null : (v) => setState(() => _role = v!),
+        ),
+        if (_error != null)
           Text(
-            l.subsAddMemberTitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            _error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(l.subsPersonLabel),
-          ),
-          persons.when(
-            loading: () => const LinearProgressIndicator(),
-            error: (Object e, StackTrace _) => AppErrorView(
-              message: l.subsPersonsLoadError,
-              onRetry: () => ref.invalidate(allPersonsProvider),
-            ),
-            data: (List<PersonOption> list) => DropdownButton<String>(
-              isExpanded: true,
-              value: _personId,
-              hint: Text(l.subsPickPerson),
-              items: list
-                  .map(
-                    (PersonOption p) => DropdownMenuItem<String>(
-                      value: p.personId,
-                      child: Text(p.fullName),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (String? v) => setState(() => _personId = v),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(l.subsRoleLabel),
-          ),
-          DropdownButton<String>(
-            isExpanded: true,
-            value: _role,
-            items: <DropdownMenuItem<String>>[
-              DropdownMenuItem<String>(
-                value: 'guardian',
-                child: Text(l.subsRoleGuardian),
-              ),
-              DropdownMenuItem<String>(
-                value: 'student',
-                child: Text(l.subsRoleStudent),
-              ),
-            ],
-            onChanged: (String? v) => setState(() => _role = v ?? 'guardian'),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AppButton(
-            label: _saving ? l.subsAdding : l.subsAddMemberButton,
-            icon: Icons.person_add,
-            onPressed: _saving ? null : _save,
-          ),
-        ],
-      ),
+        AppButton(
+          label: l.subsAddMemberButton,
+          isLoading: _saving,
+          onPressed: _save,
+        ),
+      ],
     );
   }
 }

@@ -6,6 +6,8 @@ class AppNotification {
     required this.title,
     required this.createdAt,
     this.body,
+    this.circleId,
+    this.month,
     this.readAt,
   });
 
@@ -14,6 +16,9 @@ class AppNotification {
     type: map['type'] as String,
     title: map['title'] as String,
     body: map['body'] as String?,
+    circleId:
+        (map['route_data'] as Map<String, dynamic>?)?['circle_id'] as String?,
+    month: (map['route_data'] as Map<String, dynamic>?)?['month'] as String?,
     createdAt: DateTime.parse(map['created_at'] as String),
     readAt: map['read_at'] != null
         ? DateTime.parse(map['read_at'] as String)
@@ -24,6 +29,8 @@ class AppNotification {
   final String type;
   final String title;
   final String? body;
+  final String? circleId;
+  final String? month;
   final DateTime createdAt;
   final DateTime? readAt;
 
@@ -34,6 +41,8 @@ class AppNotification {
     type: type,
     title: title,
     body: body,
+    circleId: circleId,
+    month: month,
     createdAt: createdAt,
     readAt: readAt ?? this.readAt,
   );

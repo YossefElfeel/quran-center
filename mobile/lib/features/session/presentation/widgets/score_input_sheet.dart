@@ -4,6 +4,7 @@ import 'package:quran_center/l10n/generated/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/settings/settings_repository.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -69,11 +70,11 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
     final bool passed = score != null && score >= threshold;
     final AppL10n l = AppL10n.of(context);
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
         top: AppSpacing.lg,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        bottom: AppSpacing.lg,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -82,7 +83,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
           Text(
             l.sesTasmeeTitle(widget.entry.studentName),
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: AppTextStyles.titleSm,
           ),
           if (widget.hasRevision) ...<Widget>[
             const SizedBox(height: AppSpacing.md),
@@ -115,8 +116,7 @@ class _ScoreInputSheetState extends ConsumerState<ScoreInputSheet> {
             Text(
               passed ? l.sesTasmeePassed : l.sesTasmeeNeedsRetry,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
+              style: AppTextStyles.titleMd.copyWith(
                 fontWeight: FontWeight.bold,
                 color: passed ? context.palette.success : context.palette.error,
               ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
+import '../../../../shared/presentation/domain_labels.dart';
+import '../../../../shared/theme/app_icons.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_avatar.dart';
@@ -18,6 +20,7 @@ class StudentTile extends StatelessWidget {
     required this.onAttendanceChanged,
     required this.onTasmee,
     this.onNote,
+    this.excuseRequested = false,
     this.onRequestExcuse,
     super.key,
   });
@@ -29,6 +32,7 @@ class StudentTile extends StatelessWidget {
 
   /// تسجيل ملاحظة سلوك للطالب (null = مخفي).
   final VoidCallback? onNote;
+  final bool excuseRequested;
 
   /// متاح لو الطالب غايب — يطلب عذر للمشرف (null = ماينفعش).
   final VoidCallback? onRequestExcuse;
@@ -44,56 +48,61 @@ class StudentTile extends StatelessWidget {
       ),
       child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            AppAvatar(name: entry.studentName, radius: 20),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
+            Row(
+              children: <Widget>[
+                AppAvatar(name: entry.studentName, radius: 20),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
                     entry.studentName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.titleMd.copyWith(
                       color: palette.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  _LedgerBadge(state: entry.ledgerState),
-                  if (onRequestExcuse != null)
-                    TextButton(
-                      onPressed: onRequestExcuse,
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(0, 32),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        l.sesRequestExcuse,
-                        style: AppTextStyles.labelSm,
-                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            _LedgerBadge(state: entry.ledgerState),
+            if (excuseRequested) const Text('طلب متبعت'),
+            Wrap(
+              spacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                _AttendanceDropdown(
+                  value: entry.attendance,
+                  onChanged: onAttendanceChanged,
+                ),
+                if (onRequestExcuse != null)
+                  TextButton(
+                    onPressed: onRequestExcuse,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
                     ),
-                ],
-              ),
+                    child: Text(l.sesRequestExcuse),
+                  ),
+                if (onNote != null)
+                  IconButton(
+                    tooltip: l.sesBehavioralNoteTooltip,
+                    icon: const Icon(AppIcons.note),
+                    onPressed: onNote,
+                  ),
+                if (canRecordTasmee)
+                  IconButton.filled(
+                    tooltip: l.sesTasmeeTooltip,
+                    style: IconButton.styleFrom(
+                      foregroundColor: palette.onPrimary,
+                    ),
+                    icon: Icon(AppIcons.tasmee, color: palette.onPrimary),
+                    onPressed: onTasmee,
+                  ),
+              ],
             ),
-            _AttendanceDropdown(
-              value: entry.attendance,
-              onChanged: onAttendanceChanged,
-            ),
-            if (onNote != null)
-              IconButton(
-                tooltip: l.sesBehavioralNoteTooltip,
-                icon: const Icon(Icons.note_add_outlined),
-                onPressed: onNote,
-              ),
-            if (canRecordTasmee) ...<Widget>[
-              const SizedBox(width: AppSpacing.xs),
-              IconButton.filled(
-                tooltip: l.sesTasmeeTooltip,
-                icon: const Icon(Icons.record_voice_over),
-                onPressed: onTasmee,
-              ),
-            ],
           ],
         ),
       ),
@@ -133,7 +142,7 @@ class _AttendanceDropdown extends StatelessWidget {
           .map(
             (AttendanceStatus s) => DropdownMenuItem<AttendanceStatus>(
               value: s,
-              child: Text(s.labelAr),
+              child: Text(s.label(AppL10n.of(context))),
             ),
           )
           .toList(),

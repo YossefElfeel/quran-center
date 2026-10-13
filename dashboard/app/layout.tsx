@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import { Cairo } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const cairo = Cairo({
-  variable: "--font-cairo",
-  subsets: ["arabic", "latin"],
-});
+const cairo = localFont({ src: "./fonts/Cairo.ttf", variable: "--font-cairo", display: "swap" });
 
 export const metadata: Metadata = {
   title: "لوحة تحكم مركز تحفيظ القرآن",

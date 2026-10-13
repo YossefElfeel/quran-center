@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_icons.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/tokens.dart';
 import 'app_card.dart';
@@ -53,9 +54,7 @@ class AppListCard extends StatelessWidget {
 
     final Widget? trail =
         trailing ??
-        (onTap != null
-            ? Icon(Icons.chevron_left, color: p.textSecondary)
-            : null);
+        (onTap != null ? Icon(AppIcons.drillIn, color: p.textSecondary) : null);
 
     return Padding(
       padding: margin,
@@ -82,7 +81,7 @@ class AppListCard extends StatelessWidget {
                       style: AppTextStyles.titleMd.copyWith(
                         color: p.textPrimary,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (subtitle != null) ...<Widget>[
@@ -92,7 +91,7 @@ class AppListCard extends StatelessWidget {
                         style: AppTextStyles.bodyMd.copyWith(
                           color: p.textSecondary,
                         ),
-                        maxLines: 2,
+                        maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],

@@ -4,12 +4,12 @@ import { ActivityFeed, type ActivityEntry } from "@/components/activity-feed";
 import { LiveRefresh } from "@/components/live-refresh";
 import { TrendChart } from "@/components/trend-chart";
 import { formatNumber } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDataClient } from "@/lib/supabase/data-client";
 
 import { RevenueChart } from "./analytics/revenue-chart";
 
 export default async function DashHome() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await getDataClient();
 
   // كل المقاييس في نداء RPC واحد (بدل ١٨ COUNT)، + بيانات الرسوم + بذرة سجل النشاط.
   const [metricsRes, payments, enrolledRows, activity] = await Promise.all([
@@ -30,6 +30,11 @@ export default async function DashHome() {
       .limit(30),
   ]);
 
+  if (metricsRes.error) throw new Error('metrics_load_failed');
+  if (payments.error || enrolledRows.error || activity.error) throw new Error('overview_load_failed');
+  const {data:thresholdRow,error:thresholdError}=await supabase.from('system_settings').select('value').eq('key','struggle_failed_attempts').maybeSingle();
+  if(thresholdError)throw new Error('threshold_load_failed');
+  const threshold=Number(thresholdRow?.value??3);
   const m = (metricsRes.data ?? {}) as Record<string, number | boolean>;
   const num = (k: string) => Number(m[k] ?? 0);
   const bool = (k: string) => m[k] === true;
@@ -79,7 +84,7 @@ export default async function DashHome() {
       tone: "amber" as const,
     },
     { label: "أعذار غياب معلّقة", count: num("excuse_pending"), href: "/excuses", tone: "amber" as const },
-    { label: "طلبة متعثّرون (٣+ محاولات)", count: num("struggling"), href: "/circles", tone: "red" as const },
+    { label: `طلبة متعثّرون (${formatNumber(threshold)}+ محاولات)`, count: num("struggling"), href: "/circles?filter=struggling", tone: "red" as const },
     { label: "في قائمة الانتظار", count: num("waiting"), href: "/intake", tone: "blue" as const },
     { label: "شكاوى مفتوحة", count: num("open_complaints"), href: "/complaints", tone: "amber" as const },
   ];

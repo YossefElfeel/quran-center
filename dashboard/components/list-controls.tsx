@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatNumber } from "@/lib/format";
 
 // نموذج بحث (GET) — بيحدّث ?q= ويصفّر الصفحة. بيحافظ على فلاتر تانية عبر hidden.
 export function SearchForm({
@@ -16,6 +17,7 @@ export function SearchForm({
         <input key={k} type="hidden" name={k} value={v} />
       ))}
       <input
+        aria-label={placeholder}
         name="q"
         defaultValue={q ?? ""}
         placeholder={placeholder}
@@ -49,7 +51,7 @@ export function Pager({
   return (
     <div className="flex items-center justify-between gap-3 text-sm text-foreground/60">
       <span>
-        صفحة {page} من {totalPages || 1}
+        صفحة {formatNumber(page)} من {formatNumber(totalPages || 1)}
       </span>
       <div className="flex gap-2">
         {page > 1 ? (

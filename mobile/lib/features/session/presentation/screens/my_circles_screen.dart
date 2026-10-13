@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../shared/presentation/domain_labels.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_error_view.dart';
 import '../../../../shared/widgets/app_list_card.dart';
@@ -11,6 +12,7 @@ import '../../../../shared/widgets/app_list_skeleton.dart';
 import '../../../../shared/widgets/app_refresh_indicator.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../../shared/widgets/center_contact_button.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../admin_setup/domain/circle.dart';
 import '../controllers/my_circles_controller.dart';
@@ -43,7 +45,11 @@ class MyCirclesScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(myCirclesProvider),
         ),
         data: (List<Circle> items) => items.isEmpty
-            ? EmptyState(message: l.sesNoCircles, icon: Icons.groups_outlined)
+            ? EmptyState(
+                message: l.sesNoCircles,
+                action: const CenterContactButton(),
+                icon: Icons.groups_outlined,
+              )
             : AppRefreshIndicator(
                 onRefresh: () async => ref.invalidate(myCirclesProvider),
                 child: ListView.builder(
@@ -53,7 +59,7 @@ class MyCirclesScreen extends ConsumerWidget {
                     final Circle c = items[i];
                     return AppListCard(
                       title: c.name,
-                      subtitle: c.status.labelAr,
+                      subtitle: c.status.label(AppL10n.of(context)),
                       leadingIcon: Icons.groups,
                       onTap: () => context.push(Routes.session(c.id, c.name)),
                       trailing: Row(

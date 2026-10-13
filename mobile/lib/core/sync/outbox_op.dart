@@ -2,6 +2,8 @@ import 'dart:convert';
 
 /// نوع عملية الكتابة في طابور الإرسال — كل نوع له منطق إرسال مختلف.
 enum OutboxOpType {
+  sessionOpen('session_open'),
+  sessionClose('session_close'),
   tasmeeRecord('tasmee_record'),
   attendanceMark('attendance_mark');
 
@@ -29,6 +31,8 @@ class OutboxOp {
   final OutboxOpType type;
   final Map<String, dynamic> payload;
   final int attempts;
+
+  String? get displayLabel => payload['display_label'] as String?;
 
   String get payloadJson => jsonEncode(payload);
 

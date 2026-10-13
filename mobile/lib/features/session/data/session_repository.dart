@@ -38,17 +38,27 @@ class SessionRepository {
     return row?['id'] as String?;
   }
 
-  Future<String> openSession(String circleId, String? openedBy) async {
-    final Map<String, dynamic> row = await _client
-        .from('circle_session')
-        .insert(<String, dynamic>{
-          'circle_id': circleId,
-          'status': 'open',
-          'opened_by': ?openedBy,
-        })
-        .select('id')
-        .single();
-    return row['id'] as String;
+  Future<Map<String, dynamic>?> todaySessionStatus(String circleId) async {
+    final dynamic result = await _client.rpc(
+      'today_session_status',
+      params: <String, dynamic>{'p_circle_id': circleId},
+    );
+    return result as Map<String, dynamic>?;
+  }
+
+  Future<String> openSession(
+    String circleId,
+    String? openedBy, {
+    String? sessionId,
+  }) async {
+    final dynamic id = await _client.rpc(
+      'open_circle_session',
+      params: <String, dynamic>{
+        'p_circle_id': circleId,
+        'p_session_id': sessionId,
+      },
+    );
+    return id as String;
   }
 
   Future<List<Map<String, dynamic>>> fetchRoster(String circleId) async {
@@ -60,6 +70,25 @@ class SessionRepository {
         .eq('circle_id', circleId)
         .eq('status', 'active')
         .order('enrolled_at', ascending: true);
+  }
+
+  Future<Set<String>> fetchGradedEnrollments(String sessionId) async {
+    final List<Map<String, dynamic>> rows = await _client
+        .from('daily_tasmee')
+        .select('enrollment_id')
+        .eq('session_id', sessionId);
+    return rows
+        .map((Map<String, dynamic> row) => row['enrollment_id'] as String)
+        .toSet();
+  }
+
+  Future<Set<String>> fetchRequestedExcuses(String sessionId) async {
+    final rows = await _client
+        .from('excuse_request')
+        .select('enrollment_id')
+        .eq('session_id', sessionId)
+        .timeout(const Duration(seconds: 12));
+    return rows.map((row) => row['enrollment_id'] as String).toSet();
   }
 
   Future<Map<String, String>> fetchAttendance(String sessionId) async {
@@ -298,42 +327,22 @@ class SessionRepository {
     String? memorizedTodayPortionId,
     String? teacherId,
   }) async {
-    String? revisionPortionId;
-    if (revisionName != null &&
-        revSurahStart != null &&
-        revAyahStart != null &&
-        revSurahEnd != null &&
-        revAyahEnd != null) {
-      revisionPortionId = await _insertPortion(
-        name: revisionName,
-        surahStart: revSurahStart,
-        ayahStart: revAyahStart,
-        surahEnd: revSurahEnd,
-        ayahEnd: revAyahEnd,
-      );
-    }
-
-    // for_session_id متساب null: الخطة للحصة الجاية (لسه متفتحتش)، مش للحالية.
-    await _client.from('session_plan').insert(<String, dynamic>{
-      'circle_id': circleId,
-      'revision_portion_id': ?revisionPortionId,
-      'set_by': ?teacherId,
-    });
-
-    if (memorizedTodayPortionId != null) {
-      await _client.from('session_outcome').insert(<String, dynamic>{
-        'session_id': sessionId,
-        'memorized_portion_id': memorizedTodayPortionId,
-      });
-    }
-
-    await _client
-        .from('circle_session')
-        .update(<String, dynamic>{
-          'status': 'closed',
-          'closed_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', sessionId);
+    await _client.rpc(
+      'close_session_with_plan',
+      params: <String, dynamic>{
+        'p_session_id': sessionId,
+        'p_memorized_portion_id': memorizedTodayPortionId,
+        'p_revision': revisionName == null
+            ? null
+            : <String, dynamic>{
+                'name': revisionName,
+                'surah_start': revSurahStart,
+                'ayah_start': revAyahStart,
+                'surah_end': revSurahEnd,
+                'ayah_end': revAyahEnd,
+              },
+      },
+    );
   }
 
   /// ملاحظة سلوك لطالب: visibility='parent' (يشوفها ولي الأمر، والموصّل بيبعتله

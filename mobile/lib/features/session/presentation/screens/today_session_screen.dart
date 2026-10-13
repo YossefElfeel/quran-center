@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/auth/auth_providers.dart';
+import '../../../../core/settings/settings_repository.dart';
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/presentation/domain_labels.dart';
 import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -16,6 +21,7 @@ import '../../../../shared/widgets/app_modal_sheet.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_status_badge.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../documents/domain/attendance_sheet_pdf.dart';
 import '../../../progress_engine/domain/ledger_state.dart';
@@ -97,14 +103,23 @@ class TodaySessionScreen extends ConsumerWidget {
   }
 }
 
-class _SessionBody extends ConsumerWidget {
+class _SessionBody extends ConsumerStatefulWidget {
   const _SessionBody({required this.circleId, required this.session});
 
   final String circleId;
   final TodaySession session;
 
+  @override
+  ConsumerState<_SessionBody> createState() => _SessionBodyState();
+}
+
+class _SessionBodyState extends ConsumerState<_SessionBody> {
+  String get circleId => widget.circleId;
+  TodaySession get session => widget.session;
+  final Set<String> _requestingExcuses = <String>{};
+
   void _openSetPortion(BuildContext context, {bool advanceMode = false}) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) =>
@@ -113,7 +128,7 @@ class _SessionBody extends ConsumerWidget {
   }
 
   void _openTasmee(BuildContext context, RosterEntry entry, bool hasRevision) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) => ScoreInputSheet(
@@ -125,7 +140,7 @@ class _SessionBody extends ConsumerWidget {
   }
 
   void _openNote(BuildContext context, RosterEntry entry) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) => BehavioralNoteSheet(
@@ -137,7 +152,7 @@ class _SessionBody extends ConsumerWidget {
   }
 
   void _openClose(BuildContext context) {
-    showModalBottomSheet<void>(
+    showAppModalSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext _) => CloseSessionSheet(circleId: circleId),
@@ -196,19 +211,88 @@ class _SessionBody extends ConsumerWidget {
     TodaySessionController notifier,
     String enrollmentId,
   ) async {
-    await notifier.requestExcuse(enrollmentId);
-    if (context.mounted) {
-      AppSnackbar.success(context, AppL10n.of(context).sesExcuseRequestSent);
+    if (_requestingExcuses.contains(enrollmentId)) return;
+    setState(() => _requestingExcuses.add(enrollmentId));
+    final TextEditingController reason = TextEditingController();
+    try {
+      final String? text = await showAppModalSheet<String>(
+        context: context,
+        title: 'طلب عذر',
+        builder: (BuildContext ctx) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            AppTextField(
+              controller: reason,
+              label: 'السبب (اختياري)',
+              maxLines: 3,
+            ),
+            AppButton(
+              label: 'إرسال الطلب',
+              onPressed: () => Navigator.of(ctx).pop(reason.text.trim()),
+            ),
+          ],
+        ),
+      );
+      if (text == null) return;
+      try {
+        await notifier.requestExcuse(
+          enrollmentId,
+          reason: text.isEmpty ? null : text,
+        );
+      } catch (_) {
+        if (context.mounted) {
+          AppSnackbar.error(context, 'تعذّر إرسال طلب العذر');
+        }
+        return;
+      }
+      if (context.mounted) {
+        AppSnackbar.success(context, AppL10n.of(context).sesExcuseRequestSent);
+      }
+    } finally {
+      reason.dispose();
+      if (mounted) setState(() => _requestingExcuses.remove(enrollmentId));
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final AppL10n l = AppL10n.of(context);
     if (session.roster.isEmpty) {
       return EmptyState(
         message: l.sesNoStudentsInCircle,
         icon: Icons.groups_outlined,
+        action: TextButton(
+          onPressed: () async {
+            final roles =
+                ref.read(currentRolesProvider).asData?.value ?? <String>[];
+            if (roles.contains('admin') || roles.contains('super_admin')) {
+              await context.push<void>('/admin/circles/$circleId/students');
+              return;
+            }
+            try {
+              final settings = await ref.read(appSettingsProvider.future);
+              if (settings.centerPhone.isNotEmpty) {
+                await launchUrl(Uri(scheme: 'tel', path: settings.centerPhone));
+              } else if (context.mounted) {
+                AppSnackbar.info(
+                  context,
+                  'رقم الإدارة مش مضاف — كلّم المشرف لربط الطلبة',
+                );
+              }
+            } catch (_) {
+              if (context.mounted) {
+                AppSnackbar.error(context, 'تعذّر تحميل رقم الإدارة');
+              }
+            }
+          },
+          child: Text(
+            (ref.watch(currentRolesProvider).asData?.value ?? <String>[]).any(
+                  (r) => r == 'admin' || r == 'super_admin',
+                )
+                ? 'ضيف طلاب'
+                : 'كلّم الإدارة',
+          ),
+        ),
       );
     }
     final TodaySessionController notifier = ref.read(
@@ -216,7 +300,7 @@ class _SessionBody extends ConsumerWidget {
     );
 
     if (!session.isOpen) {
-      return _ClosedView(onOpen: notifier.openSession);
+      return _ClosedView(onOpen: notifier.openSession, session: session);
     }
 
     final bool hasRevision = session.requiredRevision != null;
@@ -250,12 +334,26 @@ class _SessionBody extends ConsumerWidget {
               return StudentTile(
                 key: ValueKey<String>(e.enrollmentId),
                 entry: e,
+                excuseRequested: e.excuseRequested,
                 canRecordTasmee: session.hasPortion,
-                onAttendanceChanged: (AttendanceStatus s) =>
-                    notifier.setAttendance(e.enrollmentId, s),
+                onAttendanceChanged: (AttendanceStatus s) async {
+                  try {
+                    await notifier.setAttendance(e.enrollmentId, s);
+                  } catch (_) {
+                    if (context.mounted) {
+                      AppSnackbar.error(
+                        context,
+                        'تعذّر حفظ الحضور — جرّب تاني',
+                      );
+                    }
+                  }
+                },
                 onTasmee: () => _openTasmee(context, e, hasRevision),
                 onNote: () => _openNote(context, e),
-                onRequestExcuse: e.attendance == AttendanceStatus.absent
+                onRequestExcuse:
+                    e.attendance == AttendanceStatus.absent &&
+                        !e.excuseRequested &&
+                        !_requestingExcuses.contains(e.enrollmentId)
                     ? () => _requestExcuse(context, notifier, e.enrollmentId)
                     : null,
               );
@@ -275,10 +373,36 @@ class _SessionBody extends ConsumerWidget {
   }
 }
 
-class _ClosedView extends StatelessWidget {
-  const _ClosedView({required this.onOpen});
+class _ClosedView extends StatefulWidget {
+  const _ClosedView({required this.onOpen, required this.session});
+  final Future<void> Function() onOpen;
+  final TodaySession session;
+  @override
+  State<_ClosedView> createState() => _ClosedViewState();
+}
 
-  final VoidCallback onOpen;
+class _ClosedViewState extends State<_ClosedView> {
+  bool _busy = false;
+  Future<void> _open() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await widget.onOpen();
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.error(
+          context,
+          e.toString().contains('freeze')
+              ? 'تسجيل الحصص متوقف مؤقتًا — تواصل مع الإدارة'
+              : e.toString().contains('maintenance')
+              ? 'الدار في وضع الصيانة — جرّب لاحقًا'
+              : 'تعذّر فتح الحصة — راجع الاتصال وجرّب تاني',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -292,15 +416,48 @@ class _ClosedView extends StatelessWidget {
           Icon(Icons.event_available, size: 64, color: p.primary),
           const SizedBox(height: AppSpacing.md),
           Text(
-            l.sesSessionStillClosed,
+            widget.session.closedToday
+                ? '✓ حصة النهارده اتقفلت — ${arabicNumber(widget.session.presentCount)} حضور، ${arabicNumber(widget.session.tasmeeCount)} تسميع، ${arabicNumber(widget.session.absentCount)} غياب'
+                : l.sesSessionStillClosed,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyLg.copyWith(color: p.textPrimary),
           ),
           const SizedBox(height: AppSpacing.lg),
+          if (widget.session.closedToday)
+            AppButton(
+              label: 'شوف التفاصيل',
+              onPressed: () => showAppModalSheet<void>(
+                context: context,
+                title: 'تفاصيل الحصة',
+                builder: (_) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    for (final entry in widget.session.roster)
+                      ListTile(
+                        title: Text(entry.studentName),
+                        subtitle: Text(
+                          entry.attendanceRecorded
+                              ? entry.attendance.label(AppL10n.of(context))
+                              : 'حضور غير مسجّل',
+                        ),
+                        trailing: Text(
+                          entry.tasmeeRecorded ? '✓ تسميع' : 'بدون تسميع',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           AppButton(
-            label: l.sesOpenTodaySession,
+            label: widget.session.closedToday
+                ? 'حصة إضافية'
+                : l.sesOpenTodaySession,
+            variant: widget.session.closedToday
+                ? AppButtonVariant.text
+                : AppButtonVariant.primary,
+            isLoading: _busy,
             icon: Icons.play_arrow,
-            onPressed: onOpen,
+            onPressed: _open,
           ),
         ],
       ),

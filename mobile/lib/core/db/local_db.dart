@@ -74,6 +74,15 @@ class LocalDb extends _$LocalDb implements OutboxStore {
     return row?.payloadJson;
   }
 
+  /// Preserve optimistic work until every operation for this circle is resolved.
+  Future<bool> hasUnsyncedSession(String circleId) async {
+    final QueryRow row = await customSelect(
+      "SELECT count(*) AS n FROM outbox_entries WHERE json_extract(payload_json, '\$.circle_id') = ?",
+      variables: <Variable<Object>>[Variable<String>(circleId)],
+    ).getSingle();
+    return row.read<int>('n') > 0;
+  }
+
   @override
   Future<void> enqueue(OutboxOp op) async {
     await into(outboxEntries).insert(
@@ -203,6 +212,9 @@ class LocalDb extends _$LocalDb implements OutboxStore {
     type: OutboxOpType.fromDb(row.opType),
     attempts: row.attempts,
     lastError: row.lastError,
+    displayLabel:
+        OutboxOp.decodePayload(row.payloadJson)['display_label'] as String?,
+    sessionId: OutboxOp.decodePayload(row.payloadJson)['session_id'] as String?,
   );
 
   OutboxOp _toOp(OutboxEntry row) => OutboxOp(

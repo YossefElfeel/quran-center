@@ -7,8 +7,19 @@ import '../theme/tokens.dart';
 abstract final class AppSnackbar {
   const AppSnackbar._();
 
-  static void success(BuildContext context, String message) =>
-      _show(context, message, context.palette.success, Icons.check_circle);
+  static void success(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) => _show(
+    context,
+    message,
+    context.palette.success,
+    Icons.check_circle,
+    actionLabel: actionLabel,
+    onAction: onAction,
+  );
 
   static void error(BuildContext context, String message) =>
       _show(context, message, context.palette.error, Icons.error);
@@ -20,22 +31,33 @@ abstract final class AppSnackbar {
     BuildContext context,
     String message,
     Color color,
-    IconData icon,
-  ) {
+    IconData icon, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           backgroundColor: color,
+          action: actionLabel != null && onAction != null
+              ? SnackBarAction(
+                  label: actionLabel,
+                  textColor: context.palette.foregroundOn(color),
+                  onPressed: onAction,
+                )
+              : null,
           content: Row(
             children: <Widget>[
-              Icon(icon, color: Colors.white, size: 20),
+              Icon(icon, color: context.palette.foregroundOn(color), size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   message,
-                  style: AppTextStyles.bodyMd.copyWith(color: Colors.white),
+                  style: AppTextStyles.bodyMd.copyWith(
+                    color: context.palette.foregroundOn(color),
+                  ),
                 ),
               ),
             ],
