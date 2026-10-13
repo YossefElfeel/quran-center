@@ -124,6 +124,11 @@ jobs:
       - name: Start Supabase (applies migrations + seed)
         run: supabase start
 
+      - name: Registration index cleanup (rollback)
+        run: |
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/registration_index_cleanup.sql
+
       - name: RLS isolation suite (rolls back; must print "RLS OK")
         run: |
           DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
