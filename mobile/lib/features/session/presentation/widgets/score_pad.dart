@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/arabic_numerals.dart';
+import '../../../../shared/theme/app_text_styles.dart';
 import '../../../../shared/theme/tokens.dart';
 
 /// لوحة اختيار درجة من ٠ لـ ١٠ (خلايا لمس كبيرة، تلوين حسب حد النجاح).
@@ -52,24 +53,28 @@ class _ScoreCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppPalette palette = context.palette;
     final Color base = isPass ? palette.success : palette.error;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.md),
-      child: Container(
-        width: AppSizes.minTouch,
-        height: AppSizes.minTouch,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? base : palette.surface,
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          border: Border.all(color: base, width: 1.5),
-        ),
-        child: Text(
-          arabicNumber(value),
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : base,
+    return Semantics(
+      selected: isSelected,
+      button: true,
+      label: 'درجة ${arabicNumber(value)} من عشرة',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        child: Container(
+          width: AppSizes.minTouch,
+          constraints: const BoxConstraints(minHeight: AppSizes.minTouch),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? base : palette.surface,
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            border: Border.all(color: base, width: 1.5),
+          ),
+          child: Text(
+            arabicNumber(value),
+            style: AppTextStyles.titleLg.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isSelected ? palette.foregroundOn(base) : base,
+            ),
           ),
         ),
       ),

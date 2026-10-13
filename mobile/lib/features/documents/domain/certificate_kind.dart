@@ -14,13 +14,6 @@ enum CertificateKind {
     CertificateKind.honor => 'honor',
   };
 
-  String get labelAr => switch (this) {
-    CertificateKind.juzAmma => 'إتمام جزء عمّ',
-    CertificateKind.half => 'إتمام نصف القرآن',
-    CertificateKind.full => 'إتمام القرآن الكريم',
-    CertificateKind.honor => 'شهادة تفوّق',
-  };
-
   static CertificateKind fromDb(String value) {
     switch (value) {
       case 'juz_amma':

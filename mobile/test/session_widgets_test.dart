@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quran_center/features/session/presentation/widgets/debt_strip.dart';
 import 'package:quran_center/features/session/presentation/widgets/score_pad.dart';
 import 'package:quran_center/l10n/generated/app_localizations.dart';
+import 'package:quran_center/shared/theme/tokens.dart';
 import 'package:quran_center/shared/widgets/app_error_view.dart';
 
 /// يلفّ الـ widget في MaterialApp عربي (RTL + مفاتيح الترجمة).
@@ -36,7 +37,7 @@ void main() {
       expect(picked, 8);
     });
 
-    testWidgets('الدرجة المختارة نصّها أبيض (متلوّنة)', (
+    testWidgets('الدرجة المختارة تستخدم لونًا مقروءًا فوق الخلفية', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -44,7 +45,10 @@ void main() {
       );
 
       final Text nine = tester.widget<Text>(find.text('٩'));
-      expect(nine.style?.color, Colors.white);
+      expect(
+        nine.style?.color,
+        AppPalette.light.foregroundOn(AppPalette.light.success),
+      );
     });
   });
 

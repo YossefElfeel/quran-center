@@ -10,12 +10,6 @@ enum CircleStatus {
     CircleStatus.graduated => 'graduated',
   };
 
-  String get labelAr => switch (this) {
-    CircleStatus.forming => 'بتتجمّع',
-    CircleStatus.active => 'شغّالة',
-    CircleStatus.graduated => 'اتخرّجت',
-  };
-
   static CircleStatus fromDb(String value) => switch (value) {
     'active' => CircleStatus.active,
     'graduated' => CircleStatus.graduated,

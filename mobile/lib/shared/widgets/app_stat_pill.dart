@@ -63,10 +63,9 @@ class AppStatPill extends StatelessWidget {
                     '$v',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.titleLg.copyWith(
+                    style: AppTextStyles.headlineMd.copyWith(
                       color: p.textPrimary,
                       fontWeight: FontWeight.w800,
-                      fontSize: 22,
                     ),
                   ),
                 ),

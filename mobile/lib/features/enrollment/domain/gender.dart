@@ -5,8 +5,6 @@ enum Gender {
 
   String get dbValue => this == Gender.male ? 'male' : 'female';
 
-  String get labelAr => this == Gender.male ? 'ولد' : 'بنت';
-
   static Gender? fromDb(String? value) =>
       value == null ? null : (value == 'female' ? Gender.female : Gender.male);
 }
