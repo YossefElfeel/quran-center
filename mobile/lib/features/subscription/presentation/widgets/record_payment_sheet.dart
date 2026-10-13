@@ -64,7 +64,7 @@ class _RecordPaymentSheetState extends ConsumerState<RecordPaymentSheet> {
           widget.household.name,
           arabicNumber(_month.month),
           arabicNumber(_month.year),
-          arabicNumber(amount),
+          arabicAmount(amount),
         ),
         confirmLabel: l.subsConfirmPaymentAction,
         destructive: false,

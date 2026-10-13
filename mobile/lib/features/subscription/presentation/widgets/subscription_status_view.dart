@@ -296,8 +296,8 @@ class _HouseholdBillingCardState extends ConsumerState<_HouseholdBillingCard> {
               title: Text(arabicMonthLabel(payment.periodMonth)),
               subtitle: Text(
                 payment.voided
-                    ? l.subsPaymentAmountVoided(arabicNumber(payment.amount))
-                    : l.subsPaymentAmountPaid(arabicNumber(payment.amount)),
+                    ? l.subsPaymentAmountVoided(arabicAmount(payment.amount))
+                    : l.subsPaymentAmountPaid(arabicAmount(payment.amount)),
               ),
             ),
           if (_error != null)

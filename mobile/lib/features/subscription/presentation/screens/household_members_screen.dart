@@ -215,7 +215,7 @@ class _PaymentRowTile extends StatelessWidget {
             ),
           ),
           Text(
-            l.subsMonthlyAmount(arabicNumber(payment.amount.round())),
+            l.subsMonthlyAmount(arabicAmount(payment.amount)),
             style: AppTextStyles.titleMd.copyWith(
               color: amountColor,
               fontWeight: FontWeight.bold,
