@@ -1,11 +1,13 @@
 import { CourseCard, type Course } from "@/components/course-card";
 import { supabaseAnon } from "@/lib/supabase-server";
 
+export const metadata = { title: "الكورسات المجانية", description: "تعلّم الحفظ والتجويد من كورسات الدار المجانية" };
+
 export const dynamic = "force-dynamic";
 
 export default async function CoursesPage() {
   const supabase = supabaseAnon();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("course")
     .select("id, title, description, video_url")
     .eq("is_free", true)
@@ -17,7 +19,7 @@ export default async function CoursesPage() {
       <h1 className="mb-6 text-3xl font-bold text-[var(--brand)]">
         الكورسات المجانية
       </h1>
-      {courses.length === 0 ? (
+      {error ? <p role="alert">تعذّر تحميل الكورسات — حدّث الصفحة وجرّب تاني.</p> : courses.length === 0 ? (
         <p className="text-gray-500">لسه مفيش كورسات متاحة — تابعنا قريب.</p>
       ) : (
         <div className="flex flex-col gap-5">

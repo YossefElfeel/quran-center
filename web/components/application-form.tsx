@@ -1,92 +1,19 @@
 "use client";
-
-import { useState } from "react";
-
+import { useId, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-
-export function ApplicationForm({ competitionId }: { competitionId: string }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [youtube, setYoutube] = useState("");
-  const [consent, setConsent] = useState(false);
-  const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!name.trim() || !phone.trim() || !consent) {
-      setError("اكتب الاسم والموبايل ووافق على الشروط.");
-      return;
-    }
-    setStatus("sending");
-    setError(null);
-    const supabase = createClient();
-    const { error: err } = await supabase.functions.invoke(
-      "submit-public-application",
-      {
-        body: {
-          competition_id: competitionId,
-          name: name.trim(),
-          phone: phone.trim(),
-          consent_ack: true,
-          youtube_url: youtube.trim() || undefined,
-        },
-      },
-    );
-    if (err) {
-      setStatus("idle");
-      setError("مش قادرين نسجّل طلبك — يمكن قدّمت قبل كده أو في مشكلة. جرّب تاني.");
-      return;
-    }
-    setStatus("done");
-  }
-
-  if (status === "done") {
-    return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-        <p className="text-lg font-semibold text-emerald-700">طلبك اتسجّل ✅</p>
-        <p className="mt-1 text-emerald-600">هنتواصل معاك على الموبايل.</p>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <input
-        className="rounded-xl border border-gray-300 p-3"
-        placeholder="الاسم بالكامل"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        className="rounded-xl border border-gray-300 p-3"
-        placeholder="رقم الموبايل"
-        inputMode="tel"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-      />
-      <input
-        className="rounded-xl border border-gray-300 p-3"
-        placeholder="رابط فيديو يوتيوب (اختياري)"
-        value={youtube}
-        onChange={(e) => setYoutube(e.target.value)}
-      />
-      <label className="flex items-center gap-2 text-sm text-gray-600">
-        <input
-          type="checkbox"
-          checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
-        />
-        موافق إن الدار تتواصل معايا وتستخدم بياناتي للمسابقة.
-      </label>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <button
-        type="submit"
-        disabled={status === "sending"}
-        className="rounded-xl bg-[var(--brand)] p-3 font-semibold text-white disabled:opacity-60"
-      >
-        {status === "sending" ? "بنسجّل…" : "قدّم في المسابقة"}
-      </button>
-    </form>
-  );
+const normalize=(text:string)=>text.replace(/[٠-٩۰-۹]/g,char=>String(char.charCodeAt(0)-(char.charCodeAt(0)>=0x6f0?0x6f0:0x660)));
+function youtubeUrl(value:string){try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)&&['youtube.com','www.youtube.com','m.youtube.com','youtu.be','youtube-nocookie.com','www.youtube-nocookie.com'].includes(url.hostname);}catch{return false;}}
+export function ApplicationForm({competitionId}:{competitionId:string}){
+  const id=useId();const [busy,setBusy]=useState(false);const [reference,setReference]=useState('');const [errors,setErrors]=useState<Record<string,string>>({});
+  const reviewDays=process.env.NEXT_PUBLIC_APPLICATION_REVIEW_DAYS;
+  if(reference)return <div role="status" className="space-y-5 rounded-xl border border-emerald-200 bg-emerald-50 p-6"><h3 className="text-xl font-bold">طلبك اتسجّل</h3><p>رقم المتابعة: <b dir="ltr">{reference}</b></p><ol className="list-inside list-decimal space-y-2"><li>الإدارة تراجع الطلب والفيديو.</li><li>{reviewDays?`نتواصل على الموبايل خلال ${reviewDays} أيام بعد المراجعة.`:'الإدارة تتواصل على الموبايل بعد المراجعة.'}</li></ol><div className="flex gap-5"><Link href="/" className="underline">الرئيسية</Link><Link href="/courses" className="underline">الكورسات</Link></div></div>;
+  return <form className="space-y-5" onSubmit={async event=>{
+    event.preventDefault();if(busy)return;const form=new FormData(event.currentTarget);const name=String(form.get('name')).trim();const phone=normalize(String(form.get('phone'))).replace(/[\s()-]/g,'');const youtube=String(form.get('youtube')).trim();const next:Record<string,string>={};
+    if(name.length<2)next.name='اكتب الاسم بالكامل';if(!/^\+?[0-9]{10,15}$/.test(phone))next.phone='اكتب رقم موبايل صحيح من ١٠ إلى ١٥ رقم';if(youtube&&!youtubeUrl(youtube))next.youtube='اكتب رابط فيديو يوتيوب صحيح';if(!form.get('consent'))next.consent='الموافقة مطلوبة للتقديم';setErrors(next);if(Object.keys(next).length)return;
+    setBusy(true);try{const {data,error}=await createClient().functions.invoke('submit-public-application',{body:{competition_id:competitionId,name,phone,consent_ack:true,youtube_url:youtube||undefined}});if(error||!data?.application_id)throw error??new Error('missing_reference');setReference(data.application_id);}catch{setErrors({form:'تعذّر تسجيل الطلب — راجع الاتصال. لو قدّمت قبل كده، تواصل مع الإدارة.'});}finally{setBusy(false);}
+  }} noValidate>
+    {[['name','الاسم بالكامل','text'],['phone','رقم الموبايل','tel'],['youtube','رابط فيديو يوتيوب (اختياري)','url']].map(([field,label,type])=><div key={field}><label htmlFor={`${id}-${field}`} className="mb-2 block">{label}</label><input id={`${id}-${field}`} name={field} type={type} required={field!=='youtube'} autoComplete={field==='name'?'name':field==='phone'?'tel':'off'} dir={field==='name'?'auto':'ltr'} aria-invalid={!!errors[field]} aria-describedby={errors[field]?`${id}-${field}-error`:undefined} className="w-full rounded-lg border border-gray-300 bg-white p-3"/>{errors[field]&&<p id={`${id}-${field}-error`} role="alert" className="mt-1 text-sm text-red-700">{errors[field]}</p>}</div>)}
+    <label className="flex items-start gap-3"><input type="checkbox" name="consent" className="mt-1 size-5" required/>موافق إن الدار تتواصل معايا وتستخدم بياناتي للمسابقة.</label>{errors.consent&&<p role="alert" className="text-red-700">{errors.consent}</p>}{errors.form&&<p role="alert" className="text-red-700">{errors.form}</p>}<button disabled={busy} className="w-full rounded-lg bg-[var(--brand)] p-3 font-semibold text-white disabled:opacity-50">{busy?'جاري التسجيل…':'قدّم في المسابقة'}</button>
+  </form>;
 }

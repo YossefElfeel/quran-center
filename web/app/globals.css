@@ -3,7 +3,7 @@
 :root {
   --background: #f8faf9;
   --foreground: #14211b;
-  --brand: #0f7c5a;
+  --brand: #0c7c59;
 }
 
 body {
@@ -11,3 +11,8 @@ body {
   color: var(--foreground);
   font-family: var(--font-cairo), system-ui, -apple-system, sans-serif;
 }
+
+::selection { background: #cce5db; color: #14211b; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+a { text-underline-offset: .2em; }
+input, textarea { caret-color: var(--brand); }
